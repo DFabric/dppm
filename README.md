@@ -1,5 +1,6 @@
-# DPPM 
-#*The DPlatform's Package Manager* 
+# DPPM
+
+*The DPlatform's Package Manager*
 
 # Features
 
@@ -18,9 +19,13 @@ To list available packages (application and libraries):
 
 `dppm list`
 
-To install a new application:
+A typical installation can be:
 
-`dppm install [application]`
+```sh
+dppm install [application] # install a new application:
+dppm service [application] run true # start it
+dppm service [application] boot true # auto start the service at boot
+```
 
 Note that `install` will `build` the package, and then `add` it to the system.
 
@@ -34,12 +39,12 @@ This following command will build a `dppm` executable:
 
 `crystal build src/dppm.cr -o dppm`
 
-And run it 
+And run it
 
 `./dppm --help`
 
 For more informations, see the [offcial docs](https://crystal-lang.org/docs/using_the_compiler/)
 
 # License                                                                                                 
-                                                                                                          
+
 Copyright (c) 2018 Julien Reichardt - ISC License
