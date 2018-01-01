@@ -8,7 +8,10 @@ module Tasks
     vars["prefix"] = Dir.current if !vars["prefix"]?
     Dir.cd vars["prefix"]
 
-    Command.new.cache vars["pkgsrc"] if !File.exists? "/tmp/dppm-package-sources/"
+    # Update cache if too old
+    if File.stat(CACHE[0..-2]).mtime.to_s("%Y%m%d") != Time.utc_now.to_s("%Y%m%d")
+      Command.new.cache vars["pkgsrc"], &log
+    end
 
     case task
     when "a", "add"   then Add.new vars, &log

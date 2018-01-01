@@ -57,12 +57,12 @@ struct Command
   Usage: dppm service [application] [command]
 
   Service commands:
-      run [true|false]         start/stop the service
-      boot [true|false]        add/delete the service from the boot sequence
+      run [true|false]         run the service
+      boot [true|false]        auto-start the service at boot
       restart                  restart the service
       reload                   reload the service if available
 
-  No arguments after the `state` and `boot` command will return their current status
+  No arguments after the `run` and `boot` command will return their current status
 
   SERVICE
 
@@ -143,7 +143,7 @@ struct Command
         when "run"    then ARGV[3]? ? service.run ARGV[1], Utils.to_b(ARGV[3]) : service.run ARGV[1]
         when "boot"   then ARGV[3]? ? service.boot ARGV[1], Utils.to_b(ARGV[3]) : service.boot ARGV[1]
         when "reload" then service.reload ARGV[1]
-        when nil      then raise "no arguments"
+        when nil      then puts SERVICE
         else
           raise "unknwon argument: " + ARGV[2]
         end
@@ -154,13 +154,12 @@ struct Command
         end
       when "cache"
         if ARGV[1]? =~ /^pkgsrc=(.*)/
-          cache $1
+          cache $1 { |log_type, title, msg| log log_type, title, msg }
         elsif ARGV[1]? =~ /^--config=(.*)/
-          cache YAML.parse(File.read $1)["pkgsrc"].as_s
+          cache(YAML.parse(File.read $1)["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
         else
-          cache YAML.parse(File.read "./config.yml")["pkgsrc"].as_s
+          cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
         end
-        puts "cache at `#{CACHE}` updated"
       when "pkg"
         puts "no implemented yet"
         exit
@@ -208,15 +207,17 @@ struct Command
   end
 
   # Download a cache of package sources
-  def cache(pkgsrc)
+  def cache(pkgsrc, &log : String, String, String -> Nil)
+    FileUtils.rm_r CACHE[0..-2] if File.exists? CACHE[0..-2]
     if pkgsrc =~ /^https?:\/\/.*/
-      FileUtils.rm_r CACHE if File.exists? CACHE
       HTTPGet.file pkgsrc, CACHE[0..-2] + ".tar.gz"
       Exec.new("/bin/tar", ["zxf", CACHE[0..-2] + ".tar.gz", "-C", "/tmp/"]).out
       File.delete CACHE[0..-2] + ".tar.gz"
       File.rename Dir["/tmp/*package-sources*"][0], CACHE
+      yield "INFO", "cache updated", CACHE
     else
-      raise "can't update the cache, not a valid url: " + pkgsrc
+      File.symlink File.real_path(pkgsrc), CACHE[0..-2]
+      yield "INFO", "symlink added from `#{File.real_path(pkgsrc)}`", CACHE
     end
   end
 
