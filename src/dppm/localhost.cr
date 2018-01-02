@@ -30,12 +30,11 @@ struct Localhost
   end
 
   private def getarch
-    arch = Exec.new("/bin/uname", "-m").out
-    case arch
-    when "aarch64\n" then "arm64"
-    when "armv7l\n"  then "armhf"
-    when "x86_64\n"  then "x86-64"
-    when "i386\n"    then "x86"
+    case File.read "/proc/kallsyms"
+    when / x86_64_/  then "x86-64"
+    when / x86_/     then "x86"
+    when / aarch64_/ then "aarch64"
+    when / armv7_/   then "armhf"
     else
       raise "unsupported architecure: " + arch
     end
