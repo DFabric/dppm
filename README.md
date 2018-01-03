@@ -9,6 +9,30 @@
 - can use systemd or OpenRC for system services
 - independent of your system package manager
 
+# Install
+
+For now only the x86-64 architecture is available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467) to support `armhf` and `aarch64`.
+
+## Automatic
+
+Get the helper:
+
+`wget https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -O /tmp/helper.sh`
+
+or
+
+`curl -SL https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -o /tmp/helper.sh`
+
+Download `dppm`:
+
+`sh /tmp/helper.sh dppm-static`
+
+The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/usr/local/bin`)
+
+## Manual
+
+Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
+
 # Use
 
 To show the help:
@@ -22,16 +46,14 @@ To list available packages (application and libraries):
 A typical installation can be:
 
 ```sh
-dppm install [application] # install a new application:
-dppm service [application] run true # start it
-dppm service [application] boot true # auto start the service at boot
+dppm install [application] prefix=/opt # install a new application in /opt
+dppm service [application] run true    # start the service
+dppm service [application] boot true   # auto start the service at boot
 ```
 
 Note that `install` will `build` the package, and then `add` it to the system.
 
-Root execution is needed to add a system service (systemd/OpenRC)
-
-Prebuilt binaries will come soon.
+Root execution is needed to add a system service (systemd or OpenRC)
 
 # How to build
 

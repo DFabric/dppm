@@ -15,8 +15,8 @@ require "semantic_compare"
 require "./dppm/*"
 require "./dppm/service/*"
 require "./dppm/tasks/*"
-HOST    = Localhost.new
-CACHE   = "/tmp/dppm-package-sources/"
+HOST  = Localhost.new
+CACHE = "/tmp/dppm-package-sources/"
 
 struct Command
   # Global constant variables
@@ -170,9 +170,11 @@ struct Command
         # todo
       when "vars"
         puts VARS
+      when "h", "help", "-h", "--help"
+        puts USAGE
       when nil
         puts USAGE
-        exit
+        exit 1
       else
         puts USAGE
         error "unknown command: " + ARGV.first?.to_s
