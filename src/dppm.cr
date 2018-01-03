@@ -20,7 +20,7 @@ CACHE = "/tmp/dppm-package-sources/"
 
 struct Command
   # Global constant variables
-  VERSION = "2018.01.01"
+  VERSION = "2018-alpha"
 
   USAGE = <<-USAGE
   dppm - The DPlatform Package Manager
