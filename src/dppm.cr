@@ -77,6 +77,7 @@ struct Command
       tag                      a tag describing a version, like 'latest'
       user  (`add` task)       uid or user to be used for the program
       group (`add` task)       gid or group to be used for the program
+      owner                    regroup the user and group using a same id/name
 
   System variables (will be overridden if set):
       package                  name of the package

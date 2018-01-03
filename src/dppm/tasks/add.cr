@@ -13,9 +13,14 @@ struct Tasks::Add
     @pkgdir = @prefix + '/' + @package + '/'
     @vars["pkgdir"] = @pkgdir
     @vars["name"] = @package
-    dir = File.stat @pkgdir
-    @vars["user"] = Owner.from_id dir.uid, "uid" if !vars["user"]?
-    @vars["group"] = Owner.from_id dir.gid, "gid" if !vars["group"]?
+    if vars["owner"]?
+      @vars["user"] = vars["owner"]
+      @vars["group"] = vars["owner"]
+    else
+      dir = File.stat @pkgdir
+      @vars["user"] ||= Owner.from_id dir.uid, "uid"
+      @vars["group"] ||= Owner.from_id dir.gid, "gid"
+    end
 
     @log.call "INFO", "obtaining pkg", CACHE + @package + "/pkg.yml"
     @pkg = YAML.parse File.read CACHE + @package + "/pkg.yml"

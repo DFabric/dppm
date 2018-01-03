@@ -7,7 +7,7 @@ module Owner
            when "gid" then "/etc/group"
            else            raise "only uid or gid can be used"
            end
-    if id.is_a? UInt32 || id.to_i?
+    if id.is_a? Int || id.to_i?
       id.to_i
     else
       File.read_lines(file).each do |line|
@@ -23,7 +23,7 @@ module Owner
            when "gid" then "/etc/group"
            else            raise "only uid or gid can be used"
            end
-    if id.is_a? UInt32 || id.to_i?
+    if id.is_a? Int || id.to_i?
       File.read_lines(file).each do |line|
         return $1 if line =~ /(.*):x:(#{id}):/
       end
