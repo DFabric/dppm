@@ -11,8 +11,8 @@ struct Localhost
 
   def service
     case sysinit
-    when "systemd" then Service::Systemd.new
-    when "openrc"  then Service::OpenRC.new
+    when "systemd" then Service::Systemd
+    when "openrc"  then Service::OpenRC
     else
       raise "unsupported init system"
     end

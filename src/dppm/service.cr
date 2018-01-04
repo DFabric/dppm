@@ -12,9 +12,9 @@ module Service
     {% for sysinit in ["OpenRC", "Systemd"] %}
     {
       {{sysinit.downcase.id}} = if File.exists? initdir + {{sysinit.downcase}}
-        Service::{{sysinit.id}}.new.parse initdir + {{sysinit.downcase}}
+        Service::{{sysinit.id}}.parse initdir + {{sysinit.downcase}}
       else
-        Service::{{sysinit.id}}.new.base
+        Service::{{sysinit.id}}.base
       end
     }
     {% end %}
@@ -27,26 +27,26 @@ module Service
      group:         vars["group"],
      restart_delay: "9",
      umask:         "027"}.each do |key, value|
-      openrc = Service::OpenRC.new.set openrc, key.to_s, value
-      systemd = Service::Systemd.new.set systemd, key.to_s, value
+      openrc = Service::OpenRC.set openrc, key.to_s, value
+      systemd = Service::Systemd.set systemd, key.to_s, value
     end
 
     # Reload directive if available
     if pkg["exec"]["reload"]?
-      openrc = Service::OpenRC.new.set openrc, "reload", pkg["exec"]["reload"].as_s
-      systemd = Service::Systemd.new.set systemd, "reload", pkg["exec"]["reload"].as_s
+      openrc = Service::OpenRC.set openrc, "reload", pkg["exec"]["reload"].as_s
+      systemd = Service::Systemd.set systemd, "reload", pkg["exec"]["reload"].as_s
     end
 
     # Add a OATH environment variable
     path = Dir[vars["pkgdir"] + "lib/*/bin"].join ':'
     if !path.empty?
-      openrc = Service::OpenRC.new.set openrc, ["environment", "PATH"], path
-      systemd = Service::Systemd.new.set systemd, ["environment", "PATH"], path
+      openrc = Service::OpenRC.set openrc, ["environment", "PATH"], path
+      systemd = Service::Systemd.set systemd, ["environment", "PATH"], path
     end
 
     # Convert back hashes to service files
-    File.write vars["pkgdir"] + "etc/init/openrc", Service::OpenRC.new.build openrc
-    File.write vars["pkgdir"] + "etc/init/systemd", Service::Systemd.new.build systemd
+    File.write vars["pkgdir"] + "etc/init/openrc", Service::OpenRC.build openrc
+    File.write vars["pkgdir"] + "etc/init/systemd", Service::Systemd.build systemd
 
     # Create links
     if HOST.service.writable?
@@ -68,22 +68,5 @@ module Service
     else
       log.call "WARN", "root execution needed for system service deletion", service
     end
-  end
-
-  def set_env(env_vars, var, value)
-    # If the var exists
-    if env_vars =~ /(^| )#{var}=[^ ]+/
-      env_vars.scan(/([^ ]+?)=([^ ]+)/m).map do |env_var|
-        env_var[1] == var ? var + '=' + value : env_var[0]
-      end.join ' '
-    elsif env_vars =~ /^(?:[ ]+)?$/
-      var + '=' + value
-    else
-      env_vars + ' ' + var + '=' + value
-    end
-  end
-
-  def get_env(env_vars, var)
-    env_vars.match(/(^| )#{var}=([^ ]+)/).not_nil![2]
   end
 end

@@ -14,6 +14,8 @@ require "semantic_compare"
 # Files
 require "./dppm/*"
 require "./dppm/service/*"
+require "./dppm/service/openrc/*"
+require "./dppm/service/systemd/*"
 require "./dppm/tasks/*"
 HOST  = Localhost.new
 CACHE = "/tmp/dppm-package-sources/"
