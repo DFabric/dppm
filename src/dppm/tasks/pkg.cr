@@ -7,7 +7,7 @@ struct Pkg
     @pkg = YAML.parse File.read package + "/pkg.yml"
   end
 
-  def current_version
+  def version
     data = if @pkg["version"]["current"]["cmd"]?
              cmd = (@package + '/' + @pkg["version"]["current"]["cmd"].as_s).split ' '
              Exec.new(cmd[0], cmd[1..-1]).output

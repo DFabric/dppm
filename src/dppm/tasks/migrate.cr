@@ -10,7 +10,7 @@ struct Tasks::Migrate
     @package = vars["package"]
     vars["name"] = @package + ".new"
     @old_pkgdir = vars["prefix"] + '/' + @package
-    @old_version = Pkg.new(@package).current_version
+    @old_version = Pkg.new(@package).version
     Tasks.pkg_exists? @old_pkgdir
 
     # Init
@@ -21,7 +21,7 @@ struct Tasks::Migrate
     elsif SemanticCompare.version @old_version, '>' + @build.version
       @log.call "WARN", "downgraging from " + @old_version, @build.version
     elsif SemanticCompare.version @old_version, @build.version
-      @log.call "WARN", "use of `clone` task` recommended instead of `migrate`", "using the same version " + @old_version
+      @log.call "WARN", "use of the `clone` task recommended instead of `migrate`", "using the same version " + @old_version
     else
       raise "can't compare the semantic versions " + @old_version + "with " + @build.version
     end

@@ -26,9 +26,9 @@ struct Command
 
   USAGE = <<-USAGE
   dppm - The DPlatform Package Manager
-  Usage: dppm [command] [package] [variables] [--] [arguments]
+  Usage: dppm [command] [package] [variables] [--] [options]
 
-  Commands:
+  Command:
       a, add                   add a new pre-built package
       b, build                 build a package
       i, install               build then add a package
@@ -40,13 +40,13 @@ struct Command
       v, version               show the version
       h, help                  show this help
       cache                    update the cache from `pkgsrc` (from file or variable)
-      check                    check deps/app updates
+      check                    various checks like updates, installation
       server                   run the API server
       config                   get/set/del configuration variables
       pkg                      query informations on the package
       vars                     show the help for variables
 
-  Arguments:
+  Options:
       --config=[path]           specify a configuration file
       -v, --version             show the version
       -h, --help                show this help
@@ -69,9 +69,9 @@ struct Command
   SERVICE
 
   VARS = <<-VARS
-  Usage: dppm [...] [variable0]=[value0] [variable1]=[value1]
+  Usage: dppm [...] [variable]=[value] [variable1]=[value1] ...
 
-  Variables:
+  Variable:
       prefix                   where is the package (default: /opt)
       pkgsrc                   source of the packages
       mirror                   mirror of precompiled applications
@@ -97,9 +97,9 @@ struct Command
   PKG = <<-PKG
   Usage: dppm pkg [package] [key]
 
-  Keys:
-      version.current
-      version.all
+  Key:
+      version
+      versions
       deps
       package
       name
@@ -115,13 +115,14 @@ struct Command
   PKG
 
   CONFIG = <<-CONFIG
-  Usage: dppm config [get|set|del|list|file] [package]
+  Usage: dppm config [operation] [package]
 
-  list                          list available variables
-  file                          output the configuration file
-  config get [keys]             get the value of a key
-  config set [keys] [value]     set or change a new value for a key
-  config del [keys]             delete a key entry (not recommended)
+  Operation:
+      list                          list available variables
+      file                          output the configuration file
+      config get [keys]             get the value of a key
+      config set [keys] [value]     set or change a new value for a key
+      config del [keys]             delete a key entry (not recommended)
 
   keys represented as an array like `[key0, kye1, key2]` will directly query into
   the configuration file.
@@ -129,6 +130,23 @@ struct Command
   that will point to the configuration file.
 
   CONFIG
+
+  CHECK = <<-CHECK
+  Usage: dppm check [type]
+
+  Type:
+     list                          list available variables
+     file                          output the configuration file
+     config get [keys]             get the value of a key
+     config set [keys] [value]     set or change a new value for a key
+     config del [keys]             delete a key entry (not recommended)
+
+  keys represented as an array like `[key0, kye1, key2]` will directly query into
+  the configuration file.
+  a key as a string like `key` will query the variables defined in the pkg.yml,
+  that will point to the configuration file.
+
+  CHECK
 
   @noconfirm = false
 
@@ -165,12 +183,12 @@ struct Command
         end
       when "pkg"
         puts "no implemented yet"
-        exit
-        puts Pkg.new(ARGV[1]).current_version
+        puts Pkg.new(ARGV[1]).version
       when "config" then config
+      when "check"
+        puts "no implemented yet"
       when "server"
         puts "no implemented yet"
-        # todo
       when "vars"
         puts VARS
       when "h", "help", "-h", "--help"

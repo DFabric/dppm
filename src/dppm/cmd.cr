@@ -169,8 +169,6 @@ module Cmd
         ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' '), conf
       when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8)
       when "chown_r" then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid")
-        # Not sure if it's really useful
-        # when "template"  then template cmd[1..-1]
         # Download
       when "getstring" then HTTPGet.string cmd[1]
       when "getfile"
@@ -200,21 +198,5 @@ module Cmd
       command = Exec.new(bin, array).out
       command.empty? ? nil : command
     end
-
-    # private def template(list)
-    #   templatevars = Hash(String, String).new
-    #   vars.map { |k, v| templatevars["{{" + k + "}}"] = v }
-    #   list.each do |file|
-    #     data = File.read file
-    #     # Check if variables in the command are defined
-    #     data.scan(/(?<!\\)\{{[a-zA-Z0-9_]+}}/).each do |var|
-    #       raise "unknown variable: " + var[0] if !templatevars[var[0]]?
-    #     end
-    #     # Replace vars by their values
-    #     File.write(file, data.gsub(/(?<!\\)\{{[a-zA-Z0-9_]+}}/, templatevars)
-    #                          # Remove a slash for escpaded vars
-    #                          .gsub(/\\(\{{[a-zA-Z0-9_]+}})/, "\\1"))
-    #   end
-    # end
   end
 end

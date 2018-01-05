@@ -39,17 +39,19 @@ To show the help:
 
 `dppm --help`
 
-To list available packages (application and libraries):
+To list [available packages](https://github.com/DFabric/package-sources) (applications and libraries):
 
 `dppm list`
 
 A typical installation can be:
 
 ```sh
-dppm install [application] prefix=/opt # install a new application in /opt
-dppm service [application] run true    # start the service
-dppm service [application] boot true   # auto start the service at boot
+dppm install [application] prefix=/opt owner=myapp # install a new application in /opt as `myapp`
+dppm service [application] run true                # start the service
+dppm service [application] boot true               # auto start the service at boot
 ```
+
+The user and group used by the application here is `myapp`. [Read more about security recommendations](https://github.com/DFabric/docs/blob/master/security/owner.md)
 
 Note that `install` will `build` the package, and then `add` it to the system.
 

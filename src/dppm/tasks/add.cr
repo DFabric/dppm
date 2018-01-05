@@ -22,7 +22,7 @@ struct Tasks::Add
       @vars["group"] ||= Owner.from_id dir.gid, "gid"
     end
 
-    @log.call "INFO", "obtaining pkg", CACHE + @package + "/pkg.yml"
+    @log.call "INFO", "calculing informations", CACHE + @package + "/pkg.yml"
     @pkg = YAML.parse File.read CACHE + @package + "/pkg.yml"
 
     # Checks

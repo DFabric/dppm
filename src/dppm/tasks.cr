@@ -9,7 +9,7 @@ module Tasks
     Dir.cd vars["prefix"]
 
     # Update cache if too old
-    if !File.exists?(CACHE[0..-2]) || File.stat(CACHE[0..-2]).mtime.to_s("%Y%m%d") != Time.utc_now.to_s("%Y%m%d")
+    if !File.exists?(CACHE[0..-2]) || (File.stat(CACHE[0..-2]).ctime.to_s("%Y%m%d") != Time.utc_now.to_s("%Y%m%d"))
       Command.new.cache vars["pkgsrc"], &log
     end
 

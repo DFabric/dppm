@@ -17,7 +17,7 @@ struct Tasks::Build
     @prefix = @vars["prefix"]
     @package = @vars["package"].split(':')[0]
 
-    @log.call "INFO", "obtaining pkg", CACHE + @package + "/pkg.yml"
+    @log.call "INFO", "calculing informations", CACHE + @package + "/pkg.yml"
     @pkg = YAML.parse File.read CACHE + @package + "/pkg.yml"
     @version = getversion.not_nil!
     @name = getname
