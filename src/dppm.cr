@@ -7,7 +7,7 @@ require "semantic_version"
 require "yaml"
 
 # Third party libraries
-require "cossack"
+require "crest"
 require "exec"
 require "semantic_compare"
 
@@ -175,11 +175,11 @@ struct Command
         end
       when "cache"
         if ARGV[1]? =~ /^pkgsrc=(.*)/
-          cache $1 { |log_type, title, msg| log log_type, title, msg }
+          Command.cache $1 { |log_type, title, msg| log log_type, title, msg }
         elsif ARGV[1]? =~ /^--config=(.*)/
-          cache(YAML.parse(File.read $1)["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+          Command.cache(YAML.parse(File.read $1)["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
         else
-          cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+          Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
         end
       when "pkg"
         puts "no implemented yet"
@@ -230,10 +230,10 @@ struct Command
   end
 
   # Download a cache of package sources
-  def cache(pkgsrc, &log : String, String, String -> Nil)
+  def self.cache(pkgsrc, check = false, &log : String, String, String -> Nil)
     FileUtils.rm_r CACHE[0..-2] if File.exists? CACHE[0..-2]
     if pkgsrc =~ /^https?:\/\/.*/
-      HTTPGet.file pkgsrc, CACHE[0..-2] + ".tar.gz"
+      HTTPget.file pkgsrc, CACHE[0..-2] + ".tar.gz"
       Exec.new("/bin/tar", ["zxf", CACHE[0..-2] + ".tar.gz", "-C", "/tmp/"]).out
       File.delete CACHE[0..-2] + ".tar.gz"
       File.rename Dir["/tmp/*package-sources*"][0], CACHE
