@@ -8,9 +8,8 @@ description: |
   Short description of dppm
 
 dependencies:
-  cossack:
-    github: crystal-community/cossack
-    version: ~> 0.1
+  crest:
+    github: mamantoha/crest
   kemal:
     github: kemalcr/kemal
   exec:

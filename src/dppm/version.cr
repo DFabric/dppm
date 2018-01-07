@@ -15,7 +15,7 @@ module Version
     if src && src.as_a?
       src.as_a.map { |s| s.to_s }
     else
-      HTTPGet.string(src.to_s).split('\n').map do |line|
+      HTTPget.string(src.to_s).split('\n').map do |line|
         /#{regex}/.match(line).not_nil![0] if line =~ /#{regex}/
       end.compact!
     end

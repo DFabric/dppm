@@ -80,7 +80,7 @@ struct Tasks::Build
                   else
                     @pkg["tags"]["self"]["regex"]
                   end.as_s
-          /#{regex}/.match(HTTPGet.string src).not_nil![0]?
+          /#{regex}/.match(HTTPget.string src).not_nil![0]?
         else
           src
         end
@@ -113,7 +113,7 @@ struct Tasks::Build
       Dir.cd vars["pkgdir"]
       package = @package + "-static" + '_' + @vars["version"] + '_' + HOST.kernel + '_' + HOST.arch
       @log.call "INFO", "downloading", @vars["mirror"] + package + ".tar.xz"
-      HTTPGet.file @vars["mirror"] + package + ".tar.xz"
+      HTTPget.file @vars["mirror"] + package + ".tar.xz"
       @log.call "INFO", "extracting", @vars["mirror"] + package + ".tar.xz"
       Exec.new "/bin/tar", ["Jxf", package + ".tar.xz"]
       Dir[package + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }

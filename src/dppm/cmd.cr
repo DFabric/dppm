@@ -170,10 +170,10 @@ module Cmd
       when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8)
       when "chown_r" then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid")
         # Download
-      when "getstring" then HTTPGet.string cmd[1]
+      when "getstring" then HTTPget.string cmd[1]
       when "getfile"
         file = cmd[2]? ? cmd[2] : File.basename cmd[1]
-        HTTPGet.file cmd[1], file
+        HTTPget.file cmd[1], file
         # Compression
       when "untar_bz2" then execute "/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]
       when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]
