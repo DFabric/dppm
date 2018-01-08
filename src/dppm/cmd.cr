@@ -175,6 +175,7 @@ module Cmd
         file = cmd[2]? ? cmd[2] : File.basename cmd[1]
         HTTPget.file cmd[1], file
         # Compression
+      when "unzip"     then execute "/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]
       when "untar_bz2" then execute "/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]
       when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]
       when "untar_lz"  then execute "/bin/tar", ["axf", cmd[1], "-C", cmd[2]]
