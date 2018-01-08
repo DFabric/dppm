@@ -120,7 +120,7 @@ struct Tasks::Build
       File.delete package + ".tar.xz"
       FileUtils.rm_r package
     end
-    FileUtils.mkdir_p @pkgdir + "etc", @pkgdir + "srv" if @pkg["type"].as_s == "app"
+    FileUtils.mkdir_p [@pkgdir + "etc", @pkgdir + "srv"] if @pkg["type"].as_s == "app"
     @log.call "INFO", "build completed", @pkgdir
   end
 end
