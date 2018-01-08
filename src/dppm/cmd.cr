@@ -25,16 +25,18 @@ module Cmd
 
       yaml.each do |line|
         # Add/change vars
-        if line.is_a? String && line =~ /^([a-zA-Z0-9_]+) = (.*)/
-          @vars[$1] = command($2).to_s
-          @extvars["${" + $1 + '}'] = @vars[$1]
-        elsif line.is_a? String && line[0..3] == "puts"
-          @log.call "INFO", "puts", var(line[5..-1]) + '\n'
-        elsif line.is_a? String
-          cmd = var line
-          @log.call "INFO", "execute", cmd
-          output = command cmd
-          @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
+        if line.is_a? String
+          if line =~ /^([a-zA-Z0-9_]+) = (.*)/
+            @vars[$1] = command($2).to_s
+            @extvars["${" + $1 + '}'] = @vars[$1]
+          elsif line[0..3] == "puts"
+            @log.call "INFO", "puts", var(line[5..-1]) + '\n'
+          else
+            cmd = var line
+            @log.call "INFO", "execute", cmd
+            output = command cmd
+            @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
+          end
           # New condition block
         elsif line.is_a? Hash
           if line.first_key.to_s[0..3] == "elif" && last_cond
@@ -164,11 +166,9 @@ module Cmd
       when "set"                    then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' ')
       when /^(json|yaml|ini)\.get$/ then ConfFile.get cmd[1], Utils.to_array(cmd[2]), $1
       when /^(json|yaml|ini)\.del$/ then ConfFile.del cmd[1], Utils.to_array(cmd[2]), $1
-      when /^(json|yaml|ini)\.set$/
-        conf = $1
-        ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' '), conf
-      when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8)
-      when "chown_r" then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid")
+      when /^(json|yaml|ini)\.set$/ then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' '), $1
+      when "chmod_r"                then Utils.chmod_r cmd[1], cmd[2].to_i(8)
+      when "chown_r"                then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid")
         # Download
       when "getstring" then HTTPget.string cmd[1]
       when "getfile"
