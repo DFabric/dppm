@@ -12,11 +12,7 @@ require "exec"
 require "semantic_compare"
 
 # Files
-require "./dppm/*"
-require "./dppm/service/*"
-require "./dppm/service/openrc/*"
-require "./dppm/service/systemd/*"
-require "./dppm/tasks/*"
+require "./dppm/**"
 HOST  = Localhost.new
 CACHE = "/tmp/dppm-package-sources/"
 
@@ -278,7 +274,5 @@ struct Command
     exit exit_code
   end
 end
-
-# Needed for http redirections - not supported yet on on the http/client stdlib
 
 Command.new.run
