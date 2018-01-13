@@ -109,7 +109,7 @@ module ConfFile
 
     def get(key)
       file = @pkg[key].as_h.has_key?("self") ? @pkg[key]["self"].as_s.to_i : 0
-      get @pkgdir + '/' + file, Utils.to_array(@pkg["path"])
+      get @pkgdir + '/' + file, Utils.to_array(@pkg)
     end
   end
 
@@ -125,15 +125,15 @@ module ConfFile
     end
 
     def set(key : String, value)
-      ConfFile.set @config, Utils.to_array(@pkg[key]["path"].as_s), value
+      ConfFile.set @config, Utils.to_array(@pkg[key].as_s), value
     end
 
     def get(key : String)
-      ConfFile.get @config, Utils.to_array(@pkg[key]["path"].as_s)
+      ConfFile.get @config, Utils.to_array(@pkg[key].as_s)
     end
 
     def del(key : String)
-      ConfFile.get @config, Utils.to_array(@pkg[key]["path"].as_s)
+      ConfFile.get @config, Utils.to_array(@pkg[key].as_s)
     end
   end
 end
