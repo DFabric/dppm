@@ -1,3 +1,8 @@
+![DP logo](https://avatars.githubusercontent.com/u/19499073)
+
+[![Gitter](https://img.shields.io/badge/chat-on_gitter-red.svg?style=flat-square)](https://gitter.im/DFabric/dppm)
+[![ISC](https://img.shields.io/badge/License-ISC-blue.svg?style=flat-square)](https://en.wikipedia.org/wiki/ISC_license)
+
 # DPPM
 
 *The DPlatform's Package Manager*
