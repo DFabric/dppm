@@ -5,6 +5,8 @@
 
 # DPPM
 
+[![Join the chat at https://gitter.im/DFabric/dppm](https://badges.gitter.im/DFabric/dppm.svg)](https://gitter.im/DFabric/dppm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 *The DPlatform's Package Manager*
 
 # Features
