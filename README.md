@@ -9,10 +9,10 @@
 
 # Features
 
-- easy install, modification and backup of applications
-- support a wide range of systems (UN*Xes, x86, ARM). Distribution agnostic
+- easy install, modification and backup of the applications
+- support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
 - can use systemd or OpenRC for system services
-- independent of your system package manager
+- independent of your system's package manager
 
 # Install
 
@@ -24,9 +24,7 @@ Get the helper:
 
 `wget https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -O /tmp/helper.sh`
 
-or
-
-`curl -SL https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -o /tmp/helper.sh`
+or `curl -SL https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -o /tmp/helper.sh`
 
 Download `dppm`:
 
@@ -38,7 +36,7 @@ The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/us
 
 Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
 
-# Use
+# Usage
 
 To show the help:
 
@@ -64,15 +62,19 @@ Root execution is needed to add a system service (systemd or OpenRC)
 
 # How to build
 
-This following command will build a `dppm` executable:
+Intall dependencies:
+
+`shards install`
+
+Build a `dppm` executable:
 
 `crystal build src/dppm.cr -o dppm`
 
-And run it
+Run it
 
 `./dppm --help`
 
-For more informations, see the [offcial docs](https://crystal-lang.org/docs/using_the_compiler/)
+For more informations, see the [official docs](https://crystal-lang.org/docs/using_the_compiler/)
 
 # License                                                                                                 
 
