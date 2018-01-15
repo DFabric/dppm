@@ -100,6 +100,7 @@ struct Tasks::Build
   def run
     # Copy the sources to the @package directory to build
     FileUtils.cp_r CACHE + @package, @pkgdir
+    FileUtils.mkdir_p @pkgdir + "etc" if @pkg["type"].as_s == "app"
 
     # Build dependencies
     Tasks::Deps.new(&@log).build @vars, @deps if !@deps.empty?
@@ -120,7 +121,6 @@ struct Tasks::Build
       File.delete package + ".tar.xz"
       FileUtils.rm_r package
     end
-    FileUtils.mkdir_p [@pkgdir + "etc", @pkgdir + "srv"] if @pkg["type"].as_s == "app"
     @log.call "INFO", "build completed", @pkgdir
   end
 end

@@ -16,14 +16,18 @@ struct Tasks::Migrate
     # Init
     @build = Tasks::Build.new vars, &@log
     Tasks.checks @build.pkg["type"], @build.package, &log
-    if SemanticCompare.version @old_version, '<' + @build.version
-      @log.call "INFO", "upgrading from " + @old_version, @build.version
-    elsif SemanticCompare.version @old_version, '>' + @build.version
-      @log.call "WARN", "downgraging from " + @old_version, @build.version
-    elsif SemanticCompare.version @old_version, @build.version
-      @log.call "WARN", "use of the `clone` task recommended instead of `migrate`", "using the same version " + @old_version
-    else
-      raise "can't compare the semantic versions " + @old_version + "with " + @build.version
+    begin
+      if SemanticCompare.version @old_version, '<' + @build.version
+        @log.call "INFO", "upgrading from " + @old_version, @build.version
+      elsif SemanticCompare.version @old_version, '>' + @build.version
+        @log.call "WARN", "downgraging from " + @old_version, @build.version
+      elsif SemanticCompare.version @old_version, @build.version
+        @log.call "WARN", "use of the `clone` task recommended instead of `migrate`", "using the same version " + @old_version
+      else
+        raise "error"
+      end
+    rescue
+      @log.call "WARN", "can't compare the semantic versions ", @old_version + " - " + @build.version
     end
     @log.call "INFO", "temporary build name for " + @package, vars["name"]
   end
@@ -34,10 +38,13 @@ struct Tasks::Migrate
 
   def run
     @build.run
+    # Keep the data and configuration
     ["srv", "etc"].each do |dir|
-      if Dir.exists? @old_pkgdir + '/' + dir
-        FileUtils.rm_rf @build.pkgdir + '/' + dir
-        FileUtils.cp_r @old_pkgdir + '/' + dir, @build.pkgdir + '/' + dir
+      if Dir.exists? @old_pkgdir + dir
+        Dir[@build.pkgdir + dir + "/*"].each { |entry| FileUtils.rm_r entry }
+        Dir[@old_pkgdir + dir + "/*"].each do |entry|
+          FileUtils.cp_r @old_pkgdir + dir + entry, @build.pkgdir + dir + entry
+        end
       end
     end
     HOST.service.run @package, false
