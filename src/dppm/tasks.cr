@@ -34,14 +34,4 @@ module Tasks
   def pkg_exists?(dir)
     raise "doesn't exist: " + dir + "/pkg.yml" if !File.exists? dir + "/pkg.yml"
   end
-
-  def checks(pkgtype, package, &log : String, String, String -> Nil)
-    if HOST.service.writable?
-      service = HOST.service.file package
-      raise "system service already exist: " + service if File.exists? service
-    else
-      log.call "WARN", "system service unavailable", "root execution needed"
-    end
-    raise "only applications can be added to the system" if pkgtype != "app"
-  end
 end

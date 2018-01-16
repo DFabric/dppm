@@ -1,5 +1,34 @@
 module Service
-  def self.create(pkg, vars, &log : String, String, String -> Nil)
+  extend self
+
+  def init(sysinit = HOST.sysinit)
+    case sysinit
+    when "systemd" then Service::Systemd
+    when "openrc"  then Service::OpenRC
+    else
+      raise "unsupported init system"
+    end
+  end
+
+  def system(sysinit = HOST.sysinit)
+    case sysinit
+    when "systemd" then Service::Systemd::System
+    when "openrc"  then Service::OpenRC::System
+    else
+      raise "unsupported init system"
+    end
+  end
+
+  def check(pkgtype, package, &log : String, String, String -> Nil)
+    if HOST.service.writable?
+      raise "system service already exist: " + package if system.new(package).exists?
+    else
+      log.call "WARN", "system service unavailable", "root execution needed"
+    end
+    raise "only applications can be added to the system" if pkgtype != "app"
+  end
+
+  def create(pkg, vars, &log : String, String, String -> Nil)
     log.call "INFO", "creating services", "etc/init"
 
     # Ensure we are on pkgdir, needed for PATH generation
@@ -50,20 +79,21 @@ module Service
 
     # Create links
     if HOST.service.writable?
-      HOST.service.link vars["pkgdir"], vars["package"]
+      Service.system.new(vars["package"]).link vars["pkgdir"]
       log.call "INFO", HOST.service.name + " system service added", vars["package"]
     else
       log.call "WARN", "root execution needed for system service addition", vars["package"]
     end
   end
 
-  def self.delete(service, &log : String, String, String -> Nil)
+  def delete(service, &log : String, String, String -> Nil)
     log.call "INFO", "deleting the system service", service
     if HOST.service.writable?
-      HOST.service.run service, false
-      HOST.service.boot(service, false) if HOST.service.boot service
+      service = Service.system.new(service)
+      service.run false if service.run?
+      service.boot false if service.boot?
 
-      File.delete HOST.service.file(service)
+      File.delete service.file
       Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"] if HOST.service.name == "systemd"
     else
       log.call "WARN", "root execution needed for system service deletion", service

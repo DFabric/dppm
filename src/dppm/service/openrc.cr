@@ -41,6 +41,10 @@ module Service::OpenRC
   #   eend $?
   # }
 
+  def writable?
+    File.writable? "/etc/init.d/"
+  end
+
   def name
     "OpenRC"
   end

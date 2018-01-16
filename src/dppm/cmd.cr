@@ -10,15 +10,13 @@ module Cmd
     getter vars = Hash(String, String).new
     getter extvars = Hash(String, String).new
 
-    def initialize(yaml : Array, vars = Hash(String, String).new, &log : String, String, String -> Nil)
-      @log = log
+    def initialize(yaml : Array, vars = Hash(String, String).new, &@log : String, String, String -> Nil)
       Dir.cd vars["pkgdir"]
       # Create a PATH variable
       run yaml, vars.map { |k, v| [k.upcase, v] }.to_h
     end
 
-    def run(yaml : Array, vars = Hash(String, String).new)
-      @vars = vars
+    def run(yaml : Array, @vars = Hash(String, String).new)
       vars.map { |k, v| extvars["${" + k + '}'] = v }
       # End of block
       last_cond = false

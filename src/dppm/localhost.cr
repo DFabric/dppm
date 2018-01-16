@@ -10,12 +10,7 @@ struct Localhost
   getter vars : Hash(String, String) = getvars
 
   def service
-    case sysinit
-    when "systemd" then Service::Systemd
-    when "openrc"  then Service::OpenRC
-    else
-      raise "unsupported init system"
-    end
+    Service.init sysinit
   end
 
   # All system environment variables

@@ -155,11 +155,11 @@ struct Command
         log "INFO", ARGV[0], task.simulate
         task.run if @noconfirm || Tasks.confirm ARGV[0]
       when "service"
-        service = Localhost.new.service
+        service = Service.system.new ARGV[1]
         puts case ARGV[2]?
-        when "run"    then ARGV[3]? ? service.run ARGV[1], Utils.to_b(ARGV[3]) : service.run ARGV[1]
-        when "boot"   then ARGV[3]? ? service.boot ARGV[1], Utils.to_b(ARGV[3]) : service.boot ARGV[1]
-        when "reload" then service.reload ARGV[1]
+        when "run"    then ARGV[3]? ? service.run Utils.to_b(ARGV[3]) : service.run?
+        when "boot"   then ARGV[3]? ? service.boot Utils.to_b(ARGV[3]) : service.boot?
+        when "reload" then service.reload
         when nil      then puts SERVICE
         else
           raise "unknwon argument: " + ARGV[2]

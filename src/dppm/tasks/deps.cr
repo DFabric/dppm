@@ -4,8 +4,7 @@ require "semantic_compare"
 struct Tasks::Deps
   getter log
 
-  def initialize(&log : String, String, String -> Nil)
-    @log = log
+  def initialize(&@log : String, String, String -> Nil)
   end
 
   def get(pkg, pkgdir, allvers = Hash(String, Array(String)).new)

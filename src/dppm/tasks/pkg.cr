@@ -1,10 +1,8 @@
 struct Pkg
-  @pkg : YAML::Any
   @package : String
+  @pkg = YAML.parse File.read @package + "/pkg.yml"
 
-  def initialize(package)
-    @package = package
-    @pkg = YAML.parse File.read package + "/pkg.yml"
+  def initialize(@package)
   end
 
   def version

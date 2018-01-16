@@ -5,9 +5,7 @@ struct Tasks::Add
   @prefix : String
   @pkgdir : String
 
-  def initialize(vars, &log : String, String, String -> Nil)
-    @log = log
-    @vars = vars
+  def initialize(@vars, &@log : String, String, String -> Nil)
     @prefix = vars["prefix"]
     @package = vars["package"]
     @pkgdir = @prefix + '/' + @package + '/'
@@ -27,7 +25,7 @@ struct Tasks::Add
 
     # Checks
     Tasks.pkg_exists? @pkgdir
-    Tasks.checks @pkg["type"], @package, &log
+    Service.check @pkg["type"], @package, &log
 
     # Default variables
     unset_vars = Array(String).new

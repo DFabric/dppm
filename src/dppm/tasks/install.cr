@@ -1,10 +1,10 @@
-class Tasks::Install
+struct Tasks::Install
   def initialize(vars, &log : String, String, String -> Nil)
     @log = log
     @build = Tasks::Build.new vars, &@log
 
     # Checks
-    Tasks.checks @build.pkg["type"], @build.package, &log
+    Service.check @build.pkg["type"], @build.package, &log
 
     # Default variables
     unset_vars = Array(String).new

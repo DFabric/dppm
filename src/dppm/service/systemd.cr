@@ -29,6 +29,10 @@ module Service::Systemd
   # [Install]
   # WantedBy=multi-user.target
 
+  def writable?
+    File.writable? "/etc/systemd/system/"
+  end
+
   def name
     "systemd"
   end

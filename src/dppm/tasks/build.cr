@@ -1,5 +1,3 @@
-require "yaml"
-
 struct Tasks::Build
   getter package : String
   getter name : String
@@ -11,9 +9,7 @@ struct Tasks::Build
   @deps = Hash(String, String).new
   @arch_alias : String
 
-  def initialize(vars, &@log : String, String, String -> Nil)
-    @log = log
-    @vars = vars
+  def initialize(@vars, &@log : String, String, String -> Nil)
     @prefix = @vars["prefix"]
     @package = @vars["package"].split(':')[0]
 

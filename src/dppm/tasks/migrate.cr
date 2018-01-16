@@ -5,8 +5,7 @@ struct Tasks::Migrate
   @old_version : String
   @package : String
 
-  def initialize(vars, &log : String, String, String -> Nil)
-    @log = log
+  def initialize(vars, &@log : String, String, String -> Nil)
     @package = vars["package"]
     vars["name"] = @package + ".new"
     @old_pkgdir = vars["prefix"] + '/' + @package
@@ -15,7 +14,7 @@ struct Tasks::Migrate
 
     # Init
     @build = Tasks::Build.new vars, &@log
-    Tasks.checks @build.pkg["type"], @build.package, &log
+    Service.check @build.pkg["type"], @build.package, &log
     begin
       if SemanticCompare.version @old_version, '<' + @build.version
         @log.call "INFO", "upgrading from " + @old_version, @build.version
@@ -47,7 +46,7 @@ struct Tasks::Migrate
         end
       end
     end
-    HOST.service.run @package, false
+    Service.system.new(@package).run false
 
     # Change the name of the package to the original
     File.rename @old_pkgdir, @build.prefix + '/' + @package + '-' + @old_version
