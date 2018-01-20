@@ -2,7 +2,7 @@ name: dppm
 version: 0.0.1
 
 authors:
-  - name <mi@jrei.ch>
+  - Julien Reichardt <mi@jrei.ch>
 
 description: |
   Short description of dppm
@@ -16,11 +16,8 @@ dependencies:
     github: j8r/exec.cr
   semantic_compare:
     github: j8r/semantic_compare
-# development_dependencies:
-#   webmock:
-#     github: manastech/webmock.cr
 
-crystal: 0.24.0
+crystal: 0.24.1
 
 license: ISC
 
