@@ -1,5 +1,7 @@
-module Service
-  def set_env(env_vars, var, value)
+module Service::Env
+  extend self
+
+  def set(env_vars, var, value)
     # If the var exists
     if env_vars =~ /(^| )#{var}=[^ ]+/
       env_vars.scan(/([^ ]+?)=([^ ]+)/m).map do |env_var|
@@ -12,7 +14,7 @@ module Service
     end
   end
 
-  def get_env(env_vars, var)
+  def get(env_vars, var)
     env_vars.match(/(^| )#{var}=([^ ]+)/).not_nil![2]
   end
 end

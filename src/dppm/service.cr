@@ -3,8 +3,8 @@ module Service
 
   def init(sysinit = HOST.sysinit)
     case sysinit
-    when "systemd" then Service::Systemd
-    when "openrc"  then Service::OpenRC
+    when "systemd" then Systemd
+    when "openrc"  then OpenRC
     else
       raise "unsupported init system"
     end
@@ -12,8 +12,8 @@ module Service
 
   def system(sysinit = HOST.sysinit)
     case sysinit
-    when "systemd" then Service::Systemd::System
-    when "openrc"  then Service::OpenRC::System
+    when "systemd" then Systemd::System
+    when "openrc"  then OpenRC::System
     else
       raise "unsupported init system"
     end
@@ -41,9 +41,9 @@ module Service
     {% for sysinit in ["OpenRC", "Systemd"] %}
     {
       {{sysinit.downcase.id}} = if File.exists? initdir + {{sysinit.downcase}}
-        Service::{{sysinit.id}}.parse initdir + {{sysinit.downcase}}
+        {{sysinit.id}}.parse initdir + {{sysinit.downcase}}
       else
-        Service::{{sysinit.id}}.base
+        {{sysinit.id}}.base
       end
     }
     {% end %}
@@ -56,26 +56,26 @@ module Service
      group:         vars["group"],
      restart_delay: "9",
      umask:         "027"}.each do |key, value|
-      openrc = Service::OpenRC.set openrc, key.to_s, value
-      systemd = Service::Systemd.set systemd, key.to_s, value
+      openrc = OpenRC.set openrc, key.to_s, value
+      systemd = Systemd.set systemd, key.to_s, value
     end
 
     # Reload directive if available
     if pkg["exec"]["reload"]?
-      openrc = Service::OpenRC.set openrc, "reload", pkg["exec"]["reload"].as_s
-      systemd = Service::Systemd.set systemd, "reload", pkg["exec"]["reload"].as_s
+      openrc = OpenRC.set openrc, "reload", pkg["exec"]["reload"].as_s
+      systemd = Systemd.set systemd, "reload", pkg["exec"]["reload"].as_s
     end
 
     # Add a OATH environment variable
     path = Dir[vars["pkgdir"] + "lib/*/bin"].join ':'
     if !path.empty?
-      openrc = Service::OpenRC.set openrc, ["environment", "PATH"], path
-      systemd = Service::Systemd.set systemd, ["environment", "PATH"], path
+      openrc = OpenRC.env_set openrc, "PATH", path
+      systemd = Systemd.env_set systemd, "PATH", path
     end
 
     # Convert back hashes to service files
-    File.write vars["pkgdir"] + "etc/init/openrc", Service::OpenRC.build openrc
-    File.write vars["pkgdir"] + "etc/init/systemd", Service::Systemd.build systemd
+    File.write vars["pkgdir"] + "etc/init/openrc", OpenRC.build openrc
+    File.write vars["pkgdir"] + "etc/init/systemd", Systemd.build systemd
 
     # Create links
     if HOST.service.writable?

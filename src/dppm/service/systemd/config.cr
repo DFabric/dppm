@@ -1,5 +1,5 @@
 module Service::Systemd
-  private def shim(name)
+  def section(name)
     case name
     when "directory"     then ["Service", "WorkingDirectory"]
     when "command"       then ["Service", "ExecStart"]
@@ -19,12 +19,12 @@ module Service::Systemd
   end
 
   def get(data, name)
-    keys = shim name
+    key = section name
     data[keys[0]][keys[1]]
   end
 
   def set(data, name, value)
-    keys = shim name
+    keys = section name
     data[keys[0]][keys[1]] = if name == "reload"
                                "/bin/kill -#{value} $MAINPID"
                              else
@@ -33,20 +33,12 @@ module Service::Systemd
     data
   end
 
-  def get(data, keys : Array(String))
-    if keys[0] = "environment"
-      get_env data["Service"]["Environment"], keys[1]
-    else
-      raise "not supported by systemd #{keys}"
-    end
+  def env_get(data, env)
+    Service::Env.get data["Service"]["Environment"], env
   end
 
-  def set(data, keys : Array(String), value)
-    if keys[0] = "environment"
-      data["Service"]["Environment"] = set_env data["Service"]["Environment"]?.to_s, keys[1], value
-    else
-      raise "not supported by systemd #{keys}"
-    end
+  def env_set(data, env, value)
+    data["Service"]["Environment"] = Service::Env.set data["Service"]["Environment"]?.to_s, env, value
     data
   end
 end
