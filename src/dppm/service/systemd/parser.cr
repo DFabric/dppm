@@ -5,10 +5,10 @@ module Service::Systemd
      "Install" => ["WantedBy", "RequiredBy"]}
   end
 
-  def parse(file)
+  def parse(data)
     systemd = Hash(String, Hash(String, String | Array(String))).new
     section = ""
-    File.read(file).each_line do |line|
+    data.each_line do |line|
       if line =~ /([A-Z][A-Za-z]+)=(.*)/
         if space_array[section].includes? $1
           systemd[section][$1] = $2.split ' '

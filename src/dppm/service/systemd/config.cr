@@ -19,7 +19,7 @@ module Service::Systemd
   end
 
   def get(data, name)
-    key = section name
+    keys = section name
     data[keys[0]][keys[1]]
   end
 

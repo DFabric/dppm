@@ -89,6 +89,8 @@ struct Tasks::Add
     # Create system services
     Service.create @pkg, @vars, &@log
 
+    Service.link @vars, &@log
+
     @log.call "INFO", "add completed", @pkgdir
   end
 end

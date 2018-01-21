@@ -41,7 +41,7 @@ module Service
     {% for sysinit in ["OpenRC", "Systemd"] %}
     {
       {{sysinit.downcase.id}} = if File.exists? initdir + {{sysinit.downcase}}
-        {{sysinit.id}}.parse initdir + {{sysinit.downcase}}
+        {{sysinit.id}}.parse(File.read initdir + {{sysinit.downcase}})
       else
         {{sysinit.id}}.base
       end
@@ -76,7 +76,9 @@ module Service
     # Convert back hashes to service files
     File.write vars["pkgdir"] + "etc/init/openrc", OpenRC.build openrc
     File.write vars["pkgdir"] + "etc/init/systemd", Systemd.build systemd
+  end
 
+  def link(vars, &log : String, String, String -> Nil)
     # Create links
     if HOST.service.writable?
       Service.system.new(vars["package"]).link vars["pkgdir"]

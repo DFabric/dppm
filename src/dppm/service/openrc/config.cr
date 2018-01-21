@@ -24,7 +24,13 @@ module Service::OpenRC
     keys = section name
     case keys.size
     when 1 then data[keys[0]]
-    when 2 then data[keys[0]].to_s[keys[1]]
+    when 2
+      subdata = data[keys[0]]
+      if subdata.is_a? Hash(String, String)
+        subdata[keys[1]]
+      else
+        raise "unknown type: #{subdata}"
+      end
     else
       raise "invalid keys: #{keys}"
     end

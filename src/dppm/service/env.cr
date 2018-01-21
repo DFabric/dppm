@@ -15,6 +15,11 @@ module Service::Env
   end
 
   def get(env_vars, var)
-    env_vars.match(/(^| )#{var}=([^ ]+)/).not_nil![2]
+    env_vars =~ /(^| )#{var}=([^ ]+)/
+    if $2
+      $2
+    else
+      raise "can't get #{var} from #{env_var}"
+    end
   end
 end

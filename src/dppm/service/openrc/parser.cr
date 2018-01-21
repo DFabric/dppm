@@ -1,9 +1,8 @@
 module Service::OpenRC
-  def parse(file)
+  def parse(data)
     service = Hash(String, Hash(String, String) | Hash(String, Array(String)) | Array(String) | String).new
     supervise = Hash(String, String).new
 
-    data = File.read file
     data.each_line do |line|
       if line =~ /^([a-z_]+)=\"(.*)\"$/
         service[$1] = $2
