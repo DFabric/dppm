@@ -79,6 +79,19 @@ struct Tasks::Add
     # Build missing dependencies
     Tasks::Deps.new(&@log).build @vars, @deps if !@deps.empty?
 
+    # php-fpm based application
+    if @pkg["keywords"].includes? "php-fpm"
+      php_fpm = YAML.parse File.read(@pkgdir + "lib/php/pkg.yml")
+      @pkg.as_h["exec"] = php_fpm.as_h["exec"]
+
+      # Copy files and directories if not present
+      FileUtils.cp(@pkgdir + "lib/php/etc/php-fpm.conf.default", @pkgdir + "etc/php-fpm.conf") if !File.exists? @pkgdir + "etc/php-fpm.conf"
+      Dir.mkdir @pkgdir + "etc/php-fpm.d" if !File.exists? @pkgdir + "etc/php-fpm.d"
+      FileUtils.cp(@pkgdir + "lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "etc/php-fpm.d/www.conf"
+
+      HOST.run php_fpm["tasks"]["add"].as_a, @vars, &@log
+    end
+
     # Running the add task
     @log.call "INFO", "running configuration tasks", @package
     HOST.run @pkg["tasks"]["add"].as_a, @vars, &@log if @pkg["tasks"]["add"]?

@@ -49,6 +49,9 @@ module Service
     }
     {% end %}
 
+    # pid is needed for php-fpm based applications
+    systemd = Systemd.set systemd, "pidfile", "/run/" + vars["package"] + ".pid" if pkg["keywords"].includes? "php-fpm"
+
     # Set service options
     {description:   pkg["description"].as_s,
      directory:     vars["pkgdir"],
