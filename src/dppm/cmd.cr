@@ -22,33 +22,37 @@ module Cmd
       last_cond = false
 
       yaml.each do |line|
-        # Add/change vars
-        if line.is_a? String
-          if line =~ /^([a-zA-Z0-9_]+) = (.*)/
-            @vars[$1] = command($2).to_s
-            @extvars["${" + $1 + '}'] = @vars[$1]
-          elsif line[0..3] == "puts"
-            @log.call "INFO", "puts", var(line[5..-1]) + '\n'
-          else
-            cmd = var line
-            @log.call "INFO", "execute", cmd
-            output = command cmd
-            @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
-          end
-          # New condition block
-        elsif line.is_a? Hash
-          if line.first_key.to_s[0..3] == "elif" && last_cond
-            # Previous if/elif is true
-          elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
-            line.not_nil!.each_value do |subline|
-              run subline.not_nil!, vars if subline.is_a? Array
+        begin
+          # Add/change vars
+          if line.is_a? String
+            if line =~ /^([a-zA-Z0-9_]+) = (.*)/
+              @vars[$1] = command($2).to_s
+              @extvars["${" + $1 + '}'] = @vars[$1]
+            elsif line[0..3] == "echo"
+              @log.call "INFO", "echo", var(line[5..-1]) + '\n'
+            else
+              cmd = var line
+              @log.call "INFO", "execute", cmd
+              output = command cmd
+              @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
             end
-            last_cond = true
+            # New condition block
+          elsif line.is_a? Hash
+            if line.first_key.to_s[0..3] == "elif" && last_cond
+              # Previous if/elif is true
+            elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
+              line.not_nil!.each_value do |subline|
+                run subline.not_nil!, vars if subline.is_a? Array
+              end
+              last_cond = true
+            else
+              last_cond = false
+            end
           else
-            last_cond = false
+            raise "unknown line"
           end
-        else
-          raise "unknown line: #{line}"
+        rescue ex
+          raise "`#{line}` execution failed: #{ex}"
         end
       end
     end

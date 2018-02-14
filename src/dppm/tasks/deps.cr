@@ -56,11 +56,8 @@ struct Tasks::Deps
         FileUtils.cp_r deppath, depdir if contained
       else
         log.call "INFO", "building dependency", deppath
-        Tasks::Build.new(
-          {"package" => dep,
-           "version" => ver,
-           "prefix"  => vars["prefix"],
-          }.merge!(HOST.vars), &log).run
+        Tasks::Build.new(vars.merge({"package" => dep,
+                                     "version" => ver}), &log).run
         File.rename deppath, depdir if contained
       end
       log.call "INFO", "adding symlink to dependency", dep + ':' + ver

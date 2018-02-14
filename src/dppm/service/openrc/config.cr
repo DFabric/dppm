@@ -12,6 +12,7 @@ module Service::OpenRC
     when "network"       then ["net"]
     when "umask"         then ["supervise_daemon_args", "umask"]
     when "reload"        then ["reload"]
+    when "pidfile"       then ["pidfile"]
     else
       raise "don't exist in openrc: " + name
     end

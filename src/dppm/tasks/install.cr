@@ -1,10 +1,9 @@
 struct Tasks::Install
-  def initialize(vars, &log : String, String, String -> Nil)
-    @log = log
+  def initialize(vars, &@log : String, String, String -> Nil)
     @build = Tasks::Build.new vars, &@log
 
     # Checks
-    Service.check @build.pkg["type"], @build.package, &log
+    Service.check_availability @build.pkg["type"], @build.package, &log
 
     # Default variables
     unset_vars = Array(String).new

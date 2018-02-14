@@ -19,13 +19,14 @@ module Service
     end
   end
 
-  def check(pkgtype, package, &log : String, String, String -> Nil)
-    if HOST.service.writable?
-      raise "system service already exist: " + package if system.new(package).exists?
-    else
+  def check_availability(pkgtype, package, &log : String, String, String -> Nil)
+    if pkgtype != "app"
+      raise "only applications can be added to the system"
+    elsif system.new(package).exists?
+      raise "system service already exist: " + package
+    elsif !HOST.service.writable?
       log.call "WARN", "system service unavailable", "root execution needed"
     end
-    raise "only applications can be added to the system" if pkgtype != "app"
   end
 
   def create(pkg, vars, &log : String, String, String -> Nil)
@@ -60,13 +61,13 @@ module Service
       systemd = Systemd.set systemd, key.to_s, value
     end
 
-    # Reload directive if available
+    # if the reload directive is available
     if pkg["exec"]["reload"]?
       openrc = OpenRC.set openrc, "reload", pkg["exec"]["reload"].as_s
       systemd = Systemd.set systemd, "reload", pkg["exec"]["reload"].as_s
     end
 
-    # Add a OATH environment variable
+    # Add a PATH environment variable
     path = Dir[vars["pkgdir"] + "lib/*/bin"].join ':'
     if !path.empty?
       openrc = OpenRC.env_set openrc, "PATH", path

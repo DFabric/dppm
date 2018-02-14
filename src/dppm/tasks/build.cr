@@ -96,12 +96,12 @@ struct Tasks::Build
   def run
     # Copy the sources to the @package directory to build
     FileUtils.cp_r CACHE + @package, @pkgdir
-    FileUtils.mkdir_p @pkgdir + "etc" if @pkg["type"].as_s == "app"
+    FileUtils.mkdir_p [@pkgdir + "etc", @pkgdir + "log"] if @pkg["type"].as_s == "app"
 
     # Build dependencies
     Tasks::Deps.new(&@log).build @vars, @deps if !@deps.empty?
 
-    if @pkg["tasks"]?
+    if @pkg["tasks"]? && @pkg["tasks"]["build"]?
       @log.call "INFO", "building", @package
       HOST.run @pkg["tasks"]["build"].as_a, @vars, &@log
       # Standard package build

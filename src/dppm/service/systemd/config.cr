@@ -13,6 +13,7 @@ module Service::Systemd
     when "network"       then ["network.target"]
     when "umask"         then ["Service", "UMask"]
     when "reload"        then ["Service", "ExecReload"]
+    when "pidfile"       then ["Service", "PIDFile"]
     else
       raise "don't exist in systemd: " + name
     end

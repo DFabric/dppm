@@ -11,7 +11,7 @@ module Utils
   end
 
   def to_array(string)
-    string.split '.'
+    string.split(/(?<!\\)\./).map &.gsub "\\.", '.'
   end
 
   def to_type(string, strict = false)

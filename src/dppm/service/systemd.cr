@@ -1,7 +1,6 @@
 module Service::Systemd
   extend self
   include Service
-  include Service::Env
 
   def base
     {"Unit" => {
@@ -15,20 +14,6 @@ module Service::Systemd
        "WantedBy" => "multi-user.target",
      }}
   end
-
-  # [Unit]
-  # Description=The PHP FastCGI Process Manager
-  # After=network.target
-  #
-  # [Service]
-  # Type=notify
-  # PIDFile=run/php-fpm.pid
-  # ExecStart=lib/php/php-fpm --nodaemonize --fpm-config /php-fpm.conf
-  # ExecReload=/bin/kill -USR2 $MAINPID
-  # PrivateTmp=true
-  #
-  # [Install]
-  # WantedBy=multi-user.target
 
   def writable?
     File.writable? "/etc/systemd/system/"

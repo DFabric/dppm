@@ -25,7 +25,7 @@ struct Tasks::Add
 
     # Checks
     Tasks.pkg_exists? @pkgdir
-    Service.check @pkg["type"], @package, &log
+    Service.check_availability @pkg["type"], @package, &log
 
     # Default variables
     unset_vars = Array(String).new
@@ -88,7 +88,6 @@ struct Tasks::Add
 
     # Create system services
     Service.create @pkg, @vars, &@log
-
     Service.link @vars, &@log
 
     @log.call "INFO", "add completed", @pkgdir

@@ -14,7 +14,7 @@ struct Tasks::Migrate
 
     # Init
     @build = Tasks::Build.new vars, &@log
-    Service.check @build.pkg["type"], @build.package, &log
+    Service.check_availability @build.pkg["type"], @build.package, &log
     begin
       if SemanticCompare.version @old_version, '<' + @build.version
         @log.call "INFO", "upgrading from " + @old_version, @build.version
