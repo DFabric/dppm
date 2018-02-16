@@ -100,8 +100,13 @@ struct Tasks::Add
     Utils.chown_r @pkgdir, Owner.to_id(@vars["user"], "uid"), Owner.to_id(@vars["group"], "gid")
 
     # Create system services
-    Service.create @pkg, @vars, &@log
-    Service.link @vars, &@log
+    if HOST.service.writable?
+      HOST.service.create @pkg, @vars, &@log
+      Service.system.new(@vars["package"]).link @vars["pkgdir"]
+      @log.call "INFO", HOST.service.name + " system service added", @vars["package"]
+    else
+      @log.call "WARN", "root execution needed for system service addition", @vars["package"]
+    end
 
     @log.call "INFO", "add completed", @pkgdir
   end

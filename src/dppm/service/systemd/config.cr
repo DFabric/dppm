@@ -14,6 +14,8 @@ module Service::Systemd
     when "umask"         then ["Service", "UMask"]
     when "reload"        then ["Service", "ExecReload"]
     when "pidfile"       then ["Service", "PIDFile"]
+    when "log_err"       then ["Service", "StandardOutput"]
+    when "log_out"       then ["Service", "StandardError"]
     else
       raise "don't exist in systemd: " + name
     end

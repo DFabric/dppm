@@ -13,6 +13,8 @@ module Service::OpenRC
     when "umask"         then ["supervise_daemon_args", "umask"]
     when "reload"        then ["reload"]
     when "pidfile"       then ["pidfile"]
+    when "log_out"       then ["supervise_daemon_args", "stdout"]
+    when "log_err"       then ["supervise_daemon_args", "stderr"]
     else
       raise "don't exist in openrc: " + name
     end

@@ -29,28 +29,19 @@ module Service
     end
   end
 
-  def create(pkg, vars, &log : String, String, String -> Nil)
-    log.call "INFO", "creating services", "etc/init"
+  macro create(sysinit, pkg, vars, &log : String, String, String -> Nil)
+    log.call "INFO", "creating services for #{{{sysinit}}}", "etc/init/" + {{sysinit.downcase}}
 
     # Ensure we are on pkgdir, needed for PATH generation
     initdir = vars["pkgdir"] + "etc/init/"
     Dir.mkdir_p initdir
 
-    # Initialize init services as hashes
-    systemd = Hash
-    openrc = Hash
-    {% for sysinit in ["OpenRC", "Systemd"] %}
-    {
-      {{sysinit.downcase.id}} = if File.exists? initdir + {{sysinit.downcase}}
-        {{sysinit.id}}.parse(File.read initdir + {{sysinit.downcase}})
-      else
-        {{sysinit.id}}.base
-      end
-    }
-    {% end %}
-
-    # pid is needed for php-fpm based applications
-    systemd = Systemd.set systemd, "pidfile", "/run/" + vars["package"] + ".pid" if pkg["keywords"].includes? "php-fpm"
+    sysinit_hash = Hash
+    if File.exists? initdir + {{sysinit.downcase}}
+      sysinit_hash = {{sysinit.id}}.parse(File.read initdir + {{sysinit.downcase}})
+    else
+      sysinit_hash = {{sysinit.id}}.base
+    end
 
     # Set service options
     {description:   pkg["description"].as_s,
@@ -60,36 +51,17 @@ module Service
      group:         vars["group"],
      restart_delay: "9",
      umask:         "027"}.each do |key, value|
-      openrc = OpenRC.set openrc, key.to_s, value
-      systemd = Systemd.set systemd, key.to_s, value
+      sysinit_hash = {{sysinit.id}}.set sysinit_hash, key.to_s, value
     end
 
-    # if the reload directive is available
-    if pkg["exec"]["reload"]?
-      openrc = OpenRC.set openrc, "reload", pkg["exec"]["reload"].as_s
-      systemd = Systemd.set systemd, "reload", pkg["exec"]["reload"].as_s
-    end
+    # add a reload directive if available
+    sysinit_hash = {{sysinit.id}}.set(sysinit_hash, "reload", pkg["exec"]["reload"].as_s) if pkg["exec"]["reload"]?
 
-    # Add a PATH environment variable
+    # Add a PATH environment variable if not empty
     path = Dir[vars["pkgdir"] + "lib/*/bin"].join ':'
-    if !path.empty?
-      openrc = OpenRC.env_set openrc, "PATH", path
-      systemd = Systemd.env_set systemd, "PATH", path
-    end
+    sysinit_hash = {{sysinit.id}}.env_set(sysinit_hash, "PATH", path) if !path.empty?
 
-    # Convert back hashes to service files
-    File.write vars["pkgdir"] + "etc/init/openrc", OpenRC.build openrc
-    File.write vars["pkgdir"] + "etc/init/systemd", Systemd.build systemd
-  end
-
-  def link(vars, &log : String, String, String -> Nil)
-    # Create links
-    if HOST.service.writable?
-      Service.system.new(vars["package"]).link vars["pkgdir"]
-      log.call "INFO", HOST.service.name + " system service added", vars["package"]
-    else
-      log.call "WARN", "root execution needed for system service addition", vars["package"]
-    end
+    sysinit_hash
   end
 
   def delete(service, &log : String, String, String -> Nil)
