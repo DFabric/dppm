@@ -17,7 +17,8 @@ describe Service do
   it "creates OpenRC and systemd services" do
     library = path + "lib/library/bin"
     Dir.mkdir_p library
-    Service.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| Nil }
+    Service::OpenRC.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| Nil }
+    Service::Systemd.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| Nil }
   end
 
   it "checks values for OpenRC sections" do

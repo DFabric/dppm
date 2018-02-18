@@ -17,7 +17,7 @@ module Service::OpenRC
 
   def create(pkg, vars, &log : String, String, String -> Nil)
     # Convert back hashes to service files
-    File.write vars["pkgdir"] + "etc/init/openrc", OpenRC.build Service.create("OpenRC", pkg, vars, &log)
+    File.write vars["pkgdir"] + "etc/init/openrc", OpenRC.build creation("OpenRC", pkg, vars, &log)
   end
 
   def writable?

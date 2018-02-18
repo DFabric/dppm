@@ -29,7 +29,7 @@ module Service
     end
   end
 
-  macro create(sysinit, pkg, vars, &log : String, String, String -> Nil)
+  private macro creation(sysinit, pkg, vars, &log : String, String, String -> Nil)
     log.call "INFO", "creating services for #{{{sysinit}}}", "etc/init/" + {{sysinit.downcase}}
 
     # Ensure we are on pkgdir, needed for PATH generation

@@ -58,6 +58,8 @@ struct Command
       user  (`add` task)       uid or user to be used for the program
       group (`add` task)       gid or group to be used for the program
       owner                    regroup the user and group using a same id/name
+      port                     use the specified port
+      webserver                use the specified webserver
 
   System variables (will be overridden if set):
       package                  name of the package
@@ -87,7 +89,7 @@ struct Command
       license
       docs
       description
-      infos
+      info
       tags (tag name)
 
   PKG
