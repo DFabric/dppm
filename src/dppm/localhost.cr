@@ -8,10 +8,7 @@ struct Localhost
   getter sysinit : String = getsysinit
   getter arch : String = getarch
   getter vars : Hash(String, String) = getvars
-
-  def service
-    Service.init sysinit
-  end
+  getter service = Service.init sysinit
 
   # All system environment variables
   private def getvars
@@ -26,10 +23,10 @@ struct Localhost
 
   private def getarch
     case File.read "/proc/kallsyms"
-    when / x86_64_/  then "x86-64"
-    when / x86_/     then "x86"
-    when / aarch64_/ then "aarch64"
-    when / armv7_/   then "armhf"
+    when .includes? " x86_64_"  then "x86-64"
+    when .includes? " x86_"     then "x86"
+    when .includes? " aarch64_" then "aarch64"
+    when .includes? " armv7_"   then "armhf"
     else
       raise "unsupported architecure: " + arch
     end
