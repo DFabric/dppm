@@ -14,9 +14,7 @@ struct Localhost
   private def getvars
     h = Hash(String, String).new
     {% for var in ["arch", "kernel", "kernel_ver", "sysinit"] %}
-    {
       h[{{var}}] = {{var.id}}
-    }
     {% end %}
     h
   end

@@ -32,9 +32,7 @@ struct Tasks::Build
     Tasks::Deps.new(&@log).get(YAML.parse(File.read CACHE + @package + "/pkg.yml"), @pkgdir).map { |k, v| @deps[k] = v[0] }
 
     {% for var in ["version", "name", "package", "pkgdir", "arch_alias"] %}
-    {
       @vars[{{var}}] = @{{var.id}}.not_nil!
-    }
     {% end %}
   end
 
