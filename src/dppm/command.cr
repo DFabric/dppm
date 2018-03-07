@@ -165,9 +165,8 @@ struct Command
         puts "no implemented yet"
         puts Pkg.new(ARGV[1]).version
       when "config" then config
+      when "server" then server
       when "check"
-        puts "no implemented yet"
-      when "server"
         puts "no implemented yet"
       when "vars"
         puts VARS
@@ -236,10 +235,8 @@ struct Command
   end
 
   private def server
-    service = Service.new
-    Server.new
-    Kemal.config.env = "production"
-    Kemal.run
+    # Server.new.run
+    puts "api server not implemented yet"
   end
 
   def log(log_type, title, msg) : Nil
