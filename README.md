@@ -18,17 +18,15 @@
 
 For now only the x86-64 architecture is available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467) to support `armhf` and `aarch64`.
 
+Hopefully there are recent progress on both architectures, DPPM will be avaibable on them soon!
+
+`wget -qO-` can be replaced by `curl -s`
+
 ## Automatic
 
-Get the helper:
+Download `dppm` with the helper:
 
-`wget https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -O /tmp/helper.sh`
-
-or `curl -SL https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh -o /tmp/helper.sh`
-
-Download `dppm`:
-
-`sh /tmp/helper.sh dppm-static`
+`sh -c "APP=dppm-static $(wget -qO- https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh)"`
 
 The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/usr/local/bin`)
 
