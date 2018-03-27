@@ -13,7 +13,7 @@ module HTTPget
         raise "status code #{response.status_code}: " + response.body
       end
     rescue ex
-      raise "can't get `#{url}`: #{ex}"
+      raise "failed to get #{url.colorize.underline}: #{ex}"
     end
   end
 

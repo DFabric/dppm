@@ -13,8 +13,8 @@ struct Tasks::Build
     @prefix = @vars["prefix"]
     @package = @vars["package"].split(':')[0]
 
-    @log.call "INFO", "calculing informations", CACHE + @package + "/pkg.yml"
-    @pkg = YAML.parse File.read CACHE + @package + "/pkg.yml"
+    @log.call "INFO", "calculing informations", "#{CACHE}/#{@package}/pkg.yml"
+    @pkg = YAML.parse File.read "#{CACHE}/#{@package}/pkg.yml"
     @version = getversion.not_nil!
     @name = getname
     @pkgdir = @prefix + '/' + @name + '/'
@@ -29,7 +29,7 @@ struct Tasks::Build
 
     # keep the latest ones for each dependency
     @log.call "INFO", "calculing package dependencies", @package
-    Tasks::Deps.new(&@log).get(YAML.parse(File.read CACHE + @package + "/pkg.yml"), @pkgdir).map { |k, v| @deps[k] = v[0] }
+    Tasks::Deps.new(&@log).get(YAML.parse(File.read "#{CACHE}/#{@package}/pkg.yml"), @pkgdir).map { |k, v| @deps[k] = v[0] }
 
     {% for var in ["version", "name", "package", "pkgdir", "arch_alias"] %}
       @vars[{{var}}] = @{{var.id}}.not_nil!
@@ -93,7 +93,7 @@ struct Tasks::Build
 
   def run
     # Copy the sources to the @package directory to build
-    FileUtils.cp_r CACHE + @package, @pkgdir
+    FileUtils.cp_r "#{CACHE}/#{@package}", @pkgdir
     FileUtils.mkdir_p [@pkgdir + "etc", @pkgdir + "log"] if @pkg["type"].as_s == "app"
 
     # Build dependencies

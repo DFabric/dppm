@@ -210,15 +210,15 @@ struct Command
 
   # Download a cache of package sources
   def self.cache(pkgsrc, check = false, &log : String, String, String -> Nil)
-    FileUtils.rm_r CACHE[0..-2] if File.exists? CACHE[0..-2]
+    FileUtils.rm_r CACHE if File.exists? CACHE
     if pkgsrc =~ /^https?:\/\/.*/
-      HTTPget.file pkgsrc, CACHE[0..-2] + ".tar.gz"
-      Exec.new("/bin/tar", ["zxf", CACHE[0..-2] + ".tar.gz", "-C", "/tmp/"]).out
-      File.delete CACHE[0..-2] + ".tar.gz"
+      HTTPget.file pkgsrc, CACHE + ".tar.gz"
+      Exec.new("/bin/tar", ["zxf", CACHE + ".tar.gz", "-C", "/tmp/"]).out
+      File.delete CACHE + ".tar.gz"
       File.rename Dir["/tmp/*package-sources*"][0], CACHE
       yield "INFO", "cache updated", CACHE
     else
-      File.symlink File.real_path(pkgsrc), CACHE[0..-2]
+      File.symlink File.real_path(pkgsrc), CACHE
       yield "INFO", "symlink added from `#{File.real_path(pkgsrc)}`", CACHE
     end
   end

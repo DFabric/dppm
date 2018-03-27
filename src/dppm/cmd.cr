@@ -17,6 +17,7 @@ module Cmd
     end
 
     def run(yaml : Array, @vars = Hash(String, String).new)
+      cmd = ""
       vars.map { |k, v| extvars["${" + k + '}'] = v }
       # End of block
       last_cond = false
@@ -52,7 +53,7 @@ module Cmd
             raise "unknown line"
           end
         rescue ex
-          raise "`#{line}` execution failed: #{ex}"
+          raise "`#{!cmd.empty? ? cmd : line}` execution failed: #{ex}"
         end
       end
     end

@@ -15,7 +15,7 @@ struct Tasks::Deps
     pkgdeps.each_key do |dep|
       if !File.exists? pkgdir + "/lib/#{dep}"
         log.call "INFO", "calculing dependency", dep.to_s
-        yaml = YAML.parse File.read CACHE + "#{dep}/pkg.yml"
+        yaml = YAML.parse File.read "#{CACHE}/#{dep}/pkg.yml"
         newvers = Array(String).new
 
         # If an array of versions is already provided by a dependency
@@ -35,7 +35,7 @@ struct Tasks::Deps
         allvers[dep.to_s] = newvers
 
         # Loops inside dependencies of dependencies
-        allvers = get(YAML.parse(File.read CACHE + "#{dep}/pkg.yml"), pkgdir, allvers) if yaml["deps"]?
+        allvers = get(YAML.parse(File.read "#{CACHE}/#{dep}/pkg.yml"), pkgdir, allvers) if yaml["deps"]?
       end
     end
     allvers

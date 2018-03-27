@@ -9,8 +9,8 @@ module Tasks
     Dir.cd vars["prefix"]
 
     # Update cache if older than 2 days
-    if !(File.exists?(CACHE[0..-2]) || File.symlink?(CACHE[0..-2])) ||
-       Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(CACHE[0..-2]).ctime.to_s("%Y%m%d").to_i > 2
+    if !(File.exists?(CACHE) || File.symlink?(CACHE)) ||
+       Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(CACHE).ctime.to_s("%Y%m%d").to_i > 2
       Command.cache vars["pkgsrc"], &log
     end
 
