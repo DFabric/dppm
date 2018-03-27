@@ -35,7 +35,7 @@ struct Service::OpenRC::System
   end
 
   def run(value : Bool) : Bool
-    boot = "/etc/runlevels/default/" + service
+    boot = "/etc/runlevels/default/" + @service
     Exec.new("/sbin/rc-service", [@service, (value ? "start" : "stop")]).success?
   end
 

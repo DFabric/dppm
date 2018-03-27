@@ -1,28 +1,39 @@
-module Service::OpenRC
-  def build(data)
+class Service::OpenRC::Config
+  def build
     # File.write(file,
+    supervise = "\nsupervise_daemon_args=\"\n"
+    functions = ""
+    depend = ""
+    extra = ""
+
     String.build do |str|
       str << "#!/sbin/openrc-run\n\n"
 
-      # Variables firt
-      str << data.map do |k, v|
-        k + "=\"#{v}\"\n" if v.is_a? String
-      end.join
-      str << data.map do |content, section|
+      @section.each do |key, section|
         # supervise_daemon_args
-        if section.is_a? Hash(String, String)
-          "\n#{content}=\"\n" + section.map do |k, v|
-            "\t--#{k} \'#{v}\'\n"
-          end.join + "\"\n"
+        if section.is_a? String
+          case key
+          when "command", "command_args", "supervisor", "pidfile", "respawn_delay", "description"
+            str << key << "=\'#{section}\'\n"
+          else
+            supervise += "\t--#{key} \'#{section}\'\n"
+          end
+          # function
         elsif section.is_a? Array(String)
-          '\n' + content + "() {\n\t" + section.join("\n\t") + "\n}\n"
+          if @extras.includes? key
+            extra += "#{key}=\'#{section.join ' '}\'\n"
+          else
+            functions += "#{key}() {\n\t#{section.join("\n\t")}\n}"
+          end
           # depend
         elsif section.is_a? Hash(String, Array(String))
-          "\n#{content}() {\n" + section.map do |k, a|
-            '\t' + k + ' ' + a.join(' ') + '\n'
-          end.join + "}\n"
+          depend += "depend() {\n" + section.map { |k, a| "\t#{k} #{a.join ' '}\n" }.join + '}'
         end
-      end.join << '\n'
+      end
+      str << supervise << "\"\n\n"
+      str << extra << '\n' if !extra.empty?
+      str << depend << "\n\n" if !depend.empty?
+      str << functions << "\n\n" if !functions.empty?
     end
   end
 end

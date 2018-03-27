@@ -36,11 +36,10 @@ module Service
     initdir = vars["pkgdir"] + "etc/init/"
     Dir.mkdir_p initdir
 
-    sysinit_hash = Hash
     if File.exists? initdir + {{sysinit.downcase}}
-      sysinit_hash = {{sysinit.id}}.parse(File.read initdir + {{sysinit.downcase}})
+      sysinit_hash = {{sysinit.id}}::Config.new initdir + {{sysinit.downcase}}, file: true
     else
-      sysinit_hash = {{sysinit.id}}.base
+      sysinit_hash = {{sysinit.id}}::Config.new
     end
 
     # Set service options
@@ -51,15 +50,15 @@ module Service
      group:         vars["group"],
      restart_delay: "9",
      umask:         "027"}.each do |key, value|
-      sysinit_hash = {{sysinit.id}}.set sysinit_hash, key.to_s, value
+      sysinit_hash.set key.to_s, value
     end
 
     # add a reload directive if available
-    sysinit_hash = {{sysinit.id}}.set(sysinit_hash, "reload", pkg["exec"]["reload"].as_s) if pkg["exec"]["reload"]?
+    sysinit_hash.set("reload", pkg["exec"]["reload"].as_s) if pkg["exec"]["reload"]?
 
     # Add a PATH environment variable if not empty
     path = Dir[vars["pkgdir"] + "lib/*/bin"].join ':'
-    sysinit_hash = {{sysinit.id}}.env_set(sysinit_hash, "PATH", path) if !path.empty?
+    sysinit_hash.env_set("PATH", path) if !path.empty?
 
     sysinit_hash
   end

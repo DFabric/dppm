@@ -1,36 +1,40 @@
-module Service::OpenRC
+class Service::OpenRC::Config
+  @extras = ["extra_command", "extra_started_commands", "extra_stopped_commands"]
+
   def parse(data)
-    service = Hash(String, Hash(String, String) | Hash(String, Array(String)) | Array(String) | String).new
-    supervise = Hash(String, String).new
+    line_number = 0
+    function_name = ""
+    function = Array(String).new
+    depend = Hash(String, Array(String)).new
 
-    data.each_line do |line|
-      if line =~ /^([a-z_]+)=\"(.*)\"$/
-        service[$1] = $2
-      elsif line =~ /^(?:[\s\t]+)?--([a-z]+) \'(.*)\'$/
-        supervise[$1] = $2
+    data.each_line do |full_line|
+      line_number += 1
+      line = full_line.lstrip "\t "
+      if line.starts_with? "--"
+        key, val = line.split '\''
+        @section[key[2..-2]] = val
+      elsif line.ends_with? '\''
+        key, val = line.split '='
+        @section[key] = if @extras.includes? key
+                         val[1..-2].split ' '
+                       else
+                         val[1..-2]
+                       end
+      elsif line.ends_with? '}'
+        @section[function_name] = function
+        function_name = ""
+        function = Array(String).new
+      elsif function_name == "depend"
+        values = line.split ' '
+        depend[values[0]] = values[1..-1]
+      elsif !function_name.empty?
+        function << line
+      elsif line.ends_with? '{'
+        function_name = line.split('(')[0]
       end
+    rescue
+      raise "parse error line #{line_number}: #{full_line}"
     end
-
-    service["supervise_daemon_args"] = supervise
-
-    # If there are functions like "depends"
-    data.scan(/\n([a-z_]+)\(\) {\n(.*?)}/m).each do |content|
-      if content[1] == "depend"
-        depend = Hash(String, Array(String)).new
-        content[2].lines.each do |line|
-          if line =~ /^(?:[\s\t]+)?([a-z]+) (.*)/
-            depend[$1] = $2.split ' '
-          else
-            break
-          end
-        end
-        service["depend"] = depend
-      else
-        func = Array(String).new
-        content[2].each_line { |line| func << line.match(/^(?:[\s\t]+)?(.*)/).not_nil![1] }
-        service[content[1]] = func
-      end
-    end
-    service
+    @section["depend"] = depend
   end
 end

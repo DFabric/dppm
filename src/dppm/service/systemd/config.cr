@@ -1,5 +1,24 @@
-module Service::Systemd
-  def section(name)
+class Service::Systemd::Config
+  getter section = Hash(String, Hash(String, String)).new
+
+  def initialize
+    @section = {"Unit" => {
+      "After" => "network.target",
+    },
+     "Service" => {
+       "Type"    => "simple",
+       "Restart" => "always",
+     },
+     "Install" => {
+       "WantedBy" => "multi-user.target",
+     }}
+  end
+
+  def initialize(data : String, file = false)
+    parse file ? File.read data : data
+  end
+
+  def shim(name)
     case name
     when "directory"     then ["Service", "WorkingDirectory"]
     when "command"       then ["Service", "ExecStart"]
@@ -14,34 +33,32 @@ module Service::Systemd
     when "umask"         then ["Service", "UMask"]
     when "reload"        then ["Service", "ExecReload"]
     when "pidfile"       then ["Service", "PIDFile"]
-    when "log_err"       then ["Service", "StandardOutput"]
-    when "log_out"       then ["Service", "StandardError"]
+    when "log_error"     then ["Service", "StandardOutput"]
+    when "log_output"    then ["Service", "StandardError"]
     else
       raise "don't exist in systemd: " + name
     end
   end
 
-  def get(data, name)
-    keys = section name
-    data[keys[0]][keys[1]]
+  def get(name)
+    keys = shim name
+    @section[keys[0]][keys[1]]
   end
 
-  def set(data, name, value)
-    keys = section name
-    data[keys[0]][keys[1]] = if name == "reload"
+  def set(name, value)
+    keys = shim name
+    @section[keys[0]][keys[1]] = if name == "reload"
                                "/bin/kill -#{value} $MAINPID"
                              else
                                value
                              end
-    data
   end
 
-  def env_get(data, env)
-    Service::Env.get data["Service"]["Environment"], env
+  def env_get(env)
+    Service::Env.get @section["Service"]["Environment"], env
   end
 
-  def env_set(data, env, value)
-    data["Service"]["Environment"] = Service::Env.set data["Service"]["Environment"]?.to_s, env, value
-    data
+  def env_set(env, value)
+    Service::Env.set @section["Service"]["Environment"]?.to_s, env, value
   end
 end
