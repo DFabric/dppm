@@ -14,7 +14,6 @@ require "semantic_compare"
 
 require "./dppm/**"
 
-HOST  = Localhost.new
 CACHE = "/tmp/dppm-package-sources"
 
 Command.new.run

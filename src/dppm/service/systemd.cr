@@ -2,8 +2,16 @@ module Service::Systemd
   extend self
   include Service
 
+  def system
+    System
+  end
+
+  def config
+    Config
+  end
+
   def create(pkg, vars, &log : String, String, String -> Nil)
-    sysinit_hash = creation "Systemd", pkg, vars, &log
+    sysinit_hash = creation Config.new(vars["pkgdir"] + "etc/init/systemd", file: true), pkg, vars, &log
 
     # pid is needed for php-fpm based applications
     sysinit_hash.set "pidfile", "/run/" + vars["package"] + ".pid" if pkg["keywords"].includes? "php-fpm"

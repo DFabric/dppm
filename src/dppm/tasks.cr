@@ -3,7 +3,7 @@ module Tasks
 
   def init(task, package, vars, &log : String, String, String -> Nil)
     log.call "INFO", "initializing", task
-    vars.merge! HOST.vars
+    vars.merge! Localhost.vars
     vars["package"] = package
     vars["prefix"] = Dir.current if !vars["prefix"]?
     Dir.cd vars["prefix"]

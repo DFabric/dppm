@@ -13,9 +13,9 @@ struct Tasks::Delete
 
     # Checks
     Tasks.pkg_exists? @pkgdir
-    @service_path = Service.system.new(@package).file
+    @service_path = Localhost.service.system.new(@package).file
     if File.exists?(@service_path) &&
-       File.real_path(@service_path) == @pkgdir + "/etc/init/" + HOST.service.name.downcase
+       File.real_path(@service_path) == @pkgdir + "/etc/init/" + Localhost.service.name.downcase
       log.call "INFO", "a system service is found", @package
       @service = true
     elsif !@package.includes? '_'
@@ -32,7 +32,7 @@ struct Tasks::Delete
   end
 
   def run
-    Service.delete @package, &@log if @service
+    Localhost.service.delete @package, &@log if @service
     FileUtils.rm_rf @prefix + '/' + @package
     @log.call "INFO", "deleted", @prefix + '/' + @package
   end

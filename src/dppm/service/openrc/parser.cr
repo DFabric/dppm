@@ -16,10 +16,10 @@ class Service::OpenRC::Config
       elsif line.ends_with? '\''
         key, val = line.split '='
         @section[key] = if @extras.includes? key
-                         val[1..-2].split ' '
-                       else
-                         val[1..-2]
-                       end
+                          val[1..-2].split ' '
+                        else
+                          val[1..-2]
+                        end
       elsif line.ends_with? '}'
         @section[function_name] = function
         function_name = ""

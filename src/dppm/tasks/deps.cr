@@ -26,7 +26,7 @@ struct Tasks::Deps
         else
           # HTTPget all versions, parse and test if the versions available match
           allvers[dep.to_s] = Array(String).new
-          Version.get(HOST.kernel, HOST.arch, yaml["arch"]).each do |ver|
+          Version.get(Localhost.kernel, Localhost.arch, yaml["arch"]).each do |ver|
             newvers << ver if ver && SemanticCompare.expression ver, pkgdeps[dep].to_s
           end
         end

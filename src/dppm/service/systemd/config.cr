@@ -2,7 +2,21 @@ class Service::Systemd::Config
   getter section = Hash(String, Hash(String, String)).new
 
   def initialize
-    @section = {"Unit" => {
+    @section = base
+  end
+
+  def initialize(data : String, file = false)
+    if file && File.exists? data
+      parse File.read data
+    elsif file
+      @section = base
+    else
+      parse data
+    end
+  end
+
+  def base
+    {"Unit" => {
       "After" => "network.target",
     },
      "Service" => {
@@ -12,10 +26,6 @@ class Service::Systemd::Config
      "Install" => {
        "WantedBy" => "multi-user.target",
      }}
-  end
-
-  def initialize(data : String, file = false)
-    parse file ? File.read data : data
   end
 
   def shim(name)
@@ -48,10 +58,10 @@ class Service::Systemd::Config
   def set(name, value)
     keys = shim name
     @section[keys[0]][keys[1]] = if name == "reload"
-                               "/bin/kill -#{value} $MAINPID"
-                             else
-                               value
-                             end
+                                   "/bin/kill -#{value} $MAINPID"
+                                 else
+                                   value
+                                 end
   end
 
   def env_get(env)
@@ -59,6 +69,6 @@ class Service::Systemd::Config
   end
 
   def env_set(env, value)
-    Service::Env.set @section["Service"]["Environment"]?.to_s, env, value
+    @section["Service"]["Environment"] = Service::Env.set @section["Service"]["Environment"]?.to_s, env, value
   end
 end

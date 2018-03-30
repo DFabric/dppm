@@ -2,18 +2,28 @@ class Service::OpenRC::Config
   getter section = Hash(String, String | Array(String) | Hash(String, Array(String))).new
 
   def initialize
-    @section = {"pidfile"    => "/run/${RC_SVCNAME}.pid",
-    "supervisor" => "supervise-daemon",
-    "stdout"     => "log/out.log",
-    "stderr"     => "log/err.log",
-    "depend"     => {
-      "after" => ["net"],
-    },
-    "reload" => ["eerror \"Reloading not available for $RC_SVCNAME\""]}
+    @section = base
   end
 
   def initialize(data : String, file = false)
-    parse file ? File.read data : data
+    if file && File.exists? data
+      parse File.read data
+    elsif file
+      @section = base
+    else
+      parse data
+    end
+  end
+
+  def base
+    {"pidfile"    => "/run/${RC_SVCNAME}.pid",
+     "supervisor" => "supervise-daemon",
+     "stdout"     => "log/out.log",
+     "stderr"     => "log/err.log",
+     "depend"     => {
+       "after" => ["net"],
+     },
+     "reload" => ["eerror \"Reloading not available for $RC_SVCNAME\""]}
   end
 
   def shim(name)
@@ -64,26 +74,26 @@ class Service::OpenRC::Config
     elsif name == "reload"
       @section["extra_started_commands"] = ["reload"]
       @section["reload"] = ["ebegin \"Reloading $RC_SVCNAME\"",
-                        "supervise-daemon --signal #{value} --pidfile \"$pidfile\"",
-                        "eend $? \"Failed to reload $RC_SVCNAME\""]
+                            "supervise-daemon --signal #{value} --pidfile \"$pidfile\"",
+                            "eend $? \"Failed to reload $RC_SVCNAME\""]
     else
-    keys = shim name
-    if keys.size == 1
-      @section[keys[0]] = value
-    elsif keys.size == 2
-      subdata = @section[keys[0]]
-      if subdata.is_a? Hash(String, String)
-        subdata[keys[1]] = value
-      elsif subdata.is_a? Hash(String, Array(String))
-        subdata[keys[1]] << value
+      keys = shim name
+      if keys.size == 1
+        @section[keys[0]] = value
+      elsif keys.size == 2
+        subdata = @section[keys[0]]
+        if subdata.is_a? Hash(String, String)
+          subdata[keys[1]] = value
+        elsif subdata.is_a? Hash(String, Array(String))
+          subdata[keys[1]] << value
+        else
+          raise "unknown type: " + subdata.to_s
+        end
+        @section[keys[0]] = subdata
       else
-        raise "unknown type: " + subdata.to_s
+        raise "only size of 0 and 1 is available: #{keys}"
       end
-      @section[keys[0]] = subdata
-    else
-      raise "only size of 0 and 1 is available: #{keys}"
     end
-  end
   end
 
   def env_get(env)
@@ -91,6 +101,6 @@ class Service::OpenRC::Config
   end
 
   def env_set(env, value)
-    Service::Env.set @section["env"]?.to_s, env, value
+    @section["env"] = Service::Env.set @section["env"]?.to_s, env, value
   end
 end

@@ -2,9 +2,19 @@ module Service::OpenRC
   extend self
   include Service
 
+  def system
+    System
+  end
+
+  def config
+    Config
+  end
+
   def create(pkg, vars, &log : String, String, String -> Nil)
+    sysinit_hash = creation Config.new(vars["pkgdir"] + "etc/init/openrc", file: true), pkg, vars, &log
+
     # Convert back hashes to service files
-    File.write vars["pkgdir"] + "etc/init/openrc", creation("OpenRC", pkg, vars, &log).build
+    File.write vars["pkgdir"] + "etc/init/openrc", sysinit_hash.build
   end
 
   def writable?

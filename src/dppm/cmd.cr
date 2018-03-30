@@ -6,66 +6,65 @@ module Cmd
     ""
   end
 
-  struct Run
-    getter vars = Hash(String, String).new
-    getter extvars = Hash(String, String).new
+  class Run
+    @vars = Hash(String, String).new
+    @extvars = Hash(String, String).new
 
-    def initialize(yaml : Array, vars = Hash(String, String).new, &@log : String, String, String -> Nil)
+    def initialize(yaml : Array, vars : Hash(String, String), &@log : String, String, String -> Nil)
       Dir.cd vars["pkgdir"]
       # Create a PATH variable
-      run yaml, vars.map { |k, v| [k.upcase, v] }.to_h
+      @vars = vars.map { |k, v| [k.upcase, v] }.to_h
+      @vars.each { |k, v| @extvars["${" + k + '}'] = v }
+      run yaml
     end
 
-    def run(yaml : Array, @vars = Hash(String, String).new)
+    def run(yaml : Array)
       cmd = ""
-      vars.map { |k, v| extvars["${" + k + '}'] = v }
       # End of block
       last_cond = false
 
       yaml.each do |line|
-        begin
-          # Add/change vars
-          if line.is_a? String
-            if line =~ /^([a-zA-Z0-9_]+) = (.*)/
-              @vars[$1] = command($2).to_s
-              @extvars["${" + $1 + '}'] = @vars[$1]
-            elsif line[0..3] == "echo"
-              @log.call "INFO", "echo", var(line[5..-1]) + '\n'
-            else
-              cmd = var line
-              @log.call "INFO", "execute", cmd
-              output = command cmd
-              @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
-            end
-            # New condition block
-          elsif line.is_a? Hash
-            if line.first_key.to_s[0..3] == "elif" && last_cond
-              # Previous if/elif is true
-            elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
-              line.not_nil!.each_value do |subline|
-                run subline.not_nil!, vars if subline.is_a? Array
-              end
-              last_cond = true
-            else
-              last_cond = false
-            end
+        # Add/change vars
+        if line.is_a? String
+          if line =~ /^([a-zA-Z0-9_]+) = (.*)/
+            @vars[$1] = command($2).to_s
+            @extvars["${" + $1 + '}'] = @vars[$1]
+          elsif line[0..3] == "echo"
+            @log.call "INFO", "echo", var(line[5..-1]) + '\n'
           else
-            raise "unknown line"
+            cmd = var line
+            @log.call "INFO", "execute", cmd
+            output = command cmd
+            @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
           end
-        rescue ex
-          raise "`#{!cmd.empty? ? cmd : line}` execution failed: #{ex}"
+          # New condition block
+        elsif line.is_a? Hash
+          if line.first_key.to_s[0..3] == "elif" && last_cond
+            # Previous if/elif is true
+          elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
+            line.not_nil!.each_value do |subline|
+              run subline.not_nil! if subline.is_a? Array
+            end
+            last_cond = true
+          else
+            last_cond = false
+          end
+        else
+          raise "unknown line"
         end
+      rescue ex
+        raise "`#{!cmd.empty? ? cmd : line}` execution failed: #{ex}"
       end
     end
 
     private def var(cmd)
       # Check if variables in the command are defined
       cmd.to_s.scan(/(?<!\\)\${[a-zA-Z0-9_]+}/).each do |var|
-        raise "unknown variable: " + var[0] if !extvars[var[0]]?
+        raise "unknown variable: " + var[0] if !@extvars[var[0]]?
       end
 
       # Replace vars by their values
-      cmd.to_s.gsub(/(?<!\\)\${([a-zA-Z0-9_]+)}/, extvars)
+      cmd.to_s.gsub(/(?<!\\)\${([a-zA-Z0-9_]+)}/, @extvars)
               # Remove a slash for escpaded vars
               .gsub(/\\(\${[a-zA-Z0-9_]+})/, "\\1")
     end
@@ -84,22 +83,22 @@ module Cmd
         when "true" then return true
           # Variable existence
         when /^\!([a-zA-Z0-9_]+)\?/
-          return true if !vars[$1]?
+          return true if !@vars[$1]?
         when /^([a-zA-Z0-9_]+)\?/
-          return true if vars[$1]?
+          return true if @vars[$1]?
         when /^([a-zA-Z0-9_]+) != (.*)/
-          if vars[$1]?
-            return true if vars[$1] != $2
-          elsif vars[$2]?
-            return true if vars[$2] != $1
+          if @vars[$1]?
+            return true if @vars[$1] != $2
+          elsif @vars[$2]?
+            return true if @vars[$2] != $1
           else
             raise "variables called but neither of `#{$1}` nor `#{$2}` are already known"
           end
         when /^([a-zA-Z0-9_]+) = (.*)/
-          if vars[$1]?
-            return true if vars[$1] == $2
-          elsif vars[$2]?
-            return true if vars[$2] == $1
+          if @vars[$1]?
+            return true if @vars[$1] == $2
+          elsif @vars[$2]?
+            return true if @vars[$2] == $1
           else
             raise "variables called but neither of `#{$1}` nor `#{$2}` are already known"
           end
@@ -114,8 +113,8 @@ module Cmd
       # Check if it's a variable
       if cmdline =~ /^"(.*)"$/
         return var $1
-      elsif vars[cmdline]?
-        return vars[cmdline]
+      elsif @vars[cmdline]?
+        return @vars[cmdline]
       end
       cmd = cmdline.split(' ')
       case cmd[0]
@@ -159,7 +158,7 @@ module Cmd
       when "cp_r"    then FileUtils.cp_r cmd[1], cmd[2]
       when "link"    then File.link cmd[1], cmd[2]
       when "symlink" then File.symlink cmd[1], cmd[2]
-      when "write"   then File.write cmd[1], cmd[2]
+      when "write"   then File.write cmd[1], Utils.to_type(cmd[2])
       when "chmod"   then File.chmod cmd[1], cmd[2].to_i(8)
       when "chown"   then File.chown cmd[1], Owner.to_id(cmd[2], "uid"), Owner.to_id(cmd[3], "gid")
         # Custom
@@ -188,7 +187,7 @@ module Cmd
         exit 1
       else
         # check if the command is available in `bin` of the package and dependencies
-        bin = Cmd.find_bin vars["PKGDIR"], cmd[0]
+        bin = Cmd.find_bin @vars["PKGDIR"], cmd[0]
         if bin.empty?
           raise "unknown command or variable: " + cmdline
         else

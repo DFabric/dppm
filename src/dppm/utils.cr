@@ -14,16 +14,17 @@ module Utils
     string.split(/(?<!\\)\./).map &.gsub "\\.", '.'
   end
 
-  def to_type(string, strict = false)
+  def to_type(string : String, strict = false)
     case string
-    when /^"(.*)"$/ then $1
-    when "true"     then true
-    when "false"    then false
-    when "nil"      then nil
-    when "{}"       then Hash(String, String).new
-    when "[]"       then Array(String).new
+    when "true"  then true
+    when "false" then false
+    when "nil"   then nil
+    when "{}"    then Hash(String, String).new
+    when "[]"    then Array(String).new
     else
-      if string.to_i64?
+      if string.starts_with?('"') && string.ends_with?('"')
+        string[1..-2]
+      elsif string.to_i64?
         string.to_i64
       elsif string.to_f64?
         string.to_f64

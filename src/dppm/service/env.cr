@@ -10,16 +10,12 @@ module Service::Env
     elsif env_vars =~ /^(?:[ ]+)?$/
       var + '=' + value
     else
-      env_vars + ' ' + var + '=' + value
+      "#{env_vars} #{var}=#{value}"
     end
   end
 
   def get(env_vars, var)
     env_vars =~ /(^| )#{var}=([^ ]+)/
-    if $2
-      $2
-    else
-      raise "can't get #{var} from #{env_var}"
-    end
+    $2 ? $2 : raise "can't get #{var} from #{env_var}"
   end
 end

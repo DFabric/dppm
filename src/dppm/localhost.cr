@@ -2,35 +2,46 @@ require "socket"
 require "exec"
 
 struct Localhost
-  getter proc_ver : Array(String) = File.read("/proc/version").split(' ')
-  getter kernel : String = proc_ver[0].downcase
-  getter kernel_ver : String = proc_ver[2].split('-')[0]
-  getter sysinit : String = getsysinit
-  getter arch : String = getarch
-  getter vars : Hash(String, String) = getvars
-  getter service = Service.init sysinit
+  class_getter proc_ver : Array(String) = File.read("/proc/version").split(' ')
+  class_getter kernel : String = proc_ver[0].downcase
+  class_getter kernel_ver : String = proc_ver[2].split('-')[0]
+  class_getter sysinit : String = get_sysinit
+  class_getter arch : String = get_arch
+  class_getter vars : Hash(String, String) = get_vars
+  class_getter service : Service::Systemd | Service::OpenRC = get_service
 
-  # All system environment variables
-  private def getvars
-    h = Hash(String, String).new
-    {% for var in ["arch", "kernel", "kernel_ver", "sysinit"] %}
-      h[{{var}}] = {{var.id}}
-    {% end %}
-    h
+  def self.get_service
+    case sysinit
+    when "systemd" then Service::Systemd
+    when "openrc"  then Service::OpenRC
+    else
+      raise "unsupported init system"
+    end
   end
 
-  private def getarch
+  # All system environment variables
+  private def self.get_vars
+    {% begin %}
+    {
+      {% for var in %w(arch kernel kernel_ver sysinit) %}
+        {{var}} => {{var.id}},
+      {% end %}
+    }
+    {% end %}
+  end
+
+  private def self.get_arch
     case File.read "/proc/kallsyms"
     when .includes? " x86_64_"  then "x86-64"
     when .includes? " x86_"     then "x86"
     when .includes? " aarch64_" then "aarch64"
     when .includes? " armv7_"   then "armhf"
     else
-      raise "unsupported architecure: " + arch
+      raise "unsupported architecure: "
     end
   end
 
-  private def getsysinit
+  private def self.get_sysinit
     init = File.basename File.real_path "/sbin/init"
     case init
     when "systemd", "init" then init
@@ -39,8 +50,7 @@ struct Localhost
     end
   end
 
-  def port(port_num : Int32, port_used = Array(Int32).new, &log : String, String, String -> Nil)
-    h = Hash(Int32, Array(Int32)).new
+  def self.port(port_num : Int32, port_used = Array(Int32).new, &log : String, String, String -> Nil)
     raise "the limit of 65535 for port numbers is reached" if port_num > 65535
     begin
       # tcp port available?
@@ -59,14 +69,4 @@ struct Localhost
       port port_num + 1, port_used << port_num, &log
     end
   end
-
-  def run(task, vars, &log : String, String, String -> Nil)
-    Cmd::Run.new task, vars, &log
-  end
 end
-
-#
-#
-# System.vars.each do |var|
-#  puts "#{var}=\"#{System.vars[var]}\""
-# end

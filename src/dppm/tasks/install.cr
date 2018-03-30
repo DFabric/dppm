@@ -3,7 +3,7 @@ struct Tasks::Install
     @build = Tasks::Build.new vars, &@log
 
     # Checks
-    Service.check_availability @build.pkg["type"], @build.package, &log
+    Localhost.service.check_availability @build.pkg["type"], @build.package, &log
 
     # Default variables
     unset_vars = Array(String).new

@@ -25,7 +25,7 @@ struct Tasks::Add
 
     # Checks
     Tasks.pkg_exists? @pkgdir
-    Service.check_availability @pkg["type"], @package, &log
+    Localhost.service.check_availability @pkg["type"], @package, &log
 
     # Default variables
     unset_vars = Array(String).new
@@ -52,7 +52,7 @@ struct Tasks::Add
 
   private def port
     if @vars["port"].to_i?
-      HOST.port(@vars["port"].to_i, &@log).to_s
+      Localhost.port(@vars["port"].to_i, &@log).to_s
     else
       raise "the port must be an Int32 number: " + port
     end
@@ -89,21 +89,21 @@ struct Tasks::Add
       Dir.mkdir @pkgdir + "etc/php-fpm.d" if !File.exists? @pkgdir + "etc/php-fpm.d"
       FileUtils.cp(@pkgdir + "lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "etc/php-fpm.d/www.conf"
 
-      HOST.run php_fpm["tasks"]["add"].as_a, @vars, &@log
+      Cmd::Run.new php_fpm["tasks"]["add"].as_a, @vars, &@log
     end
 
     # Running the add task
     @log.call "INFO", "running configuration tasks", @package
-    HOST.run @pkg["tasks"]["add"].as_a, @vars, &@log if @pkg["tasks"]["add"]?
+    Cmd::Run.new @pkg["tasks"]["add"].as_a, @vars, &@log if @pkg["tasks"]["add"]?
 
     # Set the user and group owner
     Utils.chown_r @pkgdir, Owner.to_id(@vars["user"], "uid"), Owner.to_id(@vars["group"], "gid")
 
     # Create system services
-    if HOST.service.writable?
-      HOST.service.create @pkg, @vars, &@log
-      Service.system.new(@vars["package"]).link @vars["pkgdir"]
-      @log.call "INFO", HOST.service.name + " system service added", @vars["package"]
+    if Localhost.service.writable?
+      Localhost.service.create @pkg, @vars, &@log
+      Localhost.service.system.new(@vars["package"]).link @vars["pkgdir"]
+      @log.call "INFO", Localhost.service.name + " system service added", @vars["package"]
     else
       @log.call "WARN", "root execution needed for system service addition", @vars["package"]
     end

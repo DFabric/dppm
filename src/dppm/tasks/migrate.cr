@@ -14,7 +14,7 @@ struct Tasks::Migrate
 
     # Init
     @build = Tasks::Build.new vars, &@log
-    Service.check_availability @build.pkg["type"], @build.package, &log
+    Localhost.service.check_availability @build.pkg["type"], @build.package, &log
     begin
       if SemanticCompare.version @old_version, '<' + @build.version
         @log.call "INFO", "upgrading from " + @old_version, @build.version
@@ -46,7 +46,7 @@ struct Tasks::Migrate
         end
       end
     end
-    Service.system.new(@package).run false
+    Localhost.service.system.new(@package).run false
 
     # Change the name of the package to the original
     File.rename @old_pkgdir, @build.prefix + '/' + @package + '-' + @old_version

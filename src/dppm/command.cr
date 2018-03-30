@@ -50,16 +50,17 @@ struct Command
   Usage: dppm [...] [variable]=[value] [variable1]=[value1] ...
 
   Variable:
-      prefix                   where is the package (default: /opt)
-      pkgsrc                   source of the packages
-      mirror                   mirror of precompiled applications
-      name                     name of the packqge (default: package name)
-      tag                      a tag describing a version, like 'latest'
-      user  (`add` task)       uid or user to be used for the program
-      group (`add` task)       gid or group to be used for the program
-      owner                    regroup the user and group using a same id/name
-      port                     use the specified port
-      webserver                use the specified webserver
+      prefix                    where is the package (default: /opt)
+      pkgsrc                    source of the packages
+      mirror                    mirror of precompiled applications
+      name                      name of the packqge (default: package name)
+      tag                       a tag describing a version, like 'latest'
+      user  (`add` task)        uid or user to be used for the program
+      group (`add` task)        gid or group to be used for the program
+      owner                     regroup the user and group using a same id/name
+      port                      use the specified port
+      webserver (default: none) use the specified webserver
+      domains
 
   System variables (will be overridden if set):
       package                  name of the package
@@ -139,7 +140,7 @@ struct Command
         log "INFO", ARGV[0], task.simulate
         task.run if @noconfirm || Tasks.confirm ARGV[0]
       when "service"
-        service = Service.system.new ARGV[1]
+        service = Localhost.service.system.new ARGV[1]
         puts case ARGV[2]?
         when "run"    then ARGV[3]? ? service.run Utils.to_b(ARGV[3]) : service.run?
         when "boot"   then ARGV[3]? ? service.boot Utils.to_b(ARGV[3]) : service.boot?
@@ -199,7 +200,7 @@ struct Command
       end
     end
     begin
-      conf_file = YAML.parse(File.read "./config.yml") if conf_file == ""
+      conf_file = YAML.parse(File.read "./config.yml") if conf_file.as_s.empty?
       h["pkgsrc"] ||= conf_file["pkgsrc"].as_s
       h["mirror"] ||= conf_file["mirror"].as_s
     rescue ex

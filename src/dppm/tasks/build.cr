@@ -21,10 +21,10 @@ struct Tasks::Build
     @vars["pkgdir"] = @pkgdir
     raise "already existing: " + @pkgdir if File.exists? @pkgdir
 
-    @arch_alias = if @pkg["arch"]["alias"]? && @pkg["arch"]["alias"][HOST.arch]?
-                    @pkg["arch"]["alias"][HOST.arch].as_s
+    @arch_alias = if @pkg["arch"]["alias"]? && @pkg["arch"]["alias"][Localhost.arch]?
+                    @pkg["arch"]["alias"][Localhost.arch].as_s
                   else
-                    HOST.arch
+                    Localhost.arch
                   end
 
     # keep the latest ones for each dependency
@@ -63,7 +63,7 @@ struct Tasks::Build
       end
       if ver
         # Check if the version number is available
-        raise "not available version number: " + ver if !Version.get(HOST.kernel, HOST.arch, @pkg["arch"]).includes? ver
+        raise "not available version number: " + ver if !Version.get(Localhost.kernel, Localhost.arch, @pkg["arch"]).includes? ver
         ver
       elsif tag
         src = @pkg["tags"][tag]["src"].as_s
@@ -101,12 +101,12 @@ struct Tasks::Build
 
     if @pkg["tasks"]? && @pkg["tasks"]["build"]?
       @log.call "INFO", "building", @package
-      HOST.run @pkg["tasks"]["build"].as_a, @vars, &@log
+      Cmd::Run.new @pkg["tasks"]["build"].as_a, @vars, &@log
       # Standard package build
     else
       @log.call "INFO", "standard building", @package
       Dir.cd vars["pkgdir"]
-      package = @package + "-static" + '_' + @vars["version"] + '_' + HOST.kernel + '_' + HOST.arch
+      package = "#{@package}-static_#{@vars["version"]}_#{Localhost.kernel}_#{Localhost.arch}"
       @log.call "INFO", "downloading", @vars["mirror"] + package + ".tar.xz"
       HTTPget.file @vars["mirror"] + package + ".tar.xz"
       @log.call "INFO", "extracting", @vars["mirror"] + package + ".tar.xz"
