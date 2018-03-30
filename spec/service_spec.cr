@@ -11,56 +11,45 @@ describe Service do
     "user"    => "1000",
     "group"   => "1000",
   }
-  service = {
+  service_vars = {
     "directory" => path,
     "user"      => "1000",
     "group"     => "1000",
   }
 
+  {% for sysinit in %w(OpenRC Systemd) %}
+    describe {{sysinit}} do
+      service = Service::{{sysinit.id}}::Config.new
 
-  describe "OpenRC" do
-    openrc = Service::OpenRC::Config.new
+      it "creates a service" do
+        Service::{{sysinit.id}}.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| nil }
+      end
 
-    it "creates a service" do
-      Service::OpenRC.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| nil }
-    end
+      it "parses the service" do
+        service = Service::{{sysinit.id}}::Config.new(path + "etc/init/" + {{sysinit.downcase}}, file: true)
+      end
 
-    it "parses the service" do
-      openrc = Service::OpenRC::Config.new(path + "etc/init/openrc", file: true)
-    end
+      it "checks values of sections" do
+        service_vars.each do |key, value|
+          value.should eq(service.get key)
+        end
+      end
 
-    it "checks values of sections" do
-      service.each_key do |var|
-        service[var].should eq(openrc.get var)
+      it "verifies the builded service" do
+        File.read(path + "etc/init/" + {{sysinit.downcase}}).should eq service.build
+      end
+
+      it "adds environment variables" do
+        service.env_set "TEST", "some_test"
+        service.env_set "ENV", "production"
+      end
+
+      it "checks value of environment variables" do
+        service.env_get("TEST").should eq "some_test"
+        service.env_get("ENV").should eq "production"
       end
     end
-
-    it "verifies the builded service" do
-      File.read(path + "etc/init/openrc").should eq openrc.build
-    end
-  end
-
-  describe "systemd" do
-    systemd = Service::Systemd::Config.new
-
-    it "creates a service" do
-      Service::Systemd.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| nil }
-    end
-
-    it "parses the service" do
-      systemd = Service::Systemd::Config.new(path + "etc/init/systemd", file: true)
-    end
-
-    it "checks values of sections" do
-      service.each_key do |var|
-        service[var].should eq(systemd.get var)
-      end
-    end
-
-    it "verifies the builded service" do
-      File.read(path + "etc/init/systemd").should eq systemd.build
-    end
-  end
+  {% end %}
 
   FileUtils.rm_r path
 end

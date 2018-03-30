@@ -1,5 +1,4 @@
 module Service
-
   def check_availability(pkgtype, package, &log : String, String, String -> Nil)
     if pkgtype != "app"
       raise "only applications can be added to the system"
