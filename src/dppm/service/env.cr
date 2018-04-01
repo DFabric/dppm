@@ -5,7 +5,7 @@ module Service::Env
   private def parse_vars(env_vars)
     h = Hash(String, String).new
     if !env_vars.empty? && env_vars.is_a? String
-      env_vars[0..-2].split("\" ").each do |env|
+      env_vars.rchop.split("\" ").each do |env|
         var, val = env.split("=\"")
         h[var] = val
       end
