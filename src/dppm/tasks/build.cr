@@ -17,9 +17,9 @@ struct Tasks::Build
     @pkg = YAML.parse File.read "#{CACHE}/#{@package}/pkg.yml"
     @version = getversion.not_nil!
     @name = getname
-    @pkgdir = @prefix + '/' + @name + '/'
+    @pkgdir = "#{@prefix}/#{@name}/"
     @vars["pkgdir"] = @pkgdir
-    raise "already existing: " + @pkgdir if File.exists? @pkgdir
+    raise "already existing: #{@pkgdir.downcase}" if File.exists? @pkgdir
 
     @arch_alias = if @pkg["arch"]["alias"]? && @pkg["arch"]["alias"][Localhost.arch]?
                     @pkg["arch"]["alias"][Localhost.arch].as_s
@@ -31,8 +31,12 @@ struct Tasks::Build
     @log.call "INFO", "calculing package dependencies", @package
     Tasks::Deps.new(&@log).get(YAML.parse(File.read "#{CACHE}/#{@package}/pkg.yml"), @pkgdir).map { |k, v| @deps[k] = v[0] }
 
-    {% for var in ["version", "name", "package", "pkgdir", "arch_alias"] %}
-      @vars[{{var}}] = @{{var.id}}.not_nil!
+    {% begin %}
+    @vars.merge!({
+      {% for var in ["version", "name", "package", "pkgdir", "arch_alias"] %}
+        {{var}} => @{{var.id}}.not_nil! ,
+      {% end %}
+    })
     {% end %}
   end
 
@@ -68,7 +72,7 @@ struct Tasks::Build
       elsif tag
         src = @pkg["tags"][tag]["src"].as_s
         # Test if the src is an URL or a version number
-        if src =~ /^https?:\/\/.*/
+        if Utils.is_http? src
           regex = if @pkg["tags"][tag]["regex"]?
                     @pkg["tags"][tag]["regex"]
                   else

@@ -1,6 +1,10 @@
 module Utils
   extend self
 
+  def is_http?(link) : Bool
+    link.starts_with?("http://") || link.starts_with?("https://")
+  end
+
   def to_b(string)
     case string
     when "true"  then true

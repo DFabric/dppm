@@ -52,4 +52,15 @@ describe Utils do
       Utils.to_type("1.3").should eq 1.3
     end
   end
+
+  it "converts to boolean" do
+    Utils.to_b("true").should eq true
+    Utils.to_b("false").should eq false
+  end
+
+  it "checks if a string is a http url" do
+    Utils.is_http?("http://example.com").should eq true
+    Utils.is_http?("https://example.com").should eq true
+    Utils.is_http?("ftp://example.com").should eq false
+  end
 end

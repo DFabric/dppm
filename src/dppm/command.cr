@@ -190,17 +190,19 @@ struct Command
     conf_file = YAML::Any.new("")
     vars.each do |arg|
       case arg
-      when /^([a-z0-9_]+)=(.*)/ then h[$1] = $2
-      when /^--config=(.*)/     then conf_file = YAML.parse(File.read $1)
-      when /(.*)=(.*)/          then raise "only, `a-z`, `0-9` and `_` are allowed on passed variables: " + $1
-      when "-y", "--yes"        then @noconfirm = true
-      when "--contained"        then h["--contained"] = "true"
+      when .starts_with? "--config=" then conf_file = YAML.parse(File.read arg[9..-1])
+      when "-y", "--yes"             then @noconfirm = true
+      when "--contained"             then h["--contained"] = "true"
+      when .includes? '='
+        arg.each_char { |char| char.ascii_alphanumeric? || char == '_' || raise "only, `a-z`, `0-9` and `_` are allowed on passed variables: forbidden `#{char}` in `#{arg}`" }
+        var = arg.split '='
+        h[var[0]] = var[1]
       else
         raise "invalid argument: #{arg}"
       end
     end
     begin
-      conf_file = YAML.parse(File.read "./config.yml") if conf_file.as_s.empty?
+      conf_file = YAML.parse(File.read "./config.yml") if conf_file.as_s?
       h["pkgsrc"] ||= conf_file["pkgsrc"].as_s
       h["mirror"] ||= conf_file["mirror"].as_s
     rescue ex
@@ -212,7 +214,7 @@ struct Command
   # Download a cache of package sources
   def self.cache(pkgsrc, check = false, &log : String, String, String -> Nil)
     FileUtils.rm_r CACHE if File.exists? CACHE
-    if pkgsrc =~ /^https?:\/\/.*/
+    if Utils.is_http? pkgsrc
       HTTPget.file pkgsrc, CACHE + ".tar.gz"
       Exec.new("/bin/tar", ["zxf", CACHE + ".tar.gz", "-C", "/tmp/"]).out
       File.delete CACHE + ".tar.gz"

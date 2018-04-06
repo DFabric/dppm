@@ -14,7 +14,7 @@ module Cmd
       Dir.cd vars["pkgdir"]
       # Create a PATH variable
       @vars = vars.map { |k, v| [k.upcase, v] }.to_h
-      @vars.each { |k, v| @extvars["${" + k + '}'] = v }
+      @vars.each { |k, v| @extvars["${#{k}}"] = v }
       run yaml
     end
 
@@ -111,22 +111,22 @@ module Cmd
     # https://crystal-lang.org/api/File.html
     private def command(cmdline)
       # Check if it's a variable
-      if cmdline =~ /^"(.*)"$/
+      if cmdline.starts_with?('"') && cmdline.starts_with?('"')
         return var $1
       elsif @vars[cmdline]?
         return @vars[cmdline]
       end
-      cmd = cmdline.split(' ')
+      cmd = cmdline.split ' '
       case cmd[0]
-      when /^\/.*/ then execute cmd[0], cmd[1..-1]
+      when cmdline.starts_with? '/' then execute cmd[0], cmd[1..-1]
         # use globs while executing a command
       when "glob"
         cmd1 = cmd[1]
         if cmd[3]?
           dir = cmd[3]
-          Dir[cmd[2]].each { |entry| command cmd1 + ' ' + entry + ' ' + dir + '/' + File.basename entry }
+          Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry} #{dir}/#{File.basename entry}" }
         else
-          Dir[cmd[2]].each { |entry| command cmd1 + ' ' + entry }
+          Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry}" }
         end
       when "current" then Dir.current
         # Booleans
