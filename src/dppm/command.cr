@@ -194,8 +194,8 @@ struct Command
       when "-y", "--yes"             then @noconfirm = true
       when "--contained"             then h["--contained"] = "true"
       when .includes? '='
-        arg.each_char { |char| char.ascii_alphanumeric? || char == '_' || raise "only, `a-z`, `0-9` and `_` are allowed on passed variables: forbidden `#{char}` in `#{arg}`" }
         var = arg.split '='
+        var[0].each_char { |char| char.ascii_alphanumeric? || char == '_' || raise "only, `a-z`, `0-9` and `_` are allowed on passed variables: forbidden `#{char}` in `#{arg}`" }
         h[var[0]] = var[1]
       else
         raise "invalid argument: #{arg}"

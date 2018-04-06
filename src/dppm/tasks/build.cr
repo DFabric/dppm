@@ -21,8 +21,8 @@ struct Tasks::Build
     @vars["pkgdir"] = @pkgdir
     raise "already existing: #{@pkgdir.downcase}" if File.exists? @pkgdir
 
-    @arch_alias = if @pkg["arch"]["alias"]? && @pkg["arch"]["alias"][Localhost.arch]?
-                    @pkg["arch"]["alias"][Localhost.arch].as_s
+    @arch_alias = if @pkg["version"]["alias"]? && @pkg["version"]["alias"][Localhost.arch]?
+                    @pkg["version"]["alias"][Localhost.arch].as_s
                   else
                     Localhost.arch
                   end
@@ -67,7 +67,7 @@ struct Tasks::Build
       end
       if ver
         # Check if the version number is available
-        raise "not available version number: " + ver if !Version.get(Localhost.kernel, Localhost.arch, @pkg["arch"]).includes? ver
+        raise "not available version number: " + ver if !Version.get(Localhost.kernel, Localhost.arch, @pkg["version"]).includes? ver
         ver
       elsif tag
         src = @pkg["tags"][tag]["src"].as_s
@@ -90,8 +90,8 @@ struct Tasks::Build
 
   def simulate
     String.build do |str|
-      str << @vars.map { |k, v| '\n' + k + ": " + v }.join
-      str << "\ndeps: " << @deps.map { |k, v| k + ':' + v }.join(", ") if !@deps.empty?
+      str << @vars.map { |k, v| "\n#{k}: #{v}" }.join
+      str << "\ndeps: " << @deps.map { |k, v| "#{k}:#{v}" }.join(", ") if !@deps.empty?
     end
   end
 

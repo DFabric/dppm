@@ -27,11 +27,11 @@ module Tasks
   end
 
   def confirm(task)
-    puts "\nOk? [N/y]"
+    puts "\nContinue? [N/y]"
     gets =~ /[Yy]/ ? true : puts "cancelled: " + task
   end
 
   def pkg_exists?(dir)
-    raise "doesn't exist: " + dir + "/pkg.yml" if !File.exists? dir + "/pkg.yml"
+    raise "doesn't exist: #{dir}/pkg.yml" if !File.exists? dir + "/pkg.yml"
   end
 end
