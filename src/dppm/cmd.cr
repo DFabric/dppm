@@ -1,3 +1,19 @@
+# Will land in crystal 0.25
+class File < IO::FileDescriptor
+  def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil, mode = "w")
+    open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
+      case content
+      when Bytes
+        file.write(content)
+      when IO
+        IO.copy(content, file)
+      else
+        file.print(content)
+      end
+    end
+  end
+end
+
 module Cmd
   def self.find_bin(pkgdir, cmd)
     Dir[pkgdir + "bin", pkgdir + "lib/*/bin"].each do |path|
@@ -154,23 +170,24 @@ module Cmd
       when "expand_path" then File.expand_path cmdline[12..-1]
       when "real_path"   then File.real_path cmdline[10..-1]
         # Double argument with space separator
+      when "append"  then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' ')), mode: "a"
       when "cp"      then FileUtils.cp cmd[1], cmd[2]
       when "cp_r"    then FileUtils.cp_r cmd[1], cmd[2]
       when "link"    then File.link cmd[1], cmd[2]
       when "symlink" then File.symlink cmd[1], cmd[2]
-      when "write"   then File.write cmd[1], Utils.to_type(cmd[2])
+      when "write"   then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' '))
       when "chmod"   then File.chmod cmd[1], cmd[2].to_i(8)
       when "chown"   then File.chown cmd[1], Owner.to_id(cmd[2], "uid"), Owner.to_id(cmd[3], "gid")
         # Custom
-      when "ls"                     then Dir.entries Dir.current
-      when "get"                    then ConfFile.get cmd[1], Utils.to_array(cmd[2])
-      when "del"                    then ConfFile.del cmd[1], Utils.to_array(cmd[2])
-      when "set"                    then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' ')
-      when /^(json|yaml|ini)\.get$/ then ConfFile.get cmd[1], Utils.to_array(cmd[2]), $1
-      when /^(json|yaml|ini)\.del$/ then ConfFile.del cmd[1], Utils.to_array(cmd[2]), $1
-      when /^(json|yaml|ini)\.set$/ then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' '), $1
-      when "chmod_r"                then Utils.chmod_r cmd[1], cmd[2].to_i(8)
-      when "chown_r"                then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid")
+      when "ls"               then Dir.entries Dir.current
+      when "get"              then ConfFile.get cmd[1], Utils.to_array(cmd[2])
+      when "del"              then ConfFile.del cmd[1], Utils.to_array(cmd[2])
+      when "set"              then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' ')
+      when .ends_with? ".get" then ConfFile.get cmd[1], Utils.to_array(cmd[2]), cmd[0..-5]
+      when .ends_with? ".del" then ConfFile.del cmd[1], Utils.to_array(cmd[2]), cmd[0..-5]
+      when .ends_with? ".set" then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' '), cmd[0..-5]
+      when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8)
+      when "chown_r"          then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid")
         # Download
       when "getstring" then HTTPget.string cmd[1]
       when "getfile"
