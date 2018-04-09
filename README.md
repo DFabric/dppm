@@ -47,14 +47,15 @@ To list [available packages](https://github.com/DFabric/package-sources) (applic
 A typical installation can be:
 
 ```sh
-dppm install [application] prefix=/opt owner=myapp # install a new application in /opt as `myapp`
+# `opt` directory with the `myapp` owner
+dppm add [application] prefix=/opt owner=myapp     # add a new application to the system
 dppm service [application] run true                # start the service
 dppm service [application] boot true               # auto start the service at boot
 ```
 
 The user and group used by the application here is `myapp`. [Read more about security recommendations](https://github.com/DFabric/docs/blob/master/security/owner.md)
 
-Note that `install` will `build` the package, and then `add` it to the system.
+Note that `add` will `build` the missing required packages and create a system service if runned as root.
 
 Root execution is needed to add a system service (systemd or OpenRC)
 

@@ -5,11 +5,11 @@ struct Service::Systemd::System
   end
 
   def file
-    "/etc/systemd/system/" + @service + ".service"
+    "/etc/systemd/system/#{@service}.service"
   end
 
   def boot?
-    File.exists? "/etc/systemd/system/multi-user.target.wants/" + @service + ".service"
+    File.exists? "/etc/systemd/system/multi-user.target.wants/#{@service}.service"
   end
 
   def exists?
@@ -26,7 +26,7 @@ struct Service::Systemd::System
   end
 
   def boot(value : Bool)
-    boot = "/etc/systemd/system/multi-user.target.wants/" + @service + ".service"
+    boot = "/etc/systemd/system/multi-user.target.wants/#{@service}.service"
     value ? File.symlink(file, boot) : File.delete(boot)
   end
 

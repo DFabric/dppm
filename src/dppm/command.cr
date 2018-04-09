@@ -7,10 +7,9 @@ struct Command
   Usage: dppm [command] [package] [variables] [--] [options]
 
   Command:
-      a, add                   add a new pre-built package
+      a, add                   add a new package (and build its missing dependencies)
       b, build                 build a package
-      i, install               build then add a package
-      d, delete                delete an installed package
+      d, delete                delete an added package
       m, migrate               migrate to an other app version (default: latest)
       s, service               service operations
       c, clone                 clone an existing application
@@ -134,11 +133,13 @@ struct Command
   def run
     begin
       case ARGV[0]?
-      when "a", "add", "b", "build", "i", "install", "d", "delete", "m", "migrate"
+      when "a", "add", "b", "build", "d", "delete"
         error "package name: none provided" if !ARGV[1]?
         task = Tasks.init(ARGV[0], ARGV[1], arg_parser(ARGV[2..-1])) { |log_type, title, msg| log log_type, title, msg }
         log "INFO", ARGV[0], task.simulate
         task.run if @noconfirm || Tasks.confirm ARGV[0]
+      when "m", "migrate"
+        puts "implemented soon!"
       when "service"
         service = Localhost.service.system.new ARGV[1]
         puts case ARGV[2]?
@@ -195,7 +196,7 @@ struct Command
       when "--contained"             then h["--contained"] = "true"
       when .includes? '='
         var = arg.split '='
-        var[0].each_char { |char| char.ascii_alphanumeric? || char == '_' || raise "only, `a-z`, `0-9` and `_` are allowed on passed variables: forbidden `#{char}` in `#{arg}`" }
+        var[0].each_char { |char| char.ascii_alphanumeric? || char == '_' || raise "only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: forbidden `#{char}` in `#{arg}`" }
         h[var[0]] = var[1]
       else
         raise "invalid argument: #{arg}"

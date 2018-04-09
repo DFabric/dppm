@@ -16,25 +16,23 @@ end
 
 module Cmd
   def self.find_bin(pkgdir, cmd)
-    Dir[pkgdir + "bin", pkgdir + "lib/*/bin"].each do |path|
-      return path + '/' + cmd if File.executable? path + '/' + cmd
+    Dir[pkgdir + "/bin", pkgdir + "/lib/*/bin"].each do |path|
+      return "#{path}/#{cmd}" if File.executable? "#{path}/#{cmd}"
     end
     ""
   end
 
   class Run
-    @vars = Hash(String, String).new
     @extvars = Hash(String, String).new
 
-    def initialize(yaml : Array, vars : Hash(String, String), &@log : String, String, String -> Nil)
-      Dir.cd vars["pkgdir"]
+    def initialize(yaml : Array, @vars : Hash(String, String), &@log : String, String, String -> Nil)
       # Create a PATH variable
-      @vars = vars.map { |k, v| [k.upcase, v] }.to_h
+      @vars = @vars.map { |k, v| [k.upcase, v] }.to_h
       @vars.each { |k, v| @extvars["${#{k}}"] = v }
-      run yaml
+      Dir.cd @vars["PKGDIR"] { run yaml }
     end
 
-    def run(yaml : Array)
+    private def run(yaml : Array)
       cmd = ""
       # End of block
       last_cond = false
@@ -44,7 +42,7 @@ module Cmd
         if line.is_a? String
           if line =~ /^([a-zA-Z0-9_]+) = (.*)/
             @vars[$1] = command($2).to_s
-            @extvars["${" + $1 + '}'] = @vars[$1]
+            @extvars["${#{$1}}"] = @vars[$1]
           elsif line[0..3] == "echo"
             @log.call "INFO", "echo", var(line[5..-1]) + '\n'
           else
@@ -123,7 +121,7 @@ module Cmd
     end
 
     # Methods from
-    # https://crystal-lang.org/api/DIr.html
+    # https://crystal-lang.org/api/Dir.html
     # https://crystal-lang.org/api/File.html
     private def command(cmdline)
       # Check if it's a variable
@@ -179,6 +177,7 @@ module Cmd
       when "chmod"   then File.chmod cmd[1], cmd[2].to_i(8)
       when "chown"   then File.chown cmd[1], Owner.to_id(cmd[2], "uid"), Owner.to_id(cmd[3], "gid")
         # Custom
+      when "dir"              then Dir.current
       when "ls"               then Dir.entries Dir.current
       when "get"              then ConfFile.get cmd[1], Utils.to_array(cmd[2])
       when "del"              then ConfFile.del cmd[1], Utils.to_array(cmd[2])

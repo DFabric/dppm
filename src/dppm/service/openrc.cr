@@ -11,10 +11,10 @@ module Service::OpenRC
   end
 
   def create(pkg, vars, &log : String, String, String -> Nil)
-    sysinit_hash = creation Config.new(vars["pkgdir"] + "etc/init/openrc", file: true), pkg, vars, &log
+    sysinit_hash = creation Config.new(vars["pkgdir"] + "/etc/init/openrc", file: true), pkg, vars, &log
 
     # Convert back hashes to service files
-    File.write vars["pkgdir"] + "etc/init/openrc", sysinit_hash.build
+    File.write vars["pkgdir"] + "/etc/init/openrc", sysinit_hash.build
   end
 
   def writable?

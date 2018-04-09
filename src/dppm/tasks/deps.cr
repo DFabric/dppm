@@ -49,8 +49,8 @@ struct Tasks::Deps
 
     # Build each dependency
     deps.each do |dep, ver|
-      deppath = vars["prefix"] + '/' + dep + '_' + ver
-      depdir = vars["pkgdir"] + "/lib/" + dep + '_' + ver
+      deppath = "#{vars["prefix"]}/#{dep}_#{ver}"
+      depdir = "#{vars["pkgdir"]}/lib/#{dep}_#{ver}"
       if Dir.exists? deppath
         log.call "INFO", "already present", dep + '_' + ver
         FileUtils.cp_r deppath, depdir if contained
@@ -60,9 +60,11 @@ struct Tasks::Deps
                                      "version" => ver}), &log).run
         File.rename deppath, depdir if contained
       end
-      log.call "INFO", "adding symlink to dependency", dep + ':' + ver
-      File.symlink(contained ? depdir : deppath, vars["pkgdir"] + "/lib/" + dep)
-      log.call "INFO", "dependency added", dep + ':' + ver
+      if !File.exists? "#{vars["pkgdir"]}/lib/#{dep}"
+        log.call "INFO", "adding symlink to dependency", "#{dep}:#{ver}"
+        File.symlink(contained ? depdir : deppath, "#{vars["pkgdir"]}/lib/#{dep}")
+      end
+      log.call "INFO", "dependency added", "#{dep}:#{ver}"
     end
   end
 end

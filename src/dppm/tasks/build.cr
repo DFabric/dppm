@@ -3,54 +3,39 @@ struct Tasks::Build
   getter name : String
   getter prefix : String
   getter pkgdir : String
-  getter vars : Hash(String, String)
-  getter pkg
+  getter pkg : YAML::Any
   getter version : String
-  @deps = Hash(String, String).new
+  getter exists = false
+  getter deps = Hash(String, String).new
+  @vars : Hash(String, String)
   @arch_alias : String
 
   def initialize(@vars, &@log : String, String, String -> Nil)
     @prefix = @vars["prefix"]
     @package = @vars["package"].split(':')[0]
 
+    raise "package doesn't exists: " + @package if !File.exists? "#{CACHE}/#{@package}/pkg.yml"
+
     @log.call "INFO", "calculing informations", "#{CACHE}/#{@package}/pkg.yml"
     @pkg = YAML.parse File.read "#{CACHE}/#{@package}/pkg.yml"
-    @version = getversion.not_nil!
-    @name = getname
-    @pkgdir = "#{@prefix}/#{@name}/"
-    @vars["pkgdir"] = @pkgdir
-    raise "already existing: #{@pkgdir.downcase}" if File.exists? @pkgdir
+    @version = vars["version"] = getversion.not_nil!
+    @vars["package"] = @package
+    @name = vars["name"] = "#{@package}_#{@version}"
+    @pkgdir = vars["pkgdir"] = "#{@prefix}/#{@name}/"
 
-    @arch_alias = if @pkg["version"]["alias"]? && @pkg["version"]["alias"][Localhost.arch]?
-                    @pkg["version"]["alias"][Localhost.arch].as_s
-                  else
-                    Localhost.arch
-                  end
+    @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && @pkg["version"]["alias"][Localhost.arch]?
+                                         @pkg["version"]["alias"][Localhost.arch].as_s
+                                       else
+                                         Localhost.arch
+                                       end
 
+    if File.exists? @pkgdir
+      @log.call "INFO", "already present", @pkgdir
+      @exists = true
+    end
     # keep the latest ones for each dependency
     @log.call "INFO", "calculing package dependencies", @package
     Tasks::Deps.new(&@log).get(YAML.parse(File.read "#{CACHE}/#{@package}/pkg.yml"), @pkgdir).map { |k, v| @deps[k] = v[0] }
-
-    {% begin %}
-    @vars.merge!({
-      {% for var in ["version", "name", "package", "pkgdir", "arch_alias"] %}
-        {{var}} => @{{var.id}}.not_nil! ,
-      {% end %}
-    })
-    {% end %}
-  end
-
-  private def getname
-    # lib and others
-    if @pkg["type"] == "lib"
-      @package + '_' + @version
-      # Only this characters are allowed
-    elsif @pkg["type"] == "app"
-      name = @vars["name"]? ? @vars["name"] : @package
-      !name.match(/^[a-zA-Z0-9-.]+$/) ? raise "the name contains other characters than a-z, A-Z, 0-9, - and .: " + name : name
-    else
-      raise "unknow type: #{@pkg["type"]}"
-    end
   end
 
   private def getversion
@@ -98,10 +83,9 @@ struct Tasks::Build
   def run
     # Copy the sources to the @package directory to build
     FileUtils.cp_r "#{CACHE}/#{@package}", @pkgdir
-    FileUtils.mkdir_p [@pkgdir + "etc", @pkgdir + "log"] if @pkg["type"].as_s == "app"
 
     # Build dependencies
-    Tasks::Deps.new(&@log).build @vars, @deps if !@deps.empty?
+    Tasks::Deps.new(&@log).build @vars.reject("--contained"), @deps
 
     if @pkg["tasks"]? && @pkg["tasks"]["build"]?
       @log.call "INFO", "building", @package
@@ -109,16 +93,18 @@ struct Tasks::Build
       # Standard package build
     else
       @log.call "INFO", "standard building", @package
-      Dir.cd vars["pkgdir"]
-      package = "#{@package}-static_#{@vars["version"]}_#{Localhost.kernel}_#{Localhost.arch}"
-      @log.call "INFO", "downloading", @vars["mirror"] + package + ".tar.xz"
-      HTTPget.file @vars["mirror"] + package + ".tar.xz"
-      @log.call "INFO", "extracting", @vars["mirror"] + package + ".tar.xz"
-      Exec.new "/bin/tar", ["Jxf", package + ".tar.xz"]
-      Dir[package + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
-      File.delete package + ".tar.xz"
-      FileUtils.rm_r package
+      Dir.cd @vars["pkgdir"] do
+        package = "#{@package}-static_#{@vars["version"]}_#{Localhost.kernel}_#{Localhost.arch}"
+        @log.call "INFO", "downloading", @vars["mirror"] + package + ".tar.xz"
+        HTTPget.file @vars["mirror"] + package + ".tar.xz"
+        @log.call "INFO", "extracting", @vars["mirror"] + package + ".tar.xz"
+        Exec.new "/bin/tar", ["Jxf", package + ".tar.xz"]
+        Dir[package + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
+        File.delete package + ".tar.xz"
+        FileUtils.rm_r package
+      end
     end
+    FileUtils.rm_rf @pkgdir + "/lib"
     @log.call "INFO", "build completed", @pkgdir
   end
 end

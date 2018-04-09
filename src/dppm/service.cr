@@ -10,14 +10,14 @@ module Service
   end
 
   def creation(sysinit_hash, pkg, vars, &log : String, String, String -> Nil)
-    Dir.mkdir_p vars["pkgdir"] + "etc/init"
+    Dir.mkdir_p vars["pkgdir"] + "/etc/init"
 
     log.call "INFO", "creating services for #{name}", "etc/init/" + name
 
     # Set service options
     {description:   pkg["description"].as_s,
      directory:     vars["pkgdir"],
-     command:       vars["pkgdir"] + pkg["exec"]["start"].as_s,
+     command:       vars["pkgdir"] + '/' + pkg["exec"]["start"].as_s,
      user:          vars["user"],
      group:         vars["group"],
      restart_delay: "9",
@@ -29,7 +29,7 @@ module Service
     sysinit_hash.set("reload", pkg["exec"]["reload"].as_s) if pkg["exec"]["reload"]?
 
     # Add a PATH environment variable if not empty
-    path = Dir[vars["pkgdir"] + "lib/*/bin"].join ':'
+    path = Dir[vars["pkgdir"] + "/lib/*/bin"].join ':'
     sysinit_hash.env_set("PATH", path) if !path.empty?
 
     sysinit_hash
