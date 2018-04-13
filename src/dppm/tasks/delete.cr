@@ -8,7 +8,7 @@ struct Tasks::Delete
 
   def initialize(vars, &@log : String, String, String -> Nil)
     @prefix = vars["prefix"]
-    @package = vars["package"]
+    @package = vars["package"].gsub(':', '_')
     @pkgdir = @prefix + '/' + @package
 
     # Checks

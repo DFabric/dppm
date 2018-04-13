@@ -16,18 +16,16 @@ module Service::Systemd
     # pid is needed for php-fpm based applications
     sysinit_hash.set "pidfile", "/run/#{vars["name"]}.pid" if pkg["keywords"].includes? "php-fpm"
 
-    # systemd 336 and more supports file logging
-    begin
-      if version >= 336
-        sysinit_hash.section["Service"]["StandardOutput"] = "file:#{vars["pkgdir"]}/log/out.log"
-        sysinit_hash.section["Service"]["StandardError"] = "file:#{vars["pkgdir"]}/log/err.log"
-      else
-        log.call "WARN", "file logging not supported", "systemd version '#{version}' too old (>=336 needed)"
-      end
-    ensure
-      # Convert back hashes to service files
-      File.write vars["pkgdir"] + "/etc/init/systemd", sysinit_hash.build
+    # systemd 236 and more supports file logging
+    if version >= 236
+      sysinit_hash.section["Service"]["StandardOutput"] = "file:#{vars["pkgdir"]}/log/out.log"
+      sysinit_hash.section["Service"]["StandardError"] = "file:#{vars["pkgdir"]}/log/err.log"
+    else
+      log.call "WARN", "file logging not supported", "systemd version '#{version}' too old (>=336 needed)"
     end
+  
+    # Convert back hashes to service files
+    File.write vars["pkgdir"] + "/etc/init/systemd", sysinit_hash.build
   end
 
   def writable?

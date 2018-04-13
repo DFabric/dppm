@@ -14,6 +14,7 @@ struct Tasks::Add
     # Build missing dependencies
     @log.call "INFO", "checking dependencies", @package
     @build = Tasks::Build.new vars.dup, &@log
+    puts vars
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
     @deps = @build.deps
@@ -79,7 +80,7 @@ struct Tasks::Add
 
   def simulate
     String.build do |str|
-      str << @vars.map { |k, v| "\n#{k}: #{v}" }.join
+      @vars.each { |k, v| str << "\n#{k}: #{v}" }
       str << "\ndeps: " << @deps.map { |k, v| "#{k}:#{v}" }.join(", ") if !@deps.empty?
     end
   end
@@ -90,8 +91,8 @@ struct Tasks::Add
     # Create the new application
     @build.run if !@build.exists
     Dir.mkdir @pkgdir
-    File.symlink @build.pkgdir + "app", @pkgdir + "/app"
-    File.symlink @build.pkgdir + "pkg.yml", @pkgdir + "/pkg.yml"
+    File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
+    File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
 
     Tasks::Deps.new(&@log).build @vars.dup, @deps
 

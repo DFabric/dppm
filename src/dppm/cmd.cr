@@ -126,7 +126,7 @@ module Cmd
     private def command(cmdline)
       # Check if it's a variable
       if cmdline.starts_with?('"') && cmdline.starts_with?('"')
-        return var $1
+        return var cmdline[1..-2]
       elsif @vars[cmdline]?
         return @vars[cmdline]
       end
@@ -144,11 +144,11 @@ module Cmd
         end
       when "current" then Dir.current
         # Booleans
-      when "empty_d?"  then Dir.empty? cmdline[9..-1]
-      when "empty_f?"  then File.empty? cmdline[9..-1]
-      when "exists_f?" then File.exists? cmdline[10..-1]
-      when "exists_d?" then Dir.exists? cmdline[10..-1]
-      when "file?"     then File.file? cmdline[6..-1]
+      when "dir_empty?"   then Dir.empty? cmdline[9..-1]
+      when "dir_exists?"  then Dir.exists? cmdline[10..-1]
+      when "file_empty?"  then File.empty? cmdline[9..-1]
+      when "file_exists?" then File.exists? cmdline[10..-1]
+      when "file?"        then File.file? cmdline[6..-1]
         # Single arugment
       when "cd"          then Dir.cd cmdline[3..-1]
       when "mkdir"       then FileUtils.mkdir cmd[1..-1]
@@ -164,13 +164,14 @@ module Cmd
       when "size"        then File.size cmdline[5..-1]
       when "touch"       then File.touch cmdline[6..-1]
       when "readable?"   then File.readable? cmdline[10..-1]
+      when "symlink?"    then File.symlink? cmd[1]
       when "writable?"   then File.writable? cmdline[10..-1]
       when "expand_path" then File.expand_path cmdline[12..-1]
       when "real_path"   then File.real_path cmdline[10..-1]
         # Double argument with space separator
       when "append"  then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' ')), mode: "a"
-      when "cp"      then FileUtils.cp cmd[1], cmd[2]
-      when "cp_r"    then FileUtils.cp_r cmd[1], cmd[2]
+      when "cp"      then FileUtils.cp cmd[1], cmd[2]; "file copied"
+      when "cp_r"    then FileUtils.cp_r cmd[1], cmd[2]; "directory copied"
       when "link"    then File.link cmd[1], cmd[2]
       when "symlink" then File.symlink cmd[1], cmd[2]
       when "write"   then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' '))

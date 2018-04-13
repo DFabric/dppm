@@ -31,6 +31,7 @@ module Service
     # Add a PATH environment variable if not empty
     path = Dir[vars["pkgdir"] + "/lib/*/bin"].join ':'
     sysinit_hash.env_set("PATH", path) if !path.empty?
+    pkg["env"].as_h.each { | var, value | sysinit_hash.env_set var.to_s, value.to_s } if pkg["env"]?
 
     sysinit_hash
   end

@@ -21,7 +21,7 @@ struct Tasks::Build
     @version = vars["version"] = getversion.not_nil!
     @vars["package"] = @package
     @name = vars["name"] = "#{@package}_#{@version}"
-    @pkgdir = vars["pkgdir"] = "#{@prefix}/#{@name}/"
+    @pkgdir = vars["pkgdir"] = "#{@prefix}/#{@name}"
 
     @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && @pkg["version"]["alias"][Localhost.arch]?
                                          @pkg["version"]["alias"][Localhost.arch].as_s
@@ -75,12 +75,14 @@ struct Tasks::Build
 
   def simulate
     String.build do |str|
-      str << @vars.map { |k, v| "\n#{k}: #{v}" }.join
+      @vars.each { |k, v| str << "\n#{k}: #{v}" }
       str << "\ndeps: " << @deps.map { |k, v| "#{k}:#{v}" }.join(", ") if !@deps.empty?
     end
   end
 
   def run
+    raise "package already present: " + @pkgdir if @exists
+
     # Copy the sources to the @package directory to build
     FileUtils.cp_r "#{CACHE}/#{@package}", @pkgdir
 
@@ -93,8 +95,8 @@ struct Tasks::Build
       # Standard package build
     else
       @log.call "INFO", "standard building", @package
-      Dir.cd @vars["pkgdir"] do
-        package = "#{@package}-static_#{@vars["version"]}_#{Localhost.kernel}_#{Localhost.arch}"
+      Dir.cd @pkgdir do
+        package = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
         @log.call "INFO", "downloading", @vars["mirror"] + package + ".tar.xz"
         HTTPget.file @vars["mirror"] + package + ".tar.xz"
         @log.call "INFO", "extracting", @vars["mirror"] + package + ".tar.xz"
@@ -104,7 +106,7 @@ struct Tasks::Build
         FileUtils.rm_r package
       end
     end
-    FileUtils.rm_rf @pkgdir + "/lib"
+    FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     @log.call "INFO", "build completed", @pkgdir
   end
 end
