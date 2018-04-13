@@ -39,38 +39,36 @@ struct Tasks::Build
   end
 
   private def getversion
-    begin
-      if @vars["version"]?
-        ver = @vars["version"]
-      elsif @vars["tag"]?
-        tag = @vars["tag"]
-      elsif tag = @vars["package"].split(':')[1]?
-        ver = tag if tag =~ /^([0-9]+\.[0-9]+\.[0-9]+)/
-        # Set a default tag if not set
-      else
-        tag = "latest"
-      end
-      if ver
-        # Check if the version number is available
-        raise "not available version number: " + ver if !Version.get(Localhost.kernel, Localhost.arch, @pkg["version"]).includes? ver
-        ver
-      elsif tag
-        src = @pkg["tags"][tag]["src"].as_s
-        # Test if the src is an URL or a version number
-        if Utils.is_http? src
-          regex = if @pkg["tags"][tag]["regex"]?
-                    @pkg["tags"][tag]["regex"]
-                  else
-                    @pkg["tags"]["self"]["regex"]
-                  end.as_s
-          /#{regex}/.match(HTTPget.string src).not_nil![0]?
-        else
-          src
-        end
-      end
-    rescue ex
-      raise "can't obtain the version: " + ex.to_s
+    if @vars["version"]?
+      ver = @vars["version"]
+    elsif @vars["tag"]?
+      tag = @vars["tag"]
+    elsif tag = @vars["package"].split(':')[1]?
+      ver = tag if tag =~ /^([0-9]+\.[0-9]+\.[0-9]+)/
+      # Set a default tag if not set
+    else
+      tag = "latest"
     end
+    if ver
+      # Check if the version number is available
+      raise "not available version number: " + ver if !Version.get(Localhost.kernel, Localhost.arch, @pkg["version"]).includes? ver
+      ver
+    elsif tag
+      src = @pkg["tags"][tag]["src"].as_s
+      # Test if the src is an URL or a version number
+      if Utils.is_http? src
+        regex = if @pkg["tags"][tag]["regex"]?
+                  @pkg["tags"][tag]["regex"]
+                else
+                  @pkg["tags"]["self"]["regex"]
+                end.as_s
+        /#{regex}/.match(HTTPget.string src).not_nil![0]?
+      else
+        src
+      end
+    end
+  rescue ex
+    raise "can't obtain the version: " + ex.to_s
   end
 
   def simulate

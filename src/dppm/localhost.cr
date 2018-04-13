@@ -52,21 +52,19 @@ struct Localhost
 
   def self.port(port_num : Int32, port_used = Array(Int32).new, &log : String, String, String -> Nil)
     raise "the limit of 65535 for port numbers is reached" if port_num > 65535
-    begin
-      # tcp port available?
-      TCPServer.new(port_num).close
-      # ipv4 udp port available?
-      ip4 = UDPSocket.new Socket::Family::INET
-      ip4.bind "127.0.0.1", port_num
-      ip4.close
-      # ipv6 udp port available?
-      ip6 = UDPSocket.new Socket::Family::INET6
-      ip6.bind "::1", port_num
-      ip6.close
-      yield "WARN", "ports unavailable or used", port_used.join ", " if !port_used.empty?
-      port_num
-    rescue
-      port port_num + 1, port_used << port_num, &log
-    end
+    # tcp port available?
+    TCPServer.new(port_num).close
+    # ipv4 udp port available?
+    ip4 = UDPSocket.new Socket::Family::INET
+    ip4.bind "127.0.0.1", port_num
+    ip4.close
+    # ipv6 udp port available?
+    ip6 = UDPSocket.new Socket::Family::INET6
+    ip6.bind "::1", port_num
+    ip6.close
+    yield "WARN", "ports unavailable or used", port_used.join ", " if !port_used.empty?
+    port_num
+  rescue
+    port port_num + 1, port_used << port_num, &log
   end
 end

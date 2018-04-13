@@ -23,7 +23,7 @@ module Service::Systemd
     else
       log.call "WARN", "file logging not supported", "systemd version '#{version}' too old (>=336 needed)"
     end
-  
+
     # Convert back hashes to service files
     File.write vars["pkgdir"] + "/etc/init/systemd", sysinit_hash.build
   end

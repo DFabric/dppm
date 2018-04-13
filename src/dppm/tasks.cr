@@ -9,7 +9,7 @@ module Tasks
 
     # Update cache if older than 2 days
     if !(File.exists?(CACHE) || File.symlink?(CACHE)) ||
-      Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(CACHE).ctime.to_s("%Y%m%d").to_i > 2
+       Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(CACHE).ctime.to_s("%Y%m%d").to_i > 2
       Command.cache vars["pkgsrc"], &log
     end
 

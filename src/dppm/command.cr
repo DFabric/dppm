@@ -131,59 +131,57 @@ struct Command
   @noconfirm = false
 
   def run
-    begin
-      case ARGV[0]?
-      when "a", "add", "b", "build", "d", "delete"
-        error "package name: none provided" if !ARGV[1]?
-        task = Tasks.init(ARGV[0], ARGV[1], arg_parser(ARGV[2..-1])) { |log_type, title, msg| log log_type, title, msg }
-        log "INFO", ARGV[0], task.simulate
-        task.run if @noconfirm || Tasks.confirm ARGV[0]
-      when "m", "migrate"
-        puts "implemented soon!"
-      when "service"
-        service = Localhost.service.system.new ARGV[1]
-        puts case ARGV[2]?
-        when "run"    then ARGV[3]? ? service.run Utils.to_b(ARGV[3]) : service.run?
-        when "boot"   then ARGV[3]? ? service.boot Utils.to_b(ARGV[3]) : service.boot?
-        when "reload" then service.reload
-        when nil      then puts SERVICE
-        else
-          raise "unknwon argument: " + ARGV[2]
-        end
-        exit
-      when "l", "list"
-        Dir.each_child ARGV[1]? ? ARGV[1] : CACHE do |package|
-          puts package if package =~ /^[a-z]+$/
-        end
-      when "cache"
-        if ARGV[1]? =~ /^pkgsrc=(.*)/
-          Command.cache $1 { |log_type, title, msg| log log_type, title, msg }
-        elsif ARGV[1]? =~ /^--config=(.*)/
-          Command.cache(YAML.parse(File.read $1)["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
-        else
-          Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
-        end
-      when "pkg"
-        puts "no implemented yet"
-        puts Pkg.new(ARGV[1]).version
-      when "config" then config
-      when "server" then server
-      when "check"
-        puts "no implemented yet"
-      when "vars"
-        puts VARS
-      when "h", "help", "-h", "--help"
-        puts USAGE
-      when nil
-        puts USAGE
-        exit 1
+    case ARGV[0]?
+    when "a", "add", "b", "build", "d", "delete"
+      error "package name: none provided" if !ARGV[1]?
+      task = Tasks.init(ARGV[0], ARGV[1], arg_parser(ARGV[2..-1])) { |log_type, title, msg| log log_type, title, msg }
+      log "INFO", ARGV[0], task.simulate
+      task.run if @noconfirm || Tasks.confirm ARGV[0]
+    when "m", "migrate"
+      puts "implemented soon!"
+    when "service"
+      service = Localhost.service.system.new ARGV[1]
+      puts case ARGV[2]?
+      when "run"    then ARGV[3]? ? service.run Utils.to_b(ARGV[3]) : service.run?
+      when "boot"   then ARGV[3]? ? service.boot Utils.to_b(ARGV[3]) : service.boot?
+      when "reload" then service.reload
+      when nil      then puts SERVICE
       else
-        puts USAGE
-        error "unknown command: " + ARGV.first?.to_s
+        raise "unknwon argument: " + ARGV[2]
       end
-    rescue ex
-      error ex.to_s
+      exit
+    when "l", "list"
+      Dir.each_child ARGV[1]? ? ARGV[1] : CACHE do |package|
+        puts package if package =~ /^[a-z]+$/
+      end
+    when "cache"
+      if ARGV[1]? =~ /^pkgsrc=(.*)/
+        Command.cache $1 { |log_type, title, msg| log log_type, title, msg }
+      elsif ARGV[1]? =~ /^--config=(.*)/
+        Command.cache(YAML.parse(File.read $1)["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+      else
+        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+      end
+    when "pkg"
+      puts "no implemented yet"
+      puts Pkg.new(ARGV[1]).version
+    when "config" then config
+    when "server" then server
+    when "check"
+      puts "no implemented yet"
+    when "vars"
+      puts VARS
+    when "h", "help", "-h", "--help"
+      puts USAGE
+    when nil
+      puts USAGE
+      exit 1
+    else
+      puts USAGE
+      error "unknown command: " + ARGV.first?.to_s
     end
+  rescue ex
+    error ex.to_s
   end
 
   def arg_parser(vars : Array(String))

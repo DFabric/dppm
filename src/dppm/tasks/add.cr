@@ -45,11 +45,12 @@ struct Tasks::Add
       conf = ConfFile::Config.new "#{CACHE}/#{@package}"
       @pkg["config"].as_h.each_key do |var|
         if !@vars[var.to_s]?
-          begin
-            @vars[var.to_s] = conf.get(var.to_s).to_s
-            @log.call "INFO", "default value set for unset variable", var.to_s + ": " + @vars[var.to_s]
-          rescue
+          key = conf.get(var.to_s).to_s
+          if key.empty?
             unset_vars << var.to_s
+          else
+            @vars[var.to_s] = key
+            @log.call "INFO", "default value set for unset variable", var.to_s + ": " + @vars[var.to_s]
           end
         end
       end
@@ -71,11 +72,8 @@ struct Tasks::Add
   end
 
   private def port
-    if @vars["port"].to_i?
-      Localhost.port(@vars["port"].to_i, &@log).to_s
-    else
-      raise "the port must be an Int32 number: " + port
-    end
+    raise "the port must be an Int32 number: " + port if !@vars["port"].to_i?
+    Localhost.port(@vars["port"].to_i, &@log).to_s
   end
 
   def simulate

@@ -14,18 +14,18 @@ module ConfFile
            else
              raise "not supported file format: " + file
            end
-    if keys[0]?
-      keys.map { |x| data = data[x] }[-1]
-    else
-      data
+    keys.each do |key|
+      return if !data[key]?
+      data = data[key]
     end
+    data
   end
 
   def set(file, keys : Array, value, config = "")
     data = File.read file
     case config.empty? ? file.split('.')[-1] : config
     when "ini", "INI"
-      space = data.match(/.*\n[a-zA-Z+-_.]+ = .*/) ? true : false
+      space = data.includes?(" = ") ? true : false
       File.write file, INI.build(ini(INI.parse(data), keys, value), space)
     when "json"
       val = Utils.to_type value
