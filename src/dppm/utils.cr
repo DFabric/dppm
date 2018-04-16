@@ -1,3 +1,10 @@
+class String
+  def ascii_alphanumeric_underscore?
+    each_char { |char| char.ascii_alphanumeric? || char == '_' || return false }
+    true
+  end
+end
+
 module Utils
   extend self
 

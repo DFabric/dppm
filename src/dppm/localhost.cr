@@ -44,7 +44,8 @@ struct Localhost
   private def self.get_sysinit
     init = File.basename File.real_path "/sbin/init"
     case init
-    when "systemd", "init" then init
+    when "systemd"           then "systemd"
+    when "busybox", "openrc" then "openrc"
     else
       raise "unsupported init system, consider to migrate to OpenRC if you are still in init.d: " + init
     end

@@ -194,7 +194,7 @@ struct Command
       when "--contained"             then h["--contained"] = "true"
       when .includes? '='
         var = arg.split '='
-        var[0].each_char { |char| char.ascii_alphanumeric? || char == '_' || raise "only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: forbidden `#{char}` in `#{arg}`" }
+        raise "only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: " + arg if !var[0].ascii_alphanumeric_underscore?
         h[var[0]] = var[1]
       else
         raise "invalid argument: #{arg}"

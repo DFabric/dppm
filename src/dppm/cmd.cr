@@ -39,12 +39,15 @@ module Cmd
 
       yaml.each do |line|
         # Add/change vars
-        if line.is_a? String
+        case line
+        when .is_a? String
+          # A variable assignation
           if line =~ /^([a-zA-Z0-9_]+) = (.*)/
             @vars[$1] = command($2).to_s
             @extvars["${#{$1}}"] = @vars[$1]
+            # Print string
           elsif line[0..3] == "echo"
-            @log.call "INFO", "echo", var(line[5..-1]) + '\n'
+            @log.call "INFO", "echo", "#{command(line[5..-1])}\n"
           else
             cmd = var line
             @log.call "INFO", "execute", cmd
@@ -52,7 +55,7 @@ module Cmd
             @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
           end
           # New condition block
-        elsif line.is_a? Hash
+        when .is_a? Hash
           if line.first_key.to_s[0..3] == "elif" && last_cond
             # Previous if/elif is true
           elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
@@ -85,51 +88,43 @@ module Cmd
 
     private def cond(expr, last_cond)
       case expr.split(' ')[0]
-      when "if"    then ifexpr expr.[3..-1]
-      when "elif"  then ifexpr expr.[5..-1] if !last_cond
+      when "if"    then ifexpr expr[3..-1]
+      when "elif"  then ifexpr expr[5..-1] if !last_cond
       when !"else" then raise "unknown condition: " + expr.split(' ')[0]
       end
     end
 
     private def ifexpr(expr)
       expr.split(" || ") do |block|
-        case block
-        when "true" then return true
-          # Variable existence
-        when /^\!([a-zA-Z0-9_]+)\?/
-          return true if !@vars[$1]?
-        when /^([a-zA-Z0-9_]+)\?/
-          return true if @vars[$1]?
-        when /^([a-zA-Z0-9_]+) != (.*)/
-          if @vars[$1]?
-            return true if @vars[$1] != $2
-          elsif @vars[$2]?
-            return true if @vars[$2] != $1
-          else
-            raise "variables called but neither of `#{$1}` nor `#{$2}` are already known"
-          end
-        when /^([a-zA-Z0-9_]+) = (.*)/
-          if @vars[$1]?
-            return true if @vars[$1] == $2
-          elsif @vars[$2]?
-            return true if @vars[$2] == $1
-          else
-            raise "variables called but neither of `#{$1}` nor `#{$2}` are already known"
-          end
+        if block == "true"
+          return true
+        elsif block == "false"
+          return false
+        elsif block.ascii_alphanumeric_underscore?
+          return true if @vars[block.lchop]?
+        elsif block.lchop.ascii_alphanumeric_underscore? && block.starts_with? '!'
+          return true if !@vars[block.lchop]?
+        else
+          vars = block.split(" == ", 2)
+          return command(vars[0]) == command(vars[1]) if vars[1]?
+          vars = block.split(" != ", 2)
+          return command(vars[0]) != command(vars[1]) if vars[1]?
         end
       end
+      false
     end
 
     # Methods from
     # https://crystal-lang.org/api/Dir.html
     # https://crystal-lang.org/api/File.html
-    private def command(cmdline)
+    def command(cmdline)
       # Check if it's a variable
       if cmdline.starts_with?('"') && cmdline.starts_with?('"')
         return var cmdline[1..-2]
       elsif @vars[cmdline]?
         return @vars[cmdline]
       end
+
       cmd = cmdline.split ' '
       case cmd[0]
       when cmdline.starts_with? '/' then execute cmd[0], cmd[1..-1]
@@ -145,9 +140,9 @@ module Cmd
       when "current" then Dir.current
         # Booleans
       when "dir_empty?"   then Dir.empty? cmdline[9..-1]
-      when "dir_exists?"  then Dir.exists? cmdline[10..-1]
-      when "file_empty?"  then File.empty? cmdline[9..-1]
-      when "file_exists?" then File.exists? cmdline[10..-1]
+      when "dir_exists?"  then Dir.exists? cmdline[12..-1]
+      when "file_empty?"  then File.empty? cmdline[12..-1]
+      when "file_exists?" then File.exists? cmdline[13..-1]
       when "file?"        then File.file? cmdline[6..-1]
         # Single arugment
       when "cd"          then Dir.cd cmdline[3..-1]
@@ -164,7 +159,7 @@ module Cmd
       when "size"        then File.size cmdline[5..-1]
       when "touch"       then File.touch cmdline[6..-1]
       when "readable?"   then File.readable? cmdline[10..-1]
-      when "symlink?"    then File.symlink? cmd[1]
+      when "symlink?"    then File.symlink? cmdline[9..-1]
       when "writable?"   then File.writable? cmdline[10..-1]
       when "expand_path" then File.expand_path cmdline[12..-1]
       when "real_path"   then File.real_path cmdline[10..-1]
@@ -179,7 +174,7 @@ module Cmd
       when "chown"   then File.chown cmd[1], Owner.to_id(cmd[2], "uid"), Owner.to_id(cmd[3], "gid")
         # Custom
       when "dir"              then Dir.current
-      when "ls"               then Dir.entries Dir.current
+      when "ls"               then Dir.entries(Dir.current).join '\n'
       when "get"              then ConfFile.get cmd[1], Utils.to_array(cmd[2])
       when "del"              then ConfFile.del cmd[1], Utils.to_array(cmd[2])
       when "set"              then ConfFile.set cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' ')
@@ -199,9 +194,12 @@ module Cmd
       when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]
       when "untar_lz"  then execute "/bin/tar", ["axf", cmd[1], "-C", cmd[2]]
       when "untar_xz"  then execute "/bin/tar", ["Jxf", cmd[1], "-C", cmd[2]]
+      when "true"      then "true"
+      when "false"     then "false"
       when "exit"
-        puts "exit called, exiting."
-        exit 1
+        puts "exit called, exiting."; exit 1
+        # System executable
+      when .starts_with? '/' then execute cmd[0], cmd[1..-1]
       else
         # check if the command is available in `bin` of the package and dependencies
         bin = Cmd.find_bin @vars["PKGDIR"], cmd[0]
