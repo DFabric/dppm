@@ -36,9 +36,9 @@ module Utils
       if string.starts_with?('"') && string.ends_with?('"')
         string[1..-2]
       elsif string.to_i64?
-        string.to_i64
+        string.to_i64?
       elsif string.to_f64?
-        string.to_f64
+        string.to_f64?
       elsif strict
         raise "can't convert to a type: " + string
       else

@@ -20,9 +20,8 @@ struct Tasks::Add
     @deps = @build.deps
     @pkg = @build.pkg
 
-    if vars["owner"]?
-      @vars["user"] = vars["owner"]
-      @vars["group"] = vars["owner"]
+    if owner = vars["owner"]?
+      @vars["user"] = @vars["group"] = owner
     else
       dir = File.stat Dir.current
       @vars["user"] ||= Owner.from_id dir.uid, "uid"
@@ -41,9 +40,9 @@ struct Tasks::Add
 
     # Default variables
     unset_vars = Array(String).new
-    if @pkg["config"]?
+    if pkg_config = @pkg["config"]?
       conf = ConfFile::Config.new "#{CACHE}/#{@package}"
-      @pkg["config"].as_h.each_key do |var|
+      pkg_config.as_h.each_key do |var|
         if !@vars[var.to_s]?
           key = conf.get(var.to_s).to_s
           if key.empty?
@@ -108,9 +107,9 @@ struct Tasks::Add
 
     # Set configuration variables in files
     @log.call "INFO", "setting configuration variables", @name
-    if @pkg["config"]?
+    if pkg_config = @pkg["config"]?
       conf = ConfFile::Config.new @pkgdir
-      @pkg["config"].as_h.each_key do |var|
+      pkg_config.as_h.each_key do |var|
         conf.set var.to_s, @vars[var.to_s] if @vars[var.to_s]?
       end
     end

@@ -2,7 +2,7 @@ require "./spec_helper"
 
 describe Utils do
   it "changes the permissions of the directory recursively" do
-    path = Dir.current + "/chmod_r_test"
+    path = __DIR__ + "/chmod_r_test"
     begin
       Dir.mkdir path
       Dir.mkdir File.join(path, "a")

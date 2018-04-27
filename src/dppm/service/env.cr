@@ -31,6 +31,6 @@ module Service::Env
 
   def get(env_vars, var)
     vars = parse_vars env_vars
-    vars[var]? ? vars[var] : raise "can't get #{var} from #{env_vars}"
+    (var = vars[var]?) ? var : raise "can't get #{var} from #{env_vars}"
   end
 end

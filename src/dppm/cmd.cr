@@ -131,8 +131,7 @@ module Cmd
         # use globs while executing a command
       when "glob"
         cmd1 = cmd[1]
-        if cmd[3]?
-          dir = cmd[3]
+        if dir = cmd[3]?
           Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry} #{dir}/#{File.basename entry}" }
         else
           Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry}" }

@@ -155,10 +155,13 @@ struct Command
         puts package if package =~ /^[a-z]+$/
       end
     when "cache"
-      if ARGV[1]? =~ /^pkgsrc=(.*)/
-        Command.cache $1 { |log_type, title, msg| log log_type, title, msg }
-      elsif ARGV[1]? =~ /^--config=(.*)/
-        Command.cache(YAML.parse(File.read $1)["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+      case ARGV[1]?
+      when nil
+        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+      when .starts_with? "pkgsrc="
+        Command.cache ARGV[1][7..-1] { |log_type, title, msg| log log_type, title, msg }
+      when .starts_with? "--config="
+        Command.cache(YAML.parse(File.read ARGV[1][9..-1])["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
       else
         Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
       end

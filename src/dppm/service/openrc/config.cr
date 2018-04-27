@@ -97,7 +97,9 @@ class Service::OpenRC::Config
   end
 
   def env_get(env)
-    Service::Env.get @section["env"], env if @section["env"]?
+    if env_section = @section["env"]?
+      Service::Env.get env_section, env
+    end
   end
 
   def env_set(env, value)

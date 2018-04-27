@@ -19,8 +19,8 @@ struct Tasks::Deps
         newvers = Array(String).new
 
         # If an array of versions is already provided by a dependency
-        if allvers[dep]?
-          allvers[dep].each do |ver|
+        if dep_vers = allvers[dep]?
+          dep_vers.each do |ver|
             newvers << ver if SemanticCompare.expression ver, pkgdeps[dep].to_s
           end
         else

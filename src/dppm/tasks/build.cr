@@ -23,8 +23,8 @@ struct Tasks::Build
     @name = vars["name"] = "#{@package}_#{@version}"
     @pkgdir = vars["pkgdir"] = "#{@prefix}/#{@name}"
 
-    @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && @pkg["version"]["alias"][Localhost.arch]?
-                                         @pkg["version"]["alias"][Localhost.arch].as_s
+    @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && version_alias @pkg["version"]["alias"][Localhost.arch].as_s?
+                                         version_alias
                                        else
                                          Localhost.arch
                                        end
@@ -39,10 +39,8 @@ struct Tasks::Build
   end
 
   private def getversion
-    if @vars["version"]?
-      ver = @vars["version"]
-    elsif @vars["tag"]?
-      tag = @vars["tag"]
+    if ver = @vars["version"]?
+    elsif tag = @vars["tag"]?
     elsif tag = @vars["package"].split(':')[1]?
       ver = tag if tag =~ /^([0-9]+\.[0-9]+\.[0-9]+)/
       # Set a default tag if not set

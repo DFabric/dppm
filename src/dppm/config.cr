@@ -15,8 +15,7 @@ module ConfFile
              raise "not supported file format: " + file
            end
     keys.each do |key|
-      return if !data[key]?
-      data = data[key]
+      return unless data = data[key]?
     end
     data
   end

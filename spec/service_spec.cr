@@ -1,7 +1,8 @@
 require "./spec_helper"
 
 describe Service do
-  path = Dir.current + "/service_test/"
+  Dir.cd __DIR__
+  path = __DIR__ + "/service_test/"
   library = path + "lib/library/bin"
   Dir.mkdir_p library
 
@@ -22,7 +23,7 @@ describe Service do
       service = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.create(YAML.parse(File.read "./samples/package/pkg.yml"), vars) { |a, b, c| nil }
+        Service::{{sysinit.id}}.create(YAML.parse(File.read "../samples/package/pkg.yml"), vars) { |a, b, c| nil }
       end
 
       it "parses the service" do
