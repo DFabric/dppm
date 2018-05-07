@@ -14,7 +14,6 @@ struct Tasks::Add
     # Build missing dependencies
     @log.call "INFO", "checking dependencies", @package
     @build = Tasks::Build.new vars.dup, &@log
-    puts vars
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
     @deps = @build.deps
@@ -43,12 +42,13 @@ struct Tasks::Add
     if pkg_config = @pkg["config"]?
       conf = ConfFile::Config.new "#{CACHE}/#{@package}"
       pkg_config.as_h.each_key do |var|
-        if !@vars[var.to_s]?
-          key = conf.get(var.to_s).to_s
+        variable = var.to_s
+        if !@vars[variable]?
+          key = conf.get(variable).to_s
           if key.empty?
-            unset_vars << var.to_s
+            unset_vars << variable
           else
-            @vars[var.to_s] = key
+            @vars[variable] = key
             @log.call "INFO", "default value set for unset variable", var.to_s + ": " + @vars[var.to_s]
           end
         end
@@ -110,7 +110,8 @@ struct Tasks::Add
     if pkg_config = @pkg["config"]?
       conf = ConfFile::Config.new @pkgdir
       pkg_config.as_h.each_key do |var|
-        conf.set var.to_s, @vars[var.to_s] if @vars[var.to_s]?
+        variable = var.to_s
+        conf.set variable, @vars[variable] if @vars[variable]?
       end
     end
 
@@ -129,7 +130,9 @@ struct Tasks::Add
 
     # Running the add task
     @log.call "INFO", "running configuration tasks", @package
-    Cmd::Run.new(@pkg["tasks"]["add"].as_a, @vars.dup, &@log) if @pkg["tasks"]["add"]?
+    if add_task = @pkg["tasks"]["add"]?
+      Cmd::Run.new(add_task.as_a, @vars.dup, &@log)
+    end
 
     # Set the user and group owner
     Utils.chown_r @pkgdir, Owner.to_id(@vars["user"], "uid"), Owner.to_id(@vars["group"], "gid")

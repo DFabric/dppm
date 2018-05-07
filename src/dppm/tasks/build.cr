@@ -23,7 +23,7 @@ struct Tasks::Build
     @name = vars["name"] = "#{@package}_#{@version}"
     @pkgdir = vars["pkgdir"] = "#{@prefix}/#{@name}"
 
-    @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && version_alias @pkg["version"]["alias"][Localhost.arch].as_s?
+    @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && (version_alias = @pkg["version"]["alias"][Localhost.arch].as_s?)
                                          version_alias
                                        else
                                          Localhost.arch
@@ -35,7 +35,7 @@ struct Tasks::Build
     end
     # keep the latest ones for each dependency
     @log.call "INFO", "calculing package dependencies", @package
-    Tasks::Deps.new(&@log).get(YAML.parse(File.read "#{CACHE}/#{@package}/pkg.yml"), @pkgdir).map { |k, v| @deps[k] = v[0] }
+    Tasks::Deps.new(&@log).get(YAML.parse(File.read "#{CACHE}/#{@package}/pkg.yml"), @pkgdir).each { |k, v| @deps[k] = v[0] }
   end
 
   private def getversion
@@ -85,17 +85,18 @@ struct Tasks::Build
     # Build dependencies
     Tasks::Deps.new(&@log).build @vars.reject("--contained"), @deps
 
-    if @pkg["tasks"]? && @pkg["tasks"]["build"]?
+    if @pkg["tasks"]? && (build_task = @pkg["tasks"]["build"]?)
       @log.call "INFO", "building", @package
-      Cmd::Run.new @pkg["tasks"]["build"].as_a, @vars, &@log
+      Cmd::Run.new build_task.as_a, @vars, &@log
       # Standard package build
     else
       @log.call "INFO", "standard building", @package
       Dir.cd @pkgdir do
+        package_mirror = @vars["mirror"] + package + ".tar.xz"
         package = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
-        @log.call "INFO", "downloading", @vars["mirror"] + package + ".tar.xz"
-        HTTPget.file @vars["mirror"] + package + ".tar.xz"
-        @log.call "INFO", "extracting", @vars["mirror"] + package + ".tar.xz"
+        @log.call "INFO", "downloading", package_mirror
+        HTTPget.file package_mirror
+        @log.call "INFO", "extracting", package_mirror
         Exec.new "/bin/tar", ["Jxf", package + ".tar.xz"]
         Dir[package + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
         File.delete package + ".tar.xz"

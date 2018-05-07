@@ -67,7 +67,7 @@ Intall dependencies:
 
 Build a `dppm` executable:
 
-`crystal build src/dppm.cr -o dppm`
+`crystal build src/dppm.cr`
 
 Run it
 

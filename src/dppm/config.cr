@@ -28,14 +28,18 @@ module ConfFile
       File.write file, INI.build(ini(INI.parse(data), keys, value), space)
     when "json"
       val = Utils.to_type value
-      val = Hash(String, JSON::Type).new if val.is_a? Hash(String, String)
-      val = Array(JSON::Type).new if val.is_a? Array(String)
+      case val
+      when .is_a? Hash(String, String) then val = Hash(String, JSON::Type).new
+      when .is_a? Array(String)        then val = Array(JSON::Type).new
+      end
 
       File.write file, json(JSON.parse(data), keys, val).to_pretty_json
     when "yml", "yaml"
       val = Utils.to_type value
-      val = Hash(YAML::Type, YAML::Type).new if val.is_a? Hash(String, String)
-      val = Array(YAML::Type).new if val.is_a? Array(String)
+      case val
+      when .is_a? Hash(String, String) then val = Hash(YAML::Type, YAML::Type).new
+      when .is_a? Array(String)        then val = Array(YAML::Type).new
+      end
 
       File.write file, json(YAML.parse(data), keys, val).to_yaml
     else

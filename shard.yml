@@ -12,8 +12,6 @@ dependencies:
     github: mamantoha/crest
   exec:
     github: j8r/exec.cr
-  router:
-    github: tbrand/router.cr
   semantic_compare:
     github: j8r/semantic_compare
 

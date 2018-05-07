@@ -5,7 +5,7 @@ module Tasks
     log.call "INFO", "initializing", task
     vars.merge! Localhost.vars
     vars["package"] = package
-    vars["prefix"] = Dir.current if !vars["prefix"]?
+    vars["prefix"] ||= Dir.current
 
     # Update cache if older than 2 days
     if !(File.exists?(CACHE) || File.symlink?(CACHE)) ||

@@ -3,8 +3,10 @@ module Version
 
   def get(kernel, arch, pkg)
     # Set src and regex
-    src = pkg["self"]["src"] if pkg["self"]? && pkg["self"]["src"]?
-    regex = pkg["self"]["regex"] if pkg["self"]? && pkg["self"]["regex"]?
+    if hash = pkg["self"]?
+      src = hash["src"]?
+      regex = hash["regex"]?
+    end
 
     if pkg[kernel]?
       regex = pkg[kernel][arch] if !regex
@@ -12,8 +14,9 @@ module Version
     elsif !src && !regex
       raise "unsupported kernel: " + kernel
     end
-    if src && src.as_a?
-      src.as_a.map { |s| s.to_s }
+
+    if src && (src_array = src.as_a?)
+      src_array.map &.to_s
     else
       HTTPget.string(src.to_s).split('\n').map do |line|
         /#{regex}/.match(line).not_nil![0] if line =~ /#{regex}/
