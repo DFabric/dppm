@@ -16,9 +16,9 @@
 
 # Install
 
-For now only the x86-64 architecture is available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467) to support `armhf` and `arm64`.
+For now the `x86-64` and `arm64`(thanks to [@jirutka](https://github.com/jirutka)) architectures are available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467), `armhf` is work in progress.
 
-Hopefully there are recent progress on both architectures, DPPM will be available on soon! The `arm64` support is now merged.
+You can still use DPPM on a Rapberry Pi 3 by using a 64-bit OS (Raspbian is for now only 32-bit).
 
 ## Automatic
 
