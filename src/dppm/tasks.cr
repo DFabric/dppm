@@ -1,8 +1,8 @@
 module Tasks
   extend self
 
-  def init(task, package, vars, &log : String, String, String -> Nil)
-    log.call "INFO", "initializing", task
+  def init(task, package, vars)
+    Log.info "initializing", task
     vars.merge! Localhost.vars
     vars["package"] = package
     vars["prefix"] ||= Dir.current
@@ -10,15 +10,15 @@ module Tasks
     # Update cache if older than 2 days
     if !(File.exists?(CACHE) || File.symlink?(CACHE)) ||
        Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(CACHE).ctime.to_s("%Y%m%d").to_i > 2
-      Command.cache vars["pkgsrc"], &log
+      Command.cache vars["pkgsrc"]
     end
 
     case task
-    when "a", "add"   then Add.new vars, &log
-    when "b", "build" then Build.new vars, &log
+    when "a", "add"   then Add.new vars
+    when "b", "build" then Build.new vars
       # Install regroup build + add
-      # when "m", "migrate" then Migrate.new vars, &log
-    when "d", "delete" then Delete.new vars, &log
+      # when "m", "migrate" then Migrate.new vars
+    when "d", "delete" then Delete.new vars
     else
       raise "task not supported: " + task
     end

@@ -4,7 +4,7 @@ require "semantic_compare"
 struct Tasks::Deps
   getter log
 
-  def initialize(&@log : String, String, String -> Nil)
+  def initialize
   end
 
   def get(pkg, pkgdir, allvers = Hash(String, Array(String)).new)
@@ -14,7 +14,7 @@ struct Tasks::Deps
 
     pkgdeps.each_key do |dep|
       if !File.exists? pkgdir + "/lib/#{dep}"
-        log.call "INFO", "calculing dependency", dep.to_s
+        Log.info "calculing dependency", dep.to_s
         yaml = YAML.parse File.read "#{CACHE}/#{dep}/pkg.yml"
         newvers = Array(String).new
 
@@ -42,7 +42,7 @@ struct Tasks::Deps
   end
 
   def build(vars, deps)
-    log.call "INFO", "dependencies", "building"
+    Log.info "dependencies", "building"
     Dir.mkdir_p vars["pkgdir"] + "/lib"
 
     contained = vars.has_key?("--contained") ? true : false
@@ -52,19 +52,19 @@ struct Tasks::Deps
       deppath = "#{vars["prefix"]}/#{dep}_#{ver}"
       depdir = "#{vars["pkgdir"]}/lib/#{dep}_#{ver}"
       if Dir.exists? deppath
-        log.call "INFO", "already present", dep + '_' + ver
+        Log.info "already present", dep + '_' + ver
         FileUtils.cp_r deppath, depdir if contained
       else
-        log.call "INFO", "building dependency", deppath
+        Log.info "building dependency", deppath
         Tasks::Build.new(vars.merge({"package" => dep,
-                                     "version" => ver}), &log).run
+                                     "version" => ver})).run
         File.rename deppath, depdir if contained
       end
       if !File.exists? "#{vars["pkgdir"]}/lib/#{dep}"
-        log.call "INFO", "adding symlink to dependency", "#{dep}:#{ver}"
+        Log.info "adding symlink to dependency", "#{dep}:#{ver}"
         File.symlink(contained ? depdir : deppath, "#{vars["pkgdir"]}/lib/#{dep}")
       end
-      log.call "INFO", "dependency added", "#{dep}:#{ver}"
+      Log.info "dependency added", "#{dep}:#{ver}"
     end
   end
 end

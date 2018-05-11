@@ -6,7 +6,7 @@ describe Cmd::Run do
   Dir.mkdir path
   Dir.cd path
   File.write "test_file", "data"
-  cmd = Cmd::Run.new(Array(String).new, {"pkgdir" => path}) { |a, b, c| nil }
+  cmd = Cmd::Run.new(Array(String).new, {"pkgdir" => path})
 
   describe "command" do
     it "current" do

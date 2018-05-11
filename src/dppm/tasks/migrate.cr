@@ -5,29 +5,29 @@ struct Tasks::Migrate
   @old_version : String
   @package : String
 
-  def initialize(vars, &@log : String, String, String -> Nil)
+  def initialize(vars)
     @package = vars["package"]
     @old_pkgdir = vars["prefix"] + '/' + @package
     @old_version = Pkg.new(@package).version
     Tasks.pkg_exists? @old_pkgdir
 
-    @add = Tasks::Add.new(@build.vars, &@log)
+    @add = Tasks::Add.new(@build.vars)
 
-    Localhost.service.check_availability @build.pkg["type"], @build.package, &log
+    Localhost.service.check_availability @build.pkg["type"], @build.package
     # begin
     #   if SemanticCompare.version @old_version, '<' + @build.version
-    #     @log.call "INFO", "upgrading from " + @old_version, @build.version
+    #     Log.info "upgrading from " + @old_version, @build.version
     #   elsif SemanticCompare.version @old_version, '>' + @build.version
-    #     @log.call "WARN", "downgraging from " + @old_version, @build.version
+    #     Log.warn "downgraging from " + @old_version, @build.version
     #   elsif SemanticCompare.version @old_version, @build.version
-    #     @log.call "WARN", "use of the `clone` task recommended instead of `migrate`", "using the same version " + @old_version
+    #     Log.warn "use of the `clone` task recommended instead of `migrate`", "using the same version " + @old_version
     #   else
     #     raise "error"
     #   end
     # rescue
     #   @log.call "WARN", "can't compare the semantic versions ", @old_version + " - " + @build.version
     # end
-    @log.call "INFO", "temporary build name for " + @package, vars["name"]
+    Log.info "temporary build name for " + @package, vars["name"]
   end
 
   def simulate
@@ -41,6 +41,6 @@ struct Tasks::Migrate
 
     # Change the name of the package to the original
 
-    Tasks::Add.new(@build.vars, &@log).run
+    Tasks::Add.new(@build.vars).run
   end
 end

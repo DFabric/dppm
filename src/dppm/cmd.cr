@@ -25,7 +25,7 @@ module Cmd
   class Run
     @extvars = Hash(String, String).new
 
-    def initialize(yaml : Array, @vars : Hash(String, String), &@log : String, String, String -> Nil)
+    def initialize(yaml : Array, @vars : Hash(String, String))
       # Create a PATH variable
       @vars = @vars.map { |k, v| [k.upcase, v] }.to_h
       @vars.each { |k, v| @extvars["${#{k}}"] = v }
@@ -47,12 +47,12 @@ module Cmd
             @extvars["${#{$1}}"] = @vars[$1]
             # Print string
           elsif line[0..3] == "echo"
-            @log.call "INFO", "echo", "#{command(line[5..-1])}\n"
+            Log.info "echo", "#{command(line[5..-1])}\n"
           else
             cmd = var line
-            @log.call "INFO", "execute", cmd
+            Log.info "execute", cmd
             output = command cmd
-            @log.call "INFO", "output ", command(cmd).to_s if output != nil && output != 0
+            Log.info "output ", command(cmd).to_s if output != nil && output != 0
           end
           # New condition block
         when .is_a? Hash

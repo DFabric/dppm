@@ -1,18 +1,18 @@
 module Service
-  def check_availability(pkgtype, package, &log : String, String, String -> Nil)
+  def check_availability(pkgtype, package)
     if pkgtype != "app"
       raise "only applications can be added to the system"
     elsif system.new(package).exists?
       raise "system service already exist: " + package
     elsif !writable?
-      log.call "WARN", "system service unavailable", "root execution needed"
+      Log.warn "system service unavailable", "root execution needed"
     end
   end
 
-  def creation(sysinit_hash, pkg, vars, &log : String, String, String -> Nil)
+  def creation(sysinit_hash, pkg, vars)
     Dir.mkdir_p vars["pkgdir"] + "/etc/init"
 
-    log.call "INFO", "creating services for #{name}", "etc/init/" + name
+    Log.info "creating services for #{name}", "etc/init/" + name
 
     # Set service options
     {description:   pkg["description"].as_s,
@@ -40,17 +40,17 @@ module Service
     sysinit_hash
   end
 
-  def delete(service, &log : String, String, String -> Nil)
-    log.call "INFO", "deleting the system service", service
+  def delete(service)
+    Log.info "deleting the system service", service
     if writable?
-      service = system.new(service)
+      service = system.new service
       service.run false if service.run?
       service.boot false if service.boot?
 
       File.delete service.file
       Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"] if Localhost.service.name == "systemd"
     else
-      log.call "WARN", "root execution needed for system service deletion", service
+      Log.info "root execution needed for system service deletion", service
     end
   end
 end

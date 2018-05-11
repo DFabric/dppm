@@ -23,7 +23,7 @@ describe Service do
       service = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.create(YAML.parse(File.read "../samples/package/pkg.yml"), vars) { |a, b, c| nil }
+        Service::{{sysinit.id}}.create(YAML.parse(File.read "../samples/package/pkg.yml"), vars)
       end
 
       it "parses the service" do

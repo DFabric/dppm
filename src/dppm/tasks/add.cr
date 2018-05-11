@@ -8,12 +8,12 @@ struct Tasks::Add
   getter vars : Hash(String, String)
   @deps = Hash(String, String).new
 
-  def initialize(@vars, &@log : String, String, String -> Nil)
+  def initialize(@vars)
     @prefix = vars["prefix"]
 
     # Build missing dependencies
-    @log.call "INFO", "checking dependencies", @package
-    @build = Tasks::Build.new vars.dup, &@log
+    Log.info "checking dependencies", @package
+    @build = Tasks::Build.new vars.dup
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
     @deps = @build.deps
@@ -31,11 +31,11 @@ struct Tasks::Add
     @name = vars["name"]
     @pkgdir = @vars["pkgdir"] = "#{@prefix}/#{@name}"
 
-    @log.call "INFO", "calculing informations", "#{CACHE}/#{@package}/pkg.yml"
+    Log.info "calculing informations", "#{CACHE}/#{@package}/pkg.yml"
 
     # Checks
     raise "directory already exists: " + @pkgdir if File.exists? @pkgdir
-    Localhost.service.check_availability @pkg["type"], @name, &log
+    Localhost.service.check_availability @pkg["type"], @name
 
     # Default variables
     unset_vars = Array(String).new
@@ -49,12 +49,12 @@ struct Tasks::Add
             unset_vars << variable
           else
             @vars[variable] = key
-            @log.call "INFO", "default value set for unset variable", var.to_s + ": " + @vars[var.to_s]
+            Log.info "default value set for unset variable", var.to_s + ": " + @vars[var.to_s]
           end
         end
       end
     end
-    @log.call "WARN", "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
+    Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
     @vars["port"] = port if vars["port"]?
   end
 
@@ -72,7 +72,7 @@ struct Tasks::Add
 
   private def port
     raise "the port must be an Int32 number: " + port if !@vars["port"].to_i?
-    Localhost.port(@vars["port"].to_i, &@log).to_s
+    Localhost.port(@vars["port"].to_i).to_s
   end
 
   def simulate
@@ -83,7 +83,7 @@ struct Tasks::Add
   end
 
   def run
-    @log.call "INFO", "adding to the system", @name
+    Log.info "adding to the system", @name
 
     # Create the new application
     @build.run if !@build.exists
@@ -91,10 +91,10 @@ struct Tasks::Add
     File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
     File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
 
-    Tasks::Deps.new(&@log).build @vars.dup, @deps
+    Tasks::Deps.new.build @vars.dup, @deps
 
     # Copy configurations
-    @log.call "INFO", "copying configurations", @name
+    Log.info "copying configurations", @name
     {"/etc", "/srv", "/log"}.each do |dir|
       if !File.exists? @pkgdir + dir
         if File.exists? @build.pkgdir + dir
@@ -106,7 +106,7 @@ struct Tasks::Add
     end
 
     # Set configuration variables in files
-    @log.call "INFO", "setting configuration variables", @name
+    Log.info "setting configuration variables", @name
     if pkg_config = @pkg["config"]?
       conf = ConfFile::Config.new @pkgdir
       pkg_config.as_h.each_key do |var|
@@ -125,13 +125,13 @@ struct Tasks::Add
       Dir.mkdir @pkgdir + "/etc/php-fpm.d" if !File.exists? @pkgdir + "/etc/php-fpm.d"
       FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "/etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "/etc/php-fpm.d/www.conf"
 
-      Cmd::Run.new @pkg["tasks"]["build"].as_a, @vars.dup, &@log
+      Cmd::Run.new @pkg["tasks"]["build"].as_a, @vars.dup
     end
 
     # Running the add task
-    @log.call "INFO", "running configuration tasks", @package
+    Log.info "running configuration tasks", @package
     if add_task = @pkg["tasks"]["add"]?
-      Cmd::Run.new(add_task.as_a, @vars.dup, &@log)
+      Cmd::Run.new(add_task.as_a, @vars.dup)
     end
 
     # Set the user and group owner
@@ -139,13 +139,13 @@ struct Tasks::Add
 
     # Create system services
     if Localhost.service.writable?
-      Localhost.service.create @pkg, @vars, &@log
+      Localhost.service.create @pkg, @vars
       Localhost.service.system.new(@name).link @pkgdir
-      @log.call "INFO", Localhost.service.name + " system service added", @name
+      Log.info Localhost.service.name + " system service added", @name
     else
-      @log.call "WARN", "root execution needed for system service addition", @name
+      Log.warn "root execution needed for system service addition", @name
     end
 
-    @log.call "INFO", "add completed", @pkgdir
+    Log.info "add completed", @pkgdir
   end
 end

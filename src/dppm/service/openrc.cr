@@ -10,8 +10,8 @@ module Service::OpenRC
     Config
   end
 
-  def create(pkg, vars, &log : String, String, String -> Nil)
-    sysinit_hash = creation Config.new(vars["pkgdir"] + "/etc/init/openrc", file: true), pkg, vars, &log
+  def create(pkg, vars)
+    sysinit_hash = creation Config.new(vars["pkgdir"] + "/etc/init/openrc", file: true), pkg, vars
 
     # Convert back hashes to service files
     File.write vars["pkgdir"] + "/etc/init/openrc", sysinit_hash.build

@@ -133,9 +133,9 @@ struct Command
   def run
     case ARGV[0]?
     when "a", "add", "b", "build", "d", "delete"
-      error "package name: none provided" if !ARGV[1]?
-      task = Tasks.init(ARGV[0], ARGV[1], arg_parser(ARGV[2..-1])) { |log_type, title, msg| log log_type, title, msg }
-      log "INFO", ARGV[0], task.simulate
+      Log.error "package name: none provided" if !ARGV[1]?
+      task = Tasks.init ARGV[0], ARGV[1], arg_parser(ARGV[2..-1])
+      Log.info ARGV[0], task.simulate
       task.run if @noconfirm || Tasks.confirm ARGV[0]
     when "m", "migrate"
       puts "implemented soon!"
@@ -157,13 +157,13 @@ struct Command
     when "cache"
       case ARGV[1]?
       when nil
-        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s)
       when .starts_with? "pkgsrc="
-        Command.cache ARGV[1][7..-1] { |log_type, title, msg| log log_type, title, msg }
+        Command.cache ARGV[1][7..-1]
       when .starts_with? "--config="
-        Command.cache(YAML.parse(File.read ARGV[1][9..-1])["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+        Command.cache(YAML.parse(File.read ARGV[1][9..-1])["pkgsrc"].as_s)
       else
-        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s) { |log_type, title, msg| log log_type, title, msg }
+        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s)
       end
     when "pkg"
       puts "no implemented yet"
@@ -181,10 +181,10 @@ struct Command
       exit 1
     else
       puts USAGE
-      error "unknown command: " + ARGV.first?.to_s
+      Log.error "unknown command: #{ARGV.first?}"
     end
   rescue ex
-    error ex.to_s
+    Log.error ex.to_s
   end
 
   def arg_parser(vars : Array(String))
@@ -214,17 +214,17 @@ struct Command
   end
 
   # Download a cache of package sources
-  def self.cache(pkgsrc, check = false, &log : String, String, String -> Nil)
+  def self.cache(pkgsrc, check = false)
     FileUtils.rm_r CACHE if File.exists? CACHE
     if Utils.is_http? pkgsrc
       HTTPget.file pkgsrc, CACHE + ".tar.gz"
       Exec.new("/bin/tar", ["zxf", CACHE + ".tar.gz", "-C", "/tmp/"]).out
       File.delete CACHE + ".tar.gz"
       File.rename Dir["/tmp/*package-sources*"][0], CACHE
-      yield "INFO", "cache updated", CACHE
+      Log.info "cache updated", CACHE
     else
       File.symlink File.real_path(pkgsrc), CACHE
-      yield "INFO", "symlink added from `#{File.real_path(pkgsrc)}`", CACHE
+      Log.info "symlink added from `#{File.real_path(pkgsrc)}`", CACHE
     end
   end
 
@@ -242,21 +242,5 @@ struct Command
   private def server
     # Server.new.run
     puts "api server not implemented yet"
-  end
-
-  def log(log_type, title, msg) : Nil
-    # This is for the case where the main  is wrong
-    puts case log_type
-    when "INFO" then "INFO".colorize.blue.mode(:bold).to_s + ' ' + title.colorize.white.to_s
-    when "WARN" then "WARN".colorize.yellow.mode(:bold).to_s + ' ' + title.colorize.white.mode(:bold).to_s
-    else
-      raise "unknown log type: " + log_type
-    end + ": " + msg
-  end
-
-  def error(msg, exit_code = 1)
-    # This is for the case where the main  is wrong
-    STDERR.puts "ERR!".colorize.red.mode(:bold).to_s + ' ' + msg.colorize.light_magenta.to_s
-    exit exit_code
   end
 end

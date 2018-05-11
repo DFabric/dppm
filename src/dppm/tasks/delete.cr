@@ -6,7 +6,7 @@ struct Tasks::Delete
   @service_path : String
   @service = false
 
-  def initialize(vars, &@log : String, String, String -> Nil)
+  def initialize(vars)
     @prefix = vars["prefix"]
     @package = vars["package"].gsub(':', '_')
     @pkgdir = @prefix + '/' + @package
@@ -16,10 +16,10 @@ struct Tasks::Delete
     @service_path = Localhost.service.system.new(@package).file
     if File.exists?(@service_path) &&
        File.real_path(@service_path) == @pkgdir + "/etc/init/" + Localhost.service.name.downcase
-      log.call "INFO", "a system service is found", @package
+      Log.info "a system service is found", @package
       @service = true
     elsif !@package.includes? '_'
-      log.call "WARN", "no system service found", @package
+      Log.warn "no system service found", @package
     end
   end
 
@@ -32,8 +32,8 @@ struct Tasks::Delete
   end
 
   def run
-    Localhost.service.delete @package, &@log if @service
+    Localhost.service.delete @package if @service
     FileUtils.rm_rf @prefix + '/' + @package
-    @log.call "INFO", "deleted", @prefix + '/' + @package
+    Log.info "deleted", @prefix + '/' + @package
   end
 end
