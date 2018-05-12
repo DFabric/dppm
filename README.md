@@ -9,19 +9,20 @@
 
 # Features
 
-- easy install, modification and backup of the applications
+- choice among [dozens of applications](https://github.com/DFabric/package-sources)
+- easy install, backup and modification of configurations
 - support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
 - can use systemd or OpenRC for system services
 - independent of your system's package manager
+- standalone installations bundled with all dependencies - DDPM can be safely removed
 
 # Install
 
-For now the `x86-64` and `arm64`(thanks to [@jirutka](https://github.com/jirutka)) architectures are available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467), `armhf` is work in progress.
+For now the `x86-64` and `arm64`(thanks to [@jirutka](https://github.com/jirutka)) architectures are available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467) - `armhf` is work in progress.
 
 You can still use DPPM on a Rapberry Pi 3 by using a 64-bit OS (Raspbian is for now only 32-bit).
 
 ## Automatic
-
 Download `dppm` with the helper:
 
 `sh -c "APP=dppm-static $(wget -qO- https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh)"`
@@ -61,7 +62,11 @@ Root execution is needed to add a system service (systemd or OpenRC)
 
 # How to build
 
-Intall dependencies:
+You will need a [Crystal](https://crystal-lang.org) development environment
+
+You can either [install it](https://crystal-lang.org/docs/installation) or use a [Docker image](https://hub.docker.com/r/jrei/crystal-alpine)
+
+Install dependencies:
 
 `shards install`
 
