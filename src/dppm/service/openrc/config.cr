@@ -67,11 +67,12 @@ class Service::OpenRC::Config
   end
 
   def set(name, value)
-    if name == "command"
+    case name
+    when "command"
       command = value.split ' '
       @section["command"] = command[0]
       @section["command_args"] = command[1..-1].join ' '
-    elsif name == "reload"
+    when "reload"
       @section["extra_started_commands"] = ["reload"]
       @section["reload"] = ["ebegin \"Reloading $RC_SVCNAME\"",
                             "supervise-daemon --signal #{value} --pidfile \"$pidfile\"",
@@ -82,12 +83,13 @@ class Service::OpenRC::Config
         @section[keys[0]] = value
       elsif keys.size == 2
         subdata = @section[keys[0]]
-        if subdata.is_a? Hash(String, String)
+        case subdata
+        when .is_a? Hash(String, String)
           subdata[keys[1]] = value
-        elsif subdata.is_a? Hash(String, Array(String))
+        when .is_a? Hash(String, Array(String))
           subdata[keys[1]] << value
         else
-          raise "unknown type: " + subdata.to_s
+          raise "unknown type: #{subdata}"
         end
         @section[keys[0]] = subdata
       else

@@ -5,14 +5,14 @@ require "yaml"
 module ConfFile
   extend self
 
-  def get(file, keys : Array, config = "")
+  def get(file, keys : Array, format = File.extname(file).lchop)
     data = File.read file
-    data = case config.empty? ? file.split('.')[-1] : config
+    data = case format.empty? ? File.extname(file) : format
            when "ini", "INI"  then INI.parse data
            when "json"        then JSON.parse data
            when "yml", "yaml" then YAML.parse data
            else
-             raise "not supported file format: " + file
+             raise "not supported file format: " + format
            end
     keys.each do |key|
       return unless data = data[key]?
@@ -20,9 +20,9 @@ module ConfFile
     data
   end
 
-  def set(file, keys : Array, value, config = "")
+  def set(file, keys : Array, value, format = File.extname(file).lchop)
     data = File.read file
-    case config.empty? ? file.split('.')[-1] : config
+    case format.empty? ? File.extname(file) : format
     when "ini", "INI"
       space = data.includes?(" = ") ? true : false
       File.write file, INI.build(ini(INI.parse(data), keys, value), space)
@@ -43,24 +43,25 @@ module ConfFile
 
       File.write file, json(YAML.parse(data), keys, val).to_yaml
     else
-      raise "not supported file format: " + file
+      raise "not supported file format: " + format
     end
   end
 
-  def del(file, keys : Array, config = "")
+  def del(file, keys : Array, format = File.extname(file).lchop)
     data = File.read file
 
-    conf = config.empty? ? File.extname(file) : config
-    File.write file, case conf
+    case format
     when "ini", "INI"
       data = INI.parse data
       case keys.size
       when 1 then data.delete keys[0]
       when 2 then data[keys[0]].to_h.delete keys[1]
       end
-      INI.build data
-    when "json"        then del_json(JSON.parse(data), keys).to_pretty_json
-    when "yml", "yaml" then del_json(YAML.parse(data), keys).to_yaml
+      File.write file, INI.build data
+    when "json"        then File.write file, del_json(JSON.parse(data), keys).to_pretty_json
+    when "yml", "yaml" then File.write file, del_json(YAML.parse(data), keys).to_yaml
+    else
+      raise "not supported file format: " + format
     end
   end
 

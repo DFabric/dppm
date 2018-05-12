@@ -84,10 +84,9 @@ struct Tasks::Build
 
     # Build dependencies
     Tasks::Deps.new.build @vars.reject("--contained"), @deps
-
     if @pkg["tasks"]? && (build_task = @pkg["tasks"]["build"]?)
       Log.info "building", @package
-      Cmd::Run.new build_task.as_a, @vars
+      Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run build_task.as_a }
       # Standard package build
     else
       Log.info "standard building", @package

@@ -1,14 +1,13 @@
 class Service::OpenRC::Config
-  @extras = ["extra_command", "extra_started_commands", "extra_stopped_commands"]
+  @extras = {"extra_command", "extra_started_commands", "extra_stopped_commands"}
 
-  def parse(data)
-    line_number = 0
+  private def parse(data)
+    line_number = 1
     function_name = ""
     function = Array(String).new
     depend = Hash(String, Array(String)).new
 
     data.each_line do |full_line|
-      line_number += 1
       line = full_line.lstrip "\t "
       if line.starts_with? "--"
         key, val = line.split '\''
@@ -32,6 +31,7 @@ class Service::OpenRC::Config
       elsif line.ends_with? '{'
         function_name = line.split('(')[0]
       end
+      line_number += 1
     rescue
       raise "parse error line #{line_number}: #{full_line}"
     end

@@ -2,9 +2,7 @@ class Service::OpenRC::Config
   def build
     # File.write(file,
     supervise = "\nsupervise_daemon_args=\"\n"
-    functions = ""
-    depend = ""
-    extra = ""
+    functions = depend = extra = ""
 
     String.build do |str|
       str << "#!/sbin/openrc-run\n\n"

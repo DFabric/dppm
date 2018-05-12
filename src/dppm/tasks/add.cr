@@ -125,13 +125,13 @@ struct Tasks::Add
       Dir.mkdir @pkgdir + "/etc/php-fpm.d" if !File.exists? @pkgdir + "/etc/php-fpm.d"
       FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "/etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "/etc/php-fpm.d/www.conf"
 
-      Cmd::Run.new @pkg["tasks"]["build"].as_a, @vars.dup
+      Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run @pkg["tasks"]["build"].as_a }
     end
 
     # Running the add task
     Log.info "running configuration tasks", @package
     if add_task = @pkg["tasks"]["add"]?
-      Cmd::Run.new(add_task.as_a, @vars.dup)
+      Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
     end
 
     # Set the user and group owner

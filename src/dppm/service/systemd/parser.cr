@@ -5,7 +5,7 @@ class Service::Systemd::Config
      "Install" => ["WantedBy", "RequiredBy"]}
   end
 
-  def parse(data)
+  private def parse(data)
     @section = INI.parse data
   end
 end
