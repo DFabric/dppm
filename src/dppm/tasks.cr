@@ -5,20 +5,18 @@ module Tasks
     Log.info "initializing", task
     vars.merge! Localhost.vars
     vars["package"] = package
-    vars["prefix"] ||= Dir.current
+    path = Path.new vars["prefix"]?
+    vars["prefix"] = path.prefix
 
-    # Update cache if older than 2 days
-    if !(File.exists?(CACHE) || File.symlink?(CACHE)) ||
-       Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(CACHE).ctime.to_s("%Y%m%d").to_i > 2
-      Command.cache vars["pkgsrc"]
-    end
+    # Update cache
+    Command.cache vars["pkgsrc"], path.src
 
     case task
-    when "a", "add"   then Add.new vars
-    when "b", "build" then Build.new vars
+    when "a", "add"   then Add.new vars, path
+    when "b", "build" then Build.new vars, path
       # Install regroup build + add
       # when "m", "migrate" then Migrate.new vars
-    when "d", "delete" then Delete.new vars
+    when "d", "delete" then Delete.new vars, path
     else
       raise "task not supported: " + task
     end
@@ -31,5 +29,24 @@ module Tasks
 
   def pkg_exists?(dir)
     raise "doesn't exist: #{dir}/pkg.yml" if !File.exists? dir + "/pkg.yml"
+  end
+
+  struct Path
+    getter app : String
+    getter pkg : String
+    getter src : String
+    getter prefix : String
+
+    def initialize(prefix = "/opt/dppm")
+      @prefix = if prefix.nil?
+                  FileUtils.mkdir_p "/opt/dppm"
+                  "/opt/dppm"
+                else
+                  prefix
+                end
+      @app = @prefix + "/app"
+      @pkg = @prefix + "/pkg"
+      @src = @prefix + "/src"
+    end
   end
 end

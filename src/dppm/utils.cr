@@ -1,6 +1,6 @@
 class String
   def ascii_alphanumeric_underscore?
-    each_char { |char| char.ascii_alphanumeric? || char == '_' || return false }
+    each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return false }
     true
   end
 end
@@ -67,5 +67,10 @@ module Utils
         chown_r src, uid, gid, follow_symlinks
       end
     end
+  end
+  
+  
+  def gen_name(package)
+    package + '_' + UUID.random.to_s.split('-').last
   end
 end

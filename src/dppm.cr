@@ -2,9 +2,9 @@
 require "colorize"
 require "file_utils"
 require "http/client"
-require "option_parser"
 require "openssl"
 require "semantic_version"
+require "uuid"
 require "yaml"
 
 # Third party libraries
@@ -13,7 +13,5 @@ require "exec"
 require "semantic_compare"
 
 require "./dppm/**"
-
-CACHE = "/tmp/dppm-package-sources"
 
 Command.new.run

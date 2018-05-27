@@ -1,7 +1,6 @@
 struct Tasks::Build
   getter package : String
   getter name : String
-  getter prefix : String
   getter pkgdir : String
   getter pkg : YAML::Any
   getter version : String
@@ -9,19 +8,18 @@ struct Tasks::Build
   getter deps = Hash(String, String).new
   @vars : Hash(String, String)
   @arch_alias : String
+  @path : Tasks::Path
 
-  def initialize(@vars)
-    @prefix = @vars["prefix"]
+  def initialize(@vars, @path)
     @package = @vars["package"].split(':')[0]
+    raise "package doesn't exists: " + @package if !File.exists? "#{path.src}/#{@package}/pkg.yml"
 
-    raise "package doesn't exists: " + @package if !File.exists? "#{CACHE}/#{@package}/pkg.yml"
-
-    Log.info "calculing informations", "#{CACHE}/#{@package}/pkg.yml"
-    @pkg = YAML.parse File.read "#{CACHE}/#{@package}/pkg.yml"
+    Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
+    @pkg = YAML.parse File.read "#{path.src}/#{@package}/pkg.yml"
     @version = vars["version"] = getversion.not_nil!
     @vars["package"] = @package
     @name = vars["name"] = "#{@package}_#{@version}"
-    @pkgdir = vars["pkgdir"] = "#{@prefix}/#{@name}"
+    @pkgdir = vars["pkgdir"] = "#{path.pkg}/#{@name}"
 
     @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && (version_alias = @pkg["version"]["alias"][Localhost.arch].as_s?)
                                          version_alias
@@ -35,7 +33,7 @@ struct Tasks::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Tasks::Deps.new.get(YAML.parse(File.read "#{CACHE}/#{@package}/pkg.yml"), @pkgdir).each { |k, v| @deps[k] = v[0] }
+    Tasks::Deps.new(@path).get(@pkg, @pkgdir).each { |k, v| @deps[k] = v[0] }
   end
 
   private def getversion
@@ -80,10 +78,10 @@ struct Tasks::Build
     raise "package already present: " + @pkgdir if @exists
 
     # Copy the sources to the @package directory to build
-    FileUtils.cp_r "#{CACHE}/#{@package}", @pkgdir
+    FileUtils.cp_r "#{@path.src}/#{@package}", @pkgdir
 
     # Build dependencies
-    Tasks::Deps.new.build @vars.reject("--contained"), @deps
+    Tasks::Deps.new(@path).build @vars.reject("--contained"), @deps
     if @pkg["tasks"]? && (build_task = @pkg["tasks"]["build"]?)
       Log.info "building", @package
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run build_task.as_a }
@@ -91,18 +89,22 @@ struct Tasks::Build
     else
       Log.info "standard building", @package
       Dir.cd @pkgdir do
-        package_mirror = @vars["mirror"] + package + ".tar.xz"
-        package = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
+        package_full = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
+        package_archive = package_full + ".tar.xz"
+        package_mirror = @vars["mirror"] + package_archive
         Log.info "downloading", package_mirror
         HTTPget.file package_mirror
         Log.info "extracting", package_mirror
-        Exec.new "/bin/tar", ["Jxf", package + ".tar.xz"]
-        Dir[package + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
-        File.delete package + ".tar.xz"
-        FileUtils.rm_r package
+        Exec.new "/bin/tar", ["Jxf", package_archive]
+        Dir[package_full + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
+        File.delete package_archive
+        FileUtils.rm_r package_full
       end
     end
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     Log.info "build completed", @pkgdir
+  rescue
+    raise "build failed, deleting: " + @pkgdir
+    FileUtils.rm_rf @pkgdir
   end
 end

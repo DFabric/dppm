@@ -1,37 +1,37 @@
 struct Tasks::Add
   getter package : String = ""
   getter name : String
-  getter prefix : String
   getter pkgdir : String
   getter pkg : YAML::Any
   getter version : String
   getter vars : Hash(String, String)
+  @add_user_group = false
   @deps = Hash(String, String).new
+  @path : Tasks::Path
 
-  def initialize(@vars)
-    @prefix = vars["prefix"]
-
+  def initialize(@vars, @path)
     # Build missing dependencies
-    Log.info "checking dependencies", @package
-    @build = Tasks::Build.new vars.dup
+    @build = Tasks::Build.new vars.dup, path
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
     @deps = @build.deps
     @pkg = @build.pkg
-
-    if owner = vars["owner"]?
-      @vars["user"] = @vars["group"] = owner
-    else
-      dir = File.stat Dir.current
-      @vars["user"] ||= Owner.from_id dir.uid, "uid"
-      @vars["group"] ||= Owner.from_id dir.gid, "gid"
-    end
+    Log.info "getting name", @package
 
     getname
     @name = vars["name"]
-    @pkgdir = @vars["pkgdir"] = "#{@prefix}/#{@name}"
+    @pkgdir = @vars["pkgdir"] = "#{path.app}/#{@name}"
 
-    Log.info "calculing informations", "#{CACHE}/#{@package}/pkg.yml"
+    if owner = vars["owner"]?
+      @vars["user"] = @vars["group"] = owner
+    elsif @vars["user"]? || @vars["group"]?
+      raise "either both or none of user and group need to be specified"
+    else
+      @vars["user"] = @vars["group"] = '_' + @name
+      @add_user_group = true
+    end
+
+    Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
 
     # Checks
     raise "directory already exists: " + @pkgdir if File.exists? @pkgdir
@@ -40,7 +40,7 @@ struct Tasks::Add
     # Default variables
     unset_vars = Array(String).new
     if pkg_config = @pkg["config"]?
-      conf = ConfFile::Config.new "#{CACHE}/#{@package}"
+      conf = ConfFile::Config.new "#{path.src}/#{@package}"
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
         if !@vars[variable]?
@@ -63,8 +63,8 @@ struct Tasks::Add
     if @pkg["type"] == "lib"
       raise "only applications can be added to the system"
     elsif @pkg["type"] == "app"
-      @vars["name"] = @package.split(':')[0] if !@vars["name"]?
-      @vars["name"].each_char { |char| char.ascii_alphanumeric? || char == '-' || raise "the name contains other characters than `a-z`, `A-Z`, `0-9` and `-`: #{@vars["name"]}" }
+      @vars["name"] ||= Utils.gen_name @package
+      @vars["name"].ascii_alphanumeric_underscore? || raise "the name contains other characters than `a-z`, `0-9` and `_`: #{@vars["name"]}"
     else
       raise "unknow type: #{@pkg["type"]}"
     end
@@ -84,6 +84,7 @@ struct Tasks::Add
 
   def run
     Log.info "adding to the system", @name
+    FileUtils.mkdir_p [@path.app, @path.pkg]
 
     # Create the new application
     @build.run if !@build.exists
@@ -91,7 +92,7 @@ struct Tasks::Add
     File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
     File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
 
-    Tasks::Deps.new.build @vars.dup, @deps
+    Tasks::Deps.new(@path).build @vars.dup, @deps
 
     # Copy configurations
     Log.info "copying configurations", @name
@@ -134,11 +135,12 @@ struct Tasks::Add
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
     end
 
-    # Set the user and group owner
-    Utils.chown_r @pkgdir, Owner.to_id(@vars["user"], "uid"), Owner.to_id(@vars["group"], "gid")
-
-    # Create system services
     if Localhost.service.writable?
+      # Set the user and group owner
+      Owner.add(@vars["user"], @pkg["description"]) if @add_user_group
+      Utils.chown_r @pkgdir, Owner.to_id(@vars["user"], "uid"), Owner.to_id(@vars["group"], "gid")
+
+      # Create system services
       Localhost.service.create @pkg, @vars
       Localhost.service.system.new(@name).link @pkgdir
       Log.info Localhost.service.name + " system service added", @name
@@ -147,5 +149,8 @@ struct Tasks::Add
     end
 
     Log.info "add completed", @pkgdir
+  rescue
+    raise "add failed, deleting: " + @pkgdir
+    FileUtils.rm_rf @pkgdir
   end
 end

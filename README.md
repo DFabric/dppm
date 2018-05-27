@@ -9,7 +9,7 @@
 
 # Features
 
-- choice among [dozens of applications](https://github.com/DFabric/package-sources)
+- choice among [dozens of applications](https://github.com/DFabric/packages-source)
 - easy install, backup and modification of configurations
 - support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
 - can use systemd or OpenRC for system services
@@ -48,13 +48,12 @@ To list [available packages](https://github.com/DFabric/package-sources) (applic
 A typical installation can be:
 
 ```sh
-# `opt` directory with the `myapp` owner
-dppm add [application] prefix=/opt owner=myapp     # add a new application to the system
-dppm service [application] run true                # start the service
-dppm service [application] boot true               # auto start the service at boot
+dppm add [application]                # add a new application to the system (default: /opt/dppm)
+dppm service [application] run true   # start the service
+dppm service [application] boot true  # auto start the service at boot
 ```
 
-The user and group used by the application here is `myapp`. [Read more about security recommendations](https://github.com/DFabric/docs/blob/master/security/owner.md)
+If not specified, an user, group and application name will be created.
 
 Note that `add` will `build` the missing required packages.
 

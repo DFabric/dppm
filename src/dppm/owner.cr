@@ -1,9 +1,10 @@
 require "file_utils"
+require "uuid"
 
 module Owner
   extend self
 
-  def to_id(id, id_type)
+  def to_id(id, id_type) : Int32
     file = case id_type
            when "uid" then "/etc/passwd"
            when "gid" then "/etc/group"
@@ -19,7 +20,7 @@ module Owner
     end
   end
 
-  def from_id(id, id_type)
+  def from_id(id, id_type) : String
     file = case id_type
            when "uid" then "/etc/passwd"
            when "gid" then "/etc/group"
@@ -35,10 +36,48 @@ module Owner
     end
   end
 
-  def new_user_group(name)
-    passwd = File.read "/etc/passwd"
-    group = File.read "/etc/group"
-    # "/etc/passwd", name + ":x:" + id + ':' + id + "::/:/sbin/nologin"
-    # "/etc/group",  name + ":x:" + id + ':'
+  def all_groups
+    a = Array(Int32).new
+    File.read("/etc/group").each_line do |line|
+      a << line.split(':')[2].to_i
+    end
+    a
+  end
+
+  def all_users
+    a = Array(Int32).new
+    File.read("/etc/passwd").each_line do |line|
+      a << line.split(':', 5)[2].to_i
+    end
+    a
+  end
+
+  def available_id
+    id = 1000
+    users = all_users
+    groups = all_groups
+    while all_users.includes?(id)
+      id += 1
+    end
+    id
+  end
+
+  def add(name, description)
+    id = available_id
+    File.open "/etc/passwd", "a", &.puts "#{name}:x:#{id}:#{id}:#{description}:/:/bin/false"
+    File.open "/etc/group", "a", &.puts "#{name}:x:#{id}:"
+  end
+
+  def del(name, file)
+    data = ""
+    File.read(file).each_line do |line|
+      data += line + '\n' if !line.starts_with? name
+    end
+    File.write file, data
+  end
+
+  def del_all(name)
+    del name, "/etc/passwd"
+    del name, "/etc/group"
   end
 end

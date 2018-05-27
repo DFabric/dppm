@@ -48,14 +48,14 @@ struct Command
   VARS = <<-VARS
   Usage: dppm [...] [variable]=[value] [variable1]=[value1] ...
 
-  Variable:
-      prefix                    where is the package (default: /opt)
+  Variables:
+      prefix                    where is the package (default: /opt/dppm)
       pkgsrc                    source of the packages
       mirror                    mirror of precompiled applications
-      name                      name of the packqge (default: package name)
+      name                      name of the package (default: uuid)
       tag                       a tag describing a version, like 'latest'
-      user  (`add` task)        uid or user to be used for the program
-      group (`add` task)        gid or group to be used for the program
+      user                      uid or user to be used
+      group                     gid or group to be used
       owner                     regroup the user and group using a same id/name
       port                      use the specified port
       webserver (default: none) use the specified webserver
@@ -151,7 +151,7 @@ struct Command
       end
       exit
     when "l", "list"
-      Dir.each_child ARGV[1]? ? ARGV[1] : CACHE do |package|
+      Dir.each_child ARGV[1]? ? ARGV[1] : Tasks::Path.new.src do |package|
         puts package if package =~ /^[a-z]+$/
       end
     when "cache"
@@ -214,17 +214,22 @@ struct Command
   end
 
   # Download a cache of package sources
-  def self.cache(pkgsrc, check = false)
-    FileUtils.rm_r CACHE if File.exists? CACHE
-    if Utils.is_http? pkgsrc
-      HTTPget.file pkgsrc, CACHE + ".tar.gz"
-      Exec.new("/bin/tar", ["zxf", CACHE + ".tar.gz", "-C", "/tmp/"]).out
-      File.delete CACHE + ".tar.gz"
-      File.rename Dir["/tmp/*package-sources*"][0], CACHE
-      Log.info "cache updated", CACHE
-    else
-      File.symlink File.real_path(pkgsrc), CACHE
-      Log.info "symlink added from `#{File.real_path(pkgsrc)}`", CACHE
+  def self.cache(pkgsrc, src = Tasks::Path.new.src, check = false)
+    # Update cache if older than 2 days
+    if !(File.exists?(src) || File.symlink?(src)) ||
+       Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(src).ctime.to_s("%Y%m%d").to_i > 2
+      FileUtils.rm_r src if File.exists? src
+      if Utils.is_http? pkgsrc
+        HTTPget.file pkgsrc, src + ".tar.gz"
+        tmp = File.dirname(src)
+        Exec.new("/bin/tar", ["zxf", src + ".tar.gz", "-C", tmp]).out
+        File.delete src + ".tar.gz"
+        File.rename Dir[tmp + "/*packages-source*"][0], src
+        Log.info "cache updated", src
+      else
+        File.symlink File.real_path(pkgsrc), src
+        Log.info "symlink added from `#{File.real_path(pkgsrc)}`", src
+      end
     end
   end
 
