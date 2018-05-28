@@ -27,7 +27,7 @@ struct Tasks::Add
     elsif @vars["user"]? || @vars["group"]?
       raise "either both or none of user and group need to be specified"
     else
-      @vars["user"] = @vars["group"] = '_' + @name
+      @vars["user"] = @vars["group"] = @name
       @add_user_group = true
     end
 
@@ -89,8 +89,13 @@ struct Tasks::Add
     # Create the new application
     @build.run if !@build.exists
     Dir.mkdir @pkgdir
-    File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
-    File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+    if vars.has_key?("--contained")
+      FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
+      FileUtils.cp @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+    else
+      File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
+      File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+    end
 
     Tasks::Deps.new(@path).build @vars.dup, @deps
 

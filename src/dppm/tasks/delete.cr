@@ -1,5 +1,6 @@
 struct Tasks::Delete
   @name : String
+  @package : String
   @pkgdir : String
   @pkgdir : String
   @service_path : String
@@ -29,13 +30,14 @@ struct Tasks::Delete
     if !Localhost.service.writable? && @service
       raise "a service is found - root permissions required: " + @name
     end
-    p @user
-    p @name
+    Log.info "getting package name", @pkgdir + "/pkg.yml"
+    @package = YAML.parse(File.read(@pkgdir + "/pkg.yml"))["package"].as_s
   end
 
   def simulate
     String.build do |str|
       str << "\nname: " << @name \
+        << "\npackage: " << @package \
         << "\nprefix: " << @path.prefix \
         << "\npkgdir: " << @pkgdir \
         << "\nuser: " << @user \
@@ -47,7 +49,7 @@ struct Tasks::Delete
   def run
     Log.info "deleting", @pkgdir
     Localhost.service.delete @name if @service
-    if Localhost.service.writable? && @user == '_' + @name
+    if Localhost.service.writable? && @user.starts_with?(@package) && @user.split('_').last.lowercase_number?
       Owner.del_all @user
       Log.info "user and group deleted", @user
     end
