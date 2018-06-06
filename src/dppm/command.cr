@@ -13,7 +13,7 @@ struct Command
       m, migrate               migrate to an other app version (default: latest)
       s, service               service operations
       c, clone                 clone an existing application
-      l, list                  list available packages
+      l, list [app|pkg|src]    list applications, packages and sources
       v, version               show the version
       h, help                  show this help
       cache                    update the cache from `pkgsrc` (from file or variable)
@@ -151,8 +151,17 @@ struct Command
       end
       exit
     when "l", "list"
-      Dir.each_child ARGV[1]? ? ARGV[1] : Tasks::Path.new.src do |package|
-        puts package if package =~ /^[a-z]+$/
+      case ARGV[1]?
+      when "app", "pkg", "src" then list ARGV[1]
+      when nil
+        puts "app:"
+        list "app"
+        puts "\npkg:"
+        list "pkg"
+        puts "\nsrc:"
+        list "src"
+      else
+        raise "unknwon argument: " + ARGV[1]
       end
     when "cache"
       case ARGV[1]?
@@ -230,6 +239,17 @@ struct Command
         File.symlink File.real_path(pkgsrc), src
         Log.info "symlink added from `#{File.real_path(pkgsrc)}`", src
       end
+    end
+  end
+  
+  def list(dir)
+    case dir
+    when "app"
+      Dir.each_child(Tasks::Path.new.app) { |c| puts c }
+    when "pkg"    
+      Dir.each_child(Tasks::Path.new.pkg) { |c| puts c }
+    when "src"
+      Dir.each_child(Tasks::Path.new.src) { |c| puts c if c[0].ascii_lowercase? }
     end
   end
 
