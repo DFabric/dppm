@@ -6,10 +6,7 @@ struct Pkg
   end
 
   def version
-    data = if cmd = @pkg["version"]["cmd"].as_s?
-             cmd = (@package + '/' + cmd).split ' '
-             Exec.new(cmd[0], cmd[1..-1]).output
-           elsif @pkg["version"]["path"]?
+    data = if @pkg["version"]["path"]?
              @package + '/' + @pkg["version"]["src"].as_s
            else
              File.read @package + '/' + @pkg["version"]["src"].as_s
@@ -17,8 +14,10 @@ struct Pkg
 
     if path = @pkg["version"]["path"].as_s?
       ConfFile.get data, Utils.to_array path
+    elsif data =~ /#{@pkg["version"]["regex"].as_s}/
+      $0
     else
-      data.match(/#{@pkg["version"]["regex"].as_s}/).not_nil![0]
+      raise "can't obtain the version"
     end.to_s
   end
 end

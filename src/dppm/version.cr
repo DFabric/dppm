@@ -19,7 +19,7 @@ module Version
       src_array.map &.to_s
     else
       HTTPget.string(src.to_s).split('\n').map do |line|
-        /#{regex}/.match(line).not_nil![0] if line =~ /#{regex}/
+        $0 if line =~ /#{regex}/
       end.compact!
     end
   end

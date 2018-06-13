@@ -16,7 +16,7 @@ struct Tasks::Build
 
     Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
     @pkg = YAML.parse File.read "#{path.src}/#{@package}/pkg.yml"
-    @version = vars["version"] = getversion.not_nil!
+    @version = vars["version"] = getversion
     @vars["package"] = @package
     @name = vars["name"] = "#{@package}_#{@version}"
     @pkgdir = vars["pkgdir"] = "#{path.pkg}/#{@name}"
@@ -58,10 +58,16 @@ struct Tasks::Build
                 else
                   @pkg["tags"]["self"]["regex"]
                 end.as_s
-        /#{regex}/.match(HTTPget.string src).not_nil![0]?
+        if /#{regex}/ =~ HTTPget.string(src) 
+          $0
+        else
+          raise "fail to apply the `#{regex}` regex to #{src}"
+        end
       else
         src
       end
+    else
+      raise "fail to get a version"
     end
   rescue ex
     raise "can't obtain the version: " + ex.to_s
