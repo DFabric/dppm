@@ -8,9 +8,10 @@ describe Utils do
       Dir.mkdir File.join(path, "a")
       File.write File.join(path, "a/b"), ""
 
-      Utils.chmod_r path, 0o775
-      File.stat(File.join path, "a").perm.should eq 0o775
-      File.stat(File.join path, "a/b").perm.should eq 0o775
+      permission = File::Permissions.new 0o754
+      Utils.chmod_r path, permission.value
+      File.info(File.join path, "a").permissions.should eq permission
+      File.info(File.join path, "a/b").permissions.should eq permission
     ensure
       FileUtils.rm_r(path)
     end

@@ -3,7 +3,7 @@ class String
     each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return false }
     true
   end
-  
+
   def lowercase_number?
     each_char { |char| char.ascii_lowercase? || char.ascii_number? || return false }
     true
@@ -73,7 +73,7 @@ module Utils
       end
     end
   end
-  
+
   def gen_name(package)
     package + '_' + UUID.random.to_s.split('-').last
   end

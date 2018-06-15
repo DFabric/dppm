@@ -122,9 +122,9 @@ struct Tasks::Add
     end
 
     # php-fpm based application
-    if @pkg["keywords"].includes? "php-fpm"
+    if @pkg["keywords"].as_a.includes? "php-fpm"
       php_fpm = YAML.parse File.read(@pkgdir + "/lib/php/pkg.yml")
-      @pkg.as_h["exec"] = php_fpm.as_h["exec"]
+      @pkg.as_h[YAML::Any.new "exec"] = YAML::Any.new php_fpm["exec"].as_h
 
       # Copy files and directories if not present
       FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf.default", @pkgdir + "/etc/php-fpm.conf") if !File.exists? @pkgdir + "/etc/php-fpm.conf"
@@ -155,7 +155,7 @@ struct Tasks::Add
 
     Log.info "add completed", @pkgdir
   rescue
-    raise "add failed, deleting: " + @pkgdir
     FileUtils.rm_rf @pkgdir
+    raise "add failed, deleting: " + @pkgdir
   end
 end

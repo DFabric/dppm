@@ -226,7 +226,7 @@ struct Command
   def self.cache(pkgsrc, src = Tasks::Path.new.src, check = false)
     # Update cache if older than 2 days
     if !(File.exists?(src) || File.symlink?(src)) ||
-       Time.utc_now.to_s("%Y%m%d").to_i - File.lstat(src).ctime.to_s("%Y%m%d").to_i > 2
+       Time.utc_now.to_s("%Y%m%d").to_i - File.info(src).modification_time.to_s("%Y%m%d").to_i > 2
       FileUtils.rm_r src if File.exists? src
       if Utils.is_http? pkgsrc
         HTTPget.file pkgsrc, src + ".tar.gz"
@@ -241,12 +241,12 @@ struct Command
       end
     end
   end
-  
+
   def list(dir)
     case dir
     when "app"
       Dir.each_child(Tasks::Path.new.app) { |c| puts c }
-    when "pkg"    
+    when "pkg"
       Dir.each_child(Tasks::Path.new.pkg) { |c| puts c }
     when "src"
       Dir.each_child(Tasks::Path.new.src) { |c| puts c if c[0].ascii_lowercase? }

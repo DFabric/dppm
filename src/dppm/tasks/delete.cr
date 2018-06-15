@@ -13,9 +13,9 @@ struct Tasks::Delete
     @name = vars["package"].gsub(':', '_')
     @pkgdir = @path.app + '/' + @name
 
-    stat = File.stat @pkgdir
-    @user = Owner.from_id stat.uid, "uid"
-    @group = Owner.from_id stat.gid, "gid"
+    file = File.info @pkgdir
+    @user = Owner.from_id file.owner, "uid"
+    @group = Owner.from_id file.group, "gid"
 
     # Checks
     Tasks.pkg_exists? @pkgdir
@@ -24,7 +24,7 @@ struct Tasks::Delete
        File.real_path(@service_path) == "#{@pkgdir}/etc/init/#{Localhost.service.name.downcase}"
       Log.info "a system service is found", @name
       @service = true
-    elsif !@name.includes? '_'
+    else
       Log.warn "no system service found", @name
     end
     if !Localhost.service.writable? && @service
@@ -36,13 +36,13 @@ struct Tasks::Delete
 
   def simulate
     String.build do |str|
-      str << "\nname: " << @name \
-        << "\npackage: " << @package \
-        << "\nprefix: " << @path.prefix \
-        << "\npkgdir: " << @pkgdir \
-        << "\nuser: " << @user \
-        << "\ngroup: " << @group \
-        << "\nservice: " << @service_path if @service
+      str << "\nname: " << @name
+      str << "\npackage: " << @package
+      str << "\nprefix: " << @path.prefix
+      str << "\npkgdir: " << @pkgdir
+      str << "\nuser: " << @user
+      str << "\ngroup: " << @group
+      str << "\nservice: " << @service_path if @service
     end
   end
 

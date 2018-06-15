@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "yaml"
 
 describe Cmd::Run do
   path = Dir.current + "/cmd_test"
@@ -82,17 +83,17 @@ describe Cmd::Run do
 
   describe "condtions" do
     it "simple if condition" do
-      cmd.run([{"if file_exists? . == true" => ["touch if_cond"]}])
+      cmd.run([YAML.parse "if file_exists? . == true: \n- touch if_cond"])
       File.exists?("if_cond").should be_true
     end
 
     it "simple else condition" do
-      cmd.run([{"if file_exists? . != true" => ["ls ."]}, {"else" => ["touch else_cond"]}])
+      cmd.run([YAML.parse("if file_exists? . != true: \n- ls ."), YAML.parse("else: \n- touch else_cond")])
       File.exists?("else_cond").should be_true
     end
 
     it "simple elif condition" do
-      cmd.run([{"if file_exists? . != true" => ["ls ."]}, {"if file_exists? . == true" => ["touch elif_cond"]}])
+      cmd.run([YAML.parse("if file_exists? . != true: \n- ls ."), YAML.parse("if file_exists? . == true: \n- touch elif_cond")])
       File.exists?("elif_cond").should be_true
     end
   end

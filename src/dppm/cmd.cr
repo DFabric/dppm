@@ -20,10 +20,9 @@ module Cmd
       # End of block
       last_cond = false
 
-      yaml.each do |line|
+      yaml.each do |raw_line|
         # Add/change vars
-        case line
-        when .is_a? String
+        if line = raw_line.as_s?
           # New variable assignation
           if (line_var = line.split(" = ")) && line_var[0].ascii_alphanumeric_underscore?
             @vars[line_var[0]] = @extvars["${#{line_var[0]}}"] = command(line_var[1])
@@ -37,12 +36,14 @@ module Cmd
             Log.info "output", output if !output.empty?
           end
           # New condition block
-        when .is_a? Hash
+        elsif line = raw_line.as_h?
           if line.first_key.to_s[0..3] == "elif" && last_cond
             # Previous if/elif is true
           elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
             line.each_value do |subline|
-              run subline if subline.is_a? Array
+              if array = subline.as_a?
+                run array
+              end
             end
             last_cond = true
           else
@@ -64,8 +65,8 @@ module Cmd
 
       # Replace vars by their values
       cmd.to_s.gsub(/(?<!\\)\${([a-zA-Z0-9_]+)}/, @extvars)
-              # Remove a slash for escpaded vars
-              .gsub(/\\(\${[a-zA-Z0-9_]+})/, "\\1")
+        # Remove a slash for escpaded vars
+        .gsub(/\\(\${[a-zA-Z0-9_]+})/, "\\1")
     end
 
     private def cond(expr, last_cond)

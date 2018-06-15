@@ -27,21 +27,23 @@ module ConfFile
       space = data.includes?(" = ") ? true : false
       File.write file, INI.build(ini(INI.parse(data), keys, value), space)
     when "json"
-      val = Utils.to_type value
-      case val
-      when .is_a? Hash(String, String) then val = Hash(String, JSON::Type).new
-      when .is_a? Array(String)        then val = Array(JSON::Type).new
+      val = JSON::Any.new case Utils.to_type value
+      when .is_a? Hash(String, String) then Hash(String, JSON::Any).new
+      when .is_a? Array(String)        then Array(JSON::Any).new
+      else
+        value
       end
 
       File.write file, json(JSON.parse(data), keys, val).to_pretty_json
     when "yml", "yaml"
-      val = Utils.to_type value
-      case val
-      when .is_a? Hash(String, String) then val = Hash(YAML::Type, YAML::Type).new
-      when .is_a? Array(String)        then val = Array(YAML::Type).new
+      val = YAML::Any.new case Utils.to_type value
+      when .is_a? Hash(String, String) then Hash(YAML::Any, YAML::Any).new
+      when .is_a? Array(String)        then Array(YAML::Any).new
+      else
+        value
       end
 
-      File.write file, json(YAML.parse(data), keys, val).to_yaml
+      File.write file, json(YAML.parse(data), keys.map { |str| YAML::Any.new str }, val).to_yaml
     else
       raise "not supported file format: " + format
     end

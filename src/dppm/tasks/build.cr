@@ -58,7 +58,7 @@ struct Tasks::Build
                 else
                   @pkg["tags"]["self"]["regex"]
                 end.as_s
-        if /#{regex}/ =~ HTTPget.string(src) 
+        if /#{regex}/ =~ HTTPget.string(src)
           $0
         else
           raise "fail to apply the `#{regex}` regex to #{src}"
@@ -109,8 +109,8 @@ struct Tasks::Build
     end
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     Log.info "build completed", @pkgdir
-  rescue
-    raise "build failed, deleting: " + @pkgdir
+  rescue ex
     FileUtils.rm_rf @pkgdir
+    raise "build failed, deleting: #{@pkgdir}\n#{ex}"
   end
 end

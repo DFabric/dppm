@@ -39,13 +39,13 @@ module Tasks
 
     def initialize(prefix = "/opt/dppm")
       @prefix = if prefix.nil?
-                  FileUtils.mkdir_p "/opt/dppm"
                   "/opt/dppm"
                 else
                   prefix
                 end
       @app = @prefix + "/app"
       @pkg = @prefix + "/pkg"
+      FileUtils.mkdir_p [@app, @pkg]
       @src = @prefix + "/src"
     end
   end

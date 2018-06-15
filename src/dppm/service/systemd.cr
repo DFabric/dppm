@@ -14,7 +14,7 @@ module Service::Systemd
     sysinit_hash = creation Config.new(vars["pkgdir"] + "/etc/init/systemd", file: true), pkg, vars
 
     # pid is needed for php-fpm based applications
-    sysinit_hash.set "pidfile", "/run/#{vars["name"]}.pid" if pkg["keywords"].includes? "php-fpm"
+    sysinit_hash.set "pidfile", "/run/#{vars["name"]}.pid" if pkg["keywords"].as_a.includes? "php-fpm"
 
     # systemd 236 and more supports file logging
     if version >= 236
