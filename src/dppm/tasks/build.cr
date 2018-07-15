@@ -110,7 +110,7 @@ struct Tasks::Build
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     Log.info "build completed", @pkgdir
   rescue ex
-    FileUtils.rm_rf @pkgdir
-    raise "build failed, deleting: #{@pkgdir}\n#{ex}"
+    # FileUtils.rm_rf @pkgdir
+    raise "build failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

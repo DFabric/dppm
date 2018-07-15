@@ -34,7 +34,7 @@ module ConfFile
         value
       end
 
-      File.write file, json(JSON.parse(data), keys, val).to_pretty_json
+      File.write file, set_json(JSON.parse(data), keys, val).to_pretty_json
     when "yml", "yaml"
       val = YAML::Any.new case Utils.to_type value
       when .is_a? Hash(String, String) then Hash(YAML::Any, YAML::Any).new
@@ -43,7 +43,7 @@ module ConfFile
         value
       end
 
-      File.write file, json(YAML.parse(data), keys.map { |str| YAML::Any.new str }, val).to_yaml
+      File.write file, set_json(YAML.parse(data), keys.map { |str| YAML::Any.new str }, val).to_yaml
     else
       raise "not supported file format: " + format
     end
@@ -61,22 +61,10 @@ module ConfFile
       end
       File.write file, INI.build data
     when "json"        then File.write file, del_json(JSON.parse(data), keys).to_pretty_json
-    when "yml", "yaml" then File.write file, del_json(YAML.parse(data), keys).to_yaml
+    when "yml", "yaml" then File.write file, del_json(YAML.parse(data), keys.map { |str| YAML::Any.new str }).to_yaml
     else
       raise "not supported file format: " + format
     end
-  end
-
-  private def del_json(data, k)
-    case k.size
-    when 1 then data.as_h.delete k[0]
-    when 2 then data[k[0]].as_h.delete k[1]
-    when 3 then data[k[0]][k[1]].as_h.delete k[2]
-    when 4 then data[k[0]][k[1]][k[2]].as_h.delete k[3]
-    else
-      raise "max key path exceeded: #{k.size}"
-    end
-    data
   end
 
   private def ini(data, k, v)
@@ -89,19 +77,22 @@ module ConfFile
     data
   end
 
-  private def json(data, k, val)
-    # Change the value of the specified key
-    # Not found a better way to do it yet
-    case k.size
-    when 1 then data.as_h[k[0]] = val
-    when 2 then data[k[0]].as_h[k[1]] = val
-    when 3 then data[k[0]][k[1]].as_h[k[2]] = val
-    when 4 then data[k[0]][k[1]][k[2]].as_h[k[3]] = val
-    when 5 then data[k[0]][k[1]][k[2]][k[3]].as_h[k[4]] = val
-    when 6 then data[k[0]][k[1]][k[2]][k[3]][k[4]].as_h[k[5]] = val
-    when 7 then data[k[0]][k[1]][k[2]][k[3]][k[4]][k[5]].as_h[k[6]] = val
+  private def set_json(data, keys, val)
+    first_key = keys.first
+    if keys.size == 1
+      data.as_h[first_key] = val
     else
-      raise "max key path exceeded: #{k.size}"
+      data.as_h[first_key] = set_json data[first_key], keys[1..-1], val
+    end
+    data
+  end
+
+  private def del_json(data, keys)
+    first_key = keys.first
+    if keys.size == 1
+      data.as_h.delete first_key
+    else
+      data.as_h[first_key] = del_json data[first_key], keys[1..-1]
     end
     data
   end
@@ -114,7 +105,7 @@ module ConfFile
     end
 
     def get(key)
-      file = @pkg[key].as_h.has_key?("self") ? @pkg[key]["self"].as_s.to_i : 0
+      file = @pkg[key].as_h["self"]? ? @pkg[key]["self"].as_s.to_i : 0
       get @pkgdir + '/' + file, Utils.to_array(@pkg)
     end
   end

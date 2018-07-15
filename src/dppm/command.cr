@@ -1,4 +1,5 @@
 struct Command
+  CONFIG_FILE = "./config.ini"
   # Global constant variables
   VERSION = "2018-alpha"
 
@@ -166,13 +167,13 @@ struct Command
     when "cache"
       case ARGV[1]?
       when nil
-        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s)
+        Command.cache(INI.parse(File.read CONFIG_FILE)["main"]["pkgsrc"])
       when .starts_with? "pkgsrc="
         Command.cache ARGV[1][7..-1]
       when .starts_with? "--config="
-        Command.cache(YAML.parse(File.read ARGV[1][9..-1])["pkgsrc"].as_s)
+        Command.cache(INI.parse(File.read ARGV[1][9..-1])["main"]["pkgsrc"])
       else
-        Command.cache(YAML.parse(File.read "./config.yml")["pkgsrc"].as_s)
+        Command.cache(INI.parse(File.read CONFIG_FILE)["main"]["pkgsrc"])
       end
     when "pkg"
       puts "no implemented yet"
@@ -198,10 +199,10 @@ struct Command
 
   def arg_parser(vars : Array(String))
     h = Hash(String, String).new
-    conf_file = YAML::Any.new("")
+    conf_file = Hash(String, String).new
     vars.each do |arg|
       case arg
-      when .starts_with? "--config=" then conf_file = YAML.parse(File.read arg[9..-1])
+      when .starts_with? "--config=" then conf_file = INI.parse(File.read arg[9..-1])
       when "-y", "--yes"             then @noconfirm = true
       when "--contained"             then h["--contained"] = "true"
       when .includes? '='
@@ -212,12 +213,12 @@ struct Command
         raise "invalid argument: #{arg}"
       end
     end
-    begin
-      conf_file = YAML.parse(File.read "./config.yml") if conf_file.as_s?
-      h["pkgsrc"] ||= conf_file["pkgsrc"].as_s
-      h["mirror"] ||= conf_file["mirror"].as_s
-    rescue ex
-      raise "failed to get a configuraration file: #{ex}"
+    if conf_file.empty? && File.exists? CONFIG_FILE
+      conf_file = INI.parse(File.read CONFIG_FILE)
+      h["pkgsrc"] ||= conf_file["main"]["pkgsrc"]
+      h["mirror"] ||= conf_file["main"]["mirror"]
+    else
+      raise "failed to get a configuraration file: " + CONFIG_FILE
     end
     h
   end

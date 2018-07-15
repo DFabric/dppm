@@ -154,8 +154,8 @@ struct Tasks::Add
     end
 
     Log.info "add completed", @pkgdir
-  rescue
+  rescue ex
     FileUtils.rm_rf @pkgdir
-    raise "add failed, deleting: " + @pkgdir
+    raise "add failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

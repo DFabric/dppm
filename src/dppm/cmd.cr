@@ -1,7 +1,11 @@
 module Cmd
   def self.find_bin(pkgdir, cmd)
-    Dir[pkgdir + "/bin", pkgdir + "/lib/*/bin"].each do |path|
-      return "#{path}/#{cmd}" if File.executable? "#{path}/#{cmd}"
+    path = "#{pkgdir}/bin/#{cmd}"
+    return path if File.executable? path
+
+    Dir.each_child(pkgdir + "/lib") do |library|
+      path = "#{pkgdir}/lib/#{library}/bin/#{cmd}"
+      return path if File.executable? path
     end
     ""
   end
@@ -53,7 +57,7 @@ module Cmd
           raise "unknown line: #{line}"
         end
       rescue ex
-        raise "`#{!cmd.empty? ? cmd : line}` execution failed: #{ex}"
+        raise "`#{!cmd.empty? ? cmd : line}` - execution failed:\n#{ex}"
       end
     end
 
@@ -195,7 +199,7 @@ module Cmd
         # check if the command is available in `bin` of the package and dependencies
         bin = Cmd.find_bin @vars["PKGDIR"], cmd[0]
         if bin.empty?
-          raise "unknown command or variable: " + cmdline
+          raise "unknown command or variable"
         else
           execute bin, cmd[1..-1]
         end
