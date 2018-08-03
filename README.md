@@ -7,7 +7,7 @@
 
 *The DPlatform's Package Manager*
 
-# Features
+## Features
 
 - choice among [dozens of applications](https://github.com/DFabric/packages-source)
 - easy install, backup and modification of configurations
@@ -16,11 +16,15 @@
 - independent of your system's package manager
 - standalone installations bundled with all dependencies - DDPM can be safely removed
 
-# Install
+## Install
 
-For now the `x86-64` and `arm64`(thanks to [@jirutka](https://github.com/jirutka)) architectures are available. [An issue is open](https://github.com/crystal-lang/crystal/issues/5467) - `armhf` is work in progress.
+Supported architectures are `x86-64` and `arm64` (thanks to [@jirutka](https://github.com/jirutka)).
 
-You can still use DPPM on a Rapberry Pi 3 by using a 64-bit OS (Raspbian is for now only 32-bit).
+32-bit architectures are partially supported, but discouraged since nowadays more and more applications are designed for 64-bit, particularly databases ([TiDB](https://github.com/pingcap/tidb/issues/5224), [MongoDB](https://www.mongodb.com/blog/post/32-bit-limitations)...)
+
+For Rapberry Pi 3, a 64-bit OS like [Armbian](https://www.armbian.com/) is recommended, and needed to run DPPM, instead of a 32-bit Raspbian.
+
+Still, [an issue is open](https://github.com/crystal-lang/crystal/issues/5467) for `armhf`.
 
 ## Automatic
 Download `dppm` with the helper:
@@ -35,7 +39,7 @@ The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/us
 
 Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
 
-# Usage
+## Usage
 
 To show the help:
 
@@ -48,9 +52,11 @@ To list [available packages](https://github.com/DFabric/package-sources) (applic
 A typical installation can be:
 
 ```sh
-dppm add [application]                # add a new application to the system (default: /opt/dppm)
-dppm service [application] run true   # start the service
-dppm service [application] boot true  # auto start the service at boot
+# add a new application to the system (default: /opt/dppm)
+dppm p add [application]
+
+# start the service and  auto start the service at boot
+dppm service [application] action=start boot=true
 ```
 
 If not specified, an user, group and application name will be created.
@@ -59,7 +65,7 @@ Note that `add` will `build` the missing required packages.
 
 Root execution is needed to add a system service (systemd or OpenRC)
 
-# How to build
+## How to build
 
 You will need a [Crystal](https://crystal-lang.org) development environment
 
@@ -79,6 +85,6 @@ Run it
 
 For more informations, see the [official docs](https://crystal-lang.org/docs/using_the_compiler/)
 
-# License                                                                                                 
+## License                                                                                                 
 
 Copyright (c) 2018 Julien Reichardt - ISC License

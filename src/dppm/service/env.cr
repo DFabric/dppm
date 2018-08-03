@@ -1,36 +1,33 @@
-module Service::Env
-  extend self
-
+struct Service::Env
   # Environment variables need to be in the format `PATH="/usr/bin:/bin" ENV="some value"`
-  private def parse_vars(env_vars)
-    h = Hash(String, String).new
-    if !env_vars.empty? && env_vars.is_a? String
+  def initialize(env_vars : String)
+    @env_vars = Hash(String, String).new
+    begin
       env_vars.rchop.split("\" ").each do |env|
         var, val = env.split("=\"")
-        h[var] = val
+        @env_vars[var] = val
       end
+    rescue
+      # the PATH is not set/corrupt - make a new one from what we have parsed
     end
-    h
   end
 
-  def set(env_vars, var, value)
+  def initialize(env_vars)
+    @env_vars = Hash(String, String).new
+  end
+
+  def set(var, value) : String
     # If the var exists
-    vars = if env_vars.is_a? String
-             parse_vars env_vars
-           else
-             Hash(String, String).new
-           end
-    vars[var] = value
+    @env_vars[var] = value
 
     String.build do |str|
-      vars.each do |var, value|
+      @env_vars.each do |var, value|
         str << ' ' << var << "=\"" << value << '"'
       end
     end.lchop
   end
 
-  def get(env_vars, var)
-    vars = parse_vars env_vars
-    (var = vars[var]?) ? var : raise "can't get #{var} from #{env_vars}"
+  def get(var) : String
+    (var = @env_vars[var]?) ? var : raise "can't get #{var} from #{@env_vars}"
   end
 end

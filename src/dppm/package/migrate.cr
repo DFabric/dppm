@@ -1,17 +1,18 @@
 require "semantic_compare"
 
-struct Tasks::Migrate
+struct Package::Migrate
   @old_pkgdir : String
   @old_version : String
   @package : String
 
   def initialize(vars)
+    @path = Path.new vars["prefix"]
     @package = vars["package"]
     @old_pkgdir = vars["prefix"] + '/' + @package
     @old_version = Pkg.new(@package).version
-    Tasks.pkg_exists? @old_pkgdir
+    Package.pkg_exists? @old_pkgdir
 
-    @add = Tasks::Add.new(@build.vars)
+    @add = Package::Add.new(@build.vars)
 
     Localhost.service.check_availability @build.pkg["type"], @build.package
     # begin
@@ -41,6 +42,6 @@ struct Tasks::Migrate
 
     # Change the name of the package to the original
 
-    Tasks::Add.new(@build.vars).run
+    Package::Add.new(@build.vars).run
   end
 end

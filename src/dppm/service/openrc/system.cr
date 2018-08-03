@@ -1,45 +1,53 @@
 struct Service::OpenRC::System
   getter service : String
+  getter file : String
+  @boot : String
+  @init_path = "/etc/init/openrc"
 
   def initialize(@service)
+    @file = "/etc/init.d/" + @service
+    @boot = "/etc/runlevels/default/" + @service
   end
 
-  def file
-    "/etc/init.d/" + @service
+  OpenRC.change_state
+
+  def self.each
+    Dir.new("/etc/init.d").each do |service|
+      yield service
+    end
   end
 
   def boot?
-    File.exists? "/etc/runlevels/default/" + @service
+    File.exists? @boot
   end
 
   def exists?
-    File.exists? file
+    File.exists? @file
   end
 
   def writable?
-    File.writable? file
+    File.writable? @file
   end
 
   def link(src)
-    File.symlink src + "/etc/init/systemd", file
-    File.chmod file, 0o750
+    File.symlink src + @init_path, @file
+    File.chmod @file, 0o750
   end
 
   def boot(value : Bool)
-    boot = "/etc/runlevels/default/" + @service
-    value ? File.symlink(file, boot) : File.delete(boot)
+    # nothing to do
+    return value if value == boot?
+
+    value ? File.symlink(@file, @boot) : File.delete(@boot)
   end
 
   def run?
     Exec.new("/sbin/rc-service", [@service, "status"]).success?
   end
 
-  def run(value : Bool) : Bool
-    boot = "/etc/runlevels/default/" + @service
-    Exec.new("/sbin/rc-service", [@service, (value ? "start" : "stop")]).success?
+  {% for action in %w(start stop restart reload) %}
+  def {{action.id}} : Bool
+    Exec.new("/sbin/rc-service", [@service, {{action}}]).success?
   end
-
-  def reload
-    Exec.new("/sbin/rc-service", [@service, "reload"]).success?
-  end
+  {% end %}
 end

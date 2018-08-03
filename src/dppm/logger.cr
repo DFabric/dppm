@@ -1,31 +1,37 @@
 struct Log
-  class_setter destination : IO::FileDescriptor | String = STDOUT
+  class_setter colorize = true
+  class_setter date = false
+  class_setter destination : IO::FileDescriptor = STDOUT
+
+  def self.date
+    @@destination << Time.now.to_s("%F %T%z ") if @@date
+  end
 
   def self.info(title : String, message : String)
-    case (destination = @@destination)
-    when .is_a? IO::FileDescriptor then puts "#{"INFO".colorize.blue.mode(:bold)} #{title.colorize.white}: #{message}"
-    when .is_a? String             then File.open destination, "a", &.print(Time.now.to_s("%F %T%z") + " INFO \"#{title}: #{message}\"\n")
+    date
+    @@destination.puts(if colorize
+      "#{"INFO".colorize.blue.mode(:bold)} #{title.colorize.white}: #{message}"
     else
-      raise "unknown log destination: #{@@destination}"
-    end
+      "INFO \"#{title}: #{message}\""
+    end)
   end
 
   def self.warn(title : String, message : String)
-    case (destination = @@destination)
-    when .is_a? IO::FileDescriptor then puts "#{"WARN".colorize.yellow.mode(:bold)} #{title.colorize.white.mode(:bold)}: #{message}"
-    when .is_a? String             then File.open destination, "a", &.print(Time.now.to_s("%F %T%z") + " WARN \"#{title}: #{message}\"\n")
+    date
+    @@destination.puts(if colorize
+      "#{"WARN".colorize.yellow.mode(:bold)} #{title.colorize.white.mode(:bold)}: #{message}"
     else
-      raise "unknown log destination: #{@@destination}"
-    end
+      "WARN \"#{title}: #{message}\""
+    end)
   end
 
   def self.error(message : String)
-    case (destination = @@destination)
-    when .is_a? IO::FileDescriptor then puts "#{"ERR!".colorize.red.mode(:bold)} #{message.colorize.light_magenta}"
-    when .is_a? String             then File.open destination, "a", &.print(Time.now.to_s("%F %T%z") + " ERR! \"#{message}\"\n")
+    date
+    @@destination.puts(if colorize
+      "#{"ERR!".colorize.red.mode(:bold)} #{message.colorize.light_magenta}"
     else
-      raise "unknown log destination: #{@@destination}"
-    end
+      "ERR! \"#{message}\""
+    end)
     exit 1
   end
 end

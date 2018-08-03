@@ -27,7 +27,33 @@ module Utils
   end
 
   def to_array(string)
-    string.split(/(?<!\\)\./).map &.gsub "\\.", '.'
+    array = Array(String | Int32).new
+    escape = false
+    current = ""
+
+    string.each_char do |char|
+      if escape
+        current += char
+        escape = false
+      else
+        case char
+        when '\\' then escape = true
+        when '.', '['
+          if !current.empty?
+            array << current
+            current = ""
+          end
+        when ']'
+          array << current.to_i
+          current = ""
+        else
+          current += char
+        end
+      end
+    end
+    array << current if !current.empty?
+
+    array
   end
 
   def to_type(string : String, strict = false)

@@ -1,26 +1,26 @@
-struct Tasks::Add
-  getter package : String = ""
-  getter name : String
-  getter pkgdir : String
-  getter pkg : YAML::Any
-  getter version : String
-  getter vars : Hash(String, String)
+struct Package::Add
+  getter package : String = "",
+    name : String,
+    pkgdir : String,
+    pkg : YAML::Any,
+    version : String,
+    vars : Hash(String, String),
+    path : Package::Path
   @add_user_group = false
   @deps = Hash(String, String).new
-  @path : Tasks::Path
 
-  def initialize(@vars, @path)
+  def initialize(@vars)
     # Build missing dependencies
-    @build = Tasks::Build.new vars.dup, path
+    @build = Package::Build.new vars.dup
+    @path = @build.path
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
-    @deps = @build.deps
     @pkg = @build.pkg
-    Log.info "getting name", @package
 
+    Log.info "getting name", @package
     getname
     @name = vars["name"]
-    @pkgdir = @vars["pkgdir"] = "#{path.app}/#{@name}"
+    @pkgdir = @vars["pkgdir"] = "#{@path.app}/#{@name}"
 
     if owner = vars["owner"]?
       @vars["user"] = @vars["group"] = owner
@@ -30,6 +30,7 @@ struct Tasks::Add
       @vars["user"] = @vars["group"] = @name
       @add_user_group = true
     end
+    @deps = @build.deps
 
     Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
 
@@ -97,7 +98,7 @@ struct Tasks::Add
       File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
     end
 
-    Tasks::Deps.new(@path).build @vars.dup, @deps
+    Package::Deps.new(@path).build @vars.dup, @deps
 
     # Copy configurations
     Log.info "copying configurations", @name

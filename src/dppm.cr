@@ -14,4 +14,4 @@ require "semantic_compare"
 
 require "./dppm/**"
 
-Command.new.run
+CLI.run

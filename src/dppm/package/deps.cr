@@ -1,9 +1,9 @@
 require "yaml"
 require "semantic_compare"
 
-struct Tasks::Deps
+struct Package::Deps
   getter log
-  @path : Tasks::Path
+  @path : Package::Path
 
   def initialize(@path)
   end
@@ -57,8 +57,8 @@ struct Tasks::Deps
         FileUtils.cp_r deppath, depdir if contained
       else
         Log.info "building dependency", deppath
-        Tasks::Build.new(vars.merge({"package" => dep,
-                                     "version" => ver}), @path).run
+        Package::Build.new(vars.merge({"package" => dep,
+                                       "version" => ver})).run
         File.rename deppath, depdir if contained
       end
       if !File.exists? "#{vars["pkgdir"]}/lib/#{dep}"

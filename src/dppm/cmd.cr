@@ -167,12 +167,12 @@ module Cmd
         directory = cmdline[3..-1]
         directory = Dir.current if directory.empty?
         Dir.entries(directory).join('\n')
-      when "get"              then ConfFile.get(cmd[1], Utils.to_array(cmd[2])).to_s
-      when "del"              then ConfFile.del(cmd[1], Utils.to_array(cmd[2])).to_s
-      when "set"              then ConfFile.set(cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' ')).to_s
-      when .ends_with? ".get" then ConfFile.get(cmd[1], Utils.to_array(cmd[2]), cmd[0][0..-5]).to_s
-      when .ends_with? ".del" then ConfFile.del(cmd[1], Utils.to_array(cmd[2]), cmd[0][0..-5]).to_s
-      when .ends_with? ".set" then ConfFile.set(cmd[1], Utils.to_array(cmd[2]), cmd[3..-1].join(' '), cmd[0][0..-5]).to_s
+      when "get"              then ConfFile.get(cmd[1], cmd[2]).to_s
+      when "del"              then ConfFile.del(cmd[1], cmd[2]).to_s
+      when "set"              then ConfFile.set(cmd[1], cmd[2], cmd[3..-1].join(' ')).to_s
+      when .ends_with? ".get" then ConfFile.get(cmd[1], cmd[2], cmd[0][0..-5]).to_s
+      when .ends_with? ".del" then ConfFile.del(cmd[1], cmd[2], cmd[0][0..-5]).to_s
+      when .ends_with? ".set" then ConfFile.set(cmd[1], cmd[2], cmd[3..-1].join(' '), cmd[0][0..-5]).to_s
       when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
       when "chown_r" then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid"); "owner changed"
       # Download

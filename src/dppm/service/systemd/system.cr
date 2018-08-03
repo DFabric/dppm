@@ -1,44 +1,57 @@
 struct Service::Systemd::System
   getter service : String
+  getter file : String
+  @boot : String
+  @init_path = "/etc/init/systemd"
 
   def initialize(@service)
+    @file = if File.exists?(conf = "/lib/systemd/system/#{@service}.service")
+              conf
+            else
+              "/etc/systemd/system/#{@service}.service"
+            end
+    @boot = "/etc/systemd/system/multi-user.target.wants/#{@service}.service"
   end
 
-  def file
-    "/etc/systemd/system/#{@service}.service"
+  Systemd.change_state
+
+  def self.each
+    Dir["/lib/systemd/system/*.service", "/etc/systemd/system/*.service"].each do |service|
+      yield File.basename(service)[0..-9]
+    end
   end
 
   def boot?
-    File.exists? "/etc/systemd/system/multi-user.target.wants/#{@service}.service"
+    File.exists? @boot
   end
 
   def exists?
-    File.exists? file
+    File.exists? @file
   end
 
   def writable?
-    File.writable? file
+    File.writable? @file
   end
 
   def link(src)
-    File.symlink src + "/etc/init/systemd", file
+    File.symlink src + @init_path, @file
     Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"]
   end
 
   def boot(value : Bool)
-    boot = "/etc/systemd/system/multi-user.target.wants/#{@service}.service"
-    value ? File.symlink(file, boot) : File.delete(boot)
+    # nothing to do
+    return value if value == boot?
+
+    value ? File.symlink(@file, @boot) : File.delete(@boot)
   end
 
   def run?
     Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "is-active", @service]).success?
   end
 
-  def run(value : Bool) : Bool
-    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", (value ? "start" : "stop"), @service]).success?
+  {% for action in %w(start stop restart reload) %}
+  def {{action.id}} : Bool
+    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", {{action}}, @service]).success?
   end
-
-  def reload
-    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "reload", @service]).success?
-  end
+  {% end %}
 end

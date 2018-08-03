@@ -7,8 +7,12 @@ authors:
 description: An easy way to install and manage applications as packages
 
 dependencies:
+  clicr:
+    github: j8r/clicr
   crest:
     github: mamantoha/crest
+  dynany:
+    github: j8r/dynany
   exec:
     github: j8r/exec.cr
   semantic_compare:

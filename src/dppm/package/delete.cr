@@ -1,15 +1,16 @@
-struct Tasks::Delete
-  @name : String
-  @package : String
-  @pkgdir : String
-  @pkgdir : String
+struct Package::Delete
+  getter name : String,
+    package : String,
+    pkgdir : String,
+    path : Package::Path,
+    vars : Hash(String, String)
   @service_path : String
   @user : String
   @group : String
   @service = false
-  @path : Tasks::Path
 
-  def initialize(vars, @path)
+  def initialize(@vars)
+    @path = Path.new vars["prefix"]
     @name = vars["package"].gsub(':', '_')
     @pkgdir = @path.app + '/' + @name
 
@@ -18,7 +19,7 @@ struct Tasks::Delete
     @group = Owner.from_id file.group, "gid"
 
     # Checks
-    Tasks.pkg_exists? @pkgdir
+    Package.pkg_exists? @pkgdir
     @service_path = Localhost.service.system.new(@name).file
     if File.exists?(@service_path) &&
        File.real_path(@service_path) == "#{@pkgdir}/etc/init/#{Localhost.service.name.downcase}"

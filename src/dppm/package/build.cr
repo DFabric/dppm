@@ -1,21 +1,22 @@
-struct Tasks::Build
-  getter package : String
-  getter name : String
-  getter pkgdir : String
-  getter pkg : YAML::Any
-  getter version : String
-  getter exists = false
-  getter deps = Hash(String, String).new
-  @vars : Hash(String, String)
+struct Package::Build
+  getter package : String,
+    name : String,
+    pkgdir : String,
+    pkg : YAML::Any,
+    version : String,
+    exists = false,
+    deps = Hash(String, String).new,
+    path : Package::Path,
+    vars : Hash(String, String)
   @arch_alias : String
-  @path : Tasks::Path
 
-  def initialize(@vars, @path)
+  def initialize(@vars)
+    @path = Path.new vars["prefix"]
     @package = @vars["package"].split(':')[0]
-    raise "package doesn't exists: " + @package if !File.exists? "#{path.src}/#{@package}/pkg.yml"
+    raise "package doesn't exists: " + @package if !File.exists? "#{@path.src}/#{@package}/pkg.yml"
 
-    Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
-    @pkg = YAML.parse File.read "#{path.src}/#{@package}/pkg.yml"
+    Log.info "calculing informations", "#{@path.src}/#{@package}/pkg.yml"
+    @pkg = YAML.parse File.read "#{@path.src}/#{@package}/pkg.yml"
     @version = vars["version"] = getversion
     @vars["package"] = @package
     @name = vars["name"] = "#{@package}_#{@version}"
@@ -33,7 +34,7 @@ struct Tasks::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Tasks::Deps.new(@path).get(@pkg, @pkgdir).each { |k, v| @deps[k] = v[0] }
+    Package::Deps.new(@path).get(@pkg, @pkgdir).each { |k, v| @deps[k] = v[0] }
   end
 
   private def getversion
@@ -87,7 +88,7 @@ struct Tasks::Build
     FileUtils.cp_r "#{@path.src}/#{@package}", @pkgdir
 
     # Build dependencies
-    Tasks::Deps.new(@path).build @vars.reject("--contained"), @deps
+    Package::Deps.new(@path).build @vars.reject("--contained"), @deps
     if @pkg["tasks"]? && (build_task = @pkg["tasks"]["build"]?)
       Log.info "building", @package
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run build_task.as_a }

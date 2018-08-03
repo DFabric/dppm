@@ -65,10 +65,10 @@ class Service::Systemd::Config
   end
 
   def env_get(env)
-    Service::Env.get @section["Service"]["Environment"], env
+    Service::Env.new(@section["Service"]["Environment"]).get env
   end
 
   def env_set(env, value)
-    @section["Service"]["Environment"] = Service::Env.set @section["Service"]["Environment"]?.to_s, env, value
+    @section["Service"]["Environment"] = Service::Env.new(@section["Service"]["Environment"]?).set env, value
   end
 end

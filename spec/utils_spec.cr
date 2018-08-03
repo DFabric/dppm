@@ -24,7 +24,7 @@ describe Utils do
   end
 
   it "converts to an array" do
-    Utils.to_array("a.b.c").should eq ["a", "b", "c"]
+    Utils.to_array("a.b[1].some\\.key").should eq ["a", "b", 1, "some.key"]
   end
 
   describe "String to_type" do
