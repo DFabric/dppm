@@ -25,7 +25,7 @@ struct Package::CLI
     arg_parser variables
 
     # Update cache
-    Package::Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix).src
+    Package::Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src
 
     task = {{task.camelcase.id}}.new @vars.merge! Localhost.vars
 

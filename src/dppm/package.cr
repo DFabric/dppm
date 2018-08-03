@@ -19,11 +19,11 @@ module Package
     getter src : String
     getter prefix : String
 
-    def initialize(@prefix)
+    def initialize(@prefix, create = false)
       @app = @prefix + "/app"
       @pkg = @prefix + "/pkg"
-      FileUtils.mkdir_p [@app, @pkg]
       @src = @prefix + "/src"
+      FileUtils.mkdir_p [@app, @pkg] if create
     end
   end
 end
