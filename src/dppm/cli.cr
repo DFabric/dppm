@@ -153,16 +153,38 @@ module CLI
           },
         },
         service: {
-          alias:     's',
-          info:      "Manage applications' services",
-          arguments: %w(services...),
-          action:    "::Service.cli",
-          variables: {
-            action: {
-              info: "[start|stop|restart|reload] Action to perform",
+          alias:    's',
+          info:     "Manage applications' services",
+          commands: {
+            status: {
+              info:      "Service status",
+              arguments: %w(services...),
+              action:    "::Service.cli_status",
             },
             boot: {
-              info: "Auto-start the service at boot",
+              info:      "Auto-start the service at boot",
+              arguments: %w(service state),
+              action:    "::Service.cli_boot",
+            },
+            start: {
+              info:      "Start the service",
+              arguments: %w(service),
+              action:    "puts Localhost.service.system.new().start",
+            },
+            stop: {
+              info:      "Stop the service",
+              arguments: %w(service),
+              action:    "puts Localhost.service.system.new().stop",
+            },
+            restart: {
+              info:      "Restart the service",
+              arguments: %w(service),
+              action:    "puts Localhost.service.system.new().restart",
+            },
+            reload: {
+              info:      "Reload the service",
+              arguments: %w(service),
+              action:    "puts Localhost.service.system.new().reload",
             },
           },
         },

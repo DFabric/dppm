@@ -56,7 +56,8 @@ A typical installation can be:
 dppm p add [application]
 
 # start the service and  auto start the service at boot
-dppm service [application] action=start boot=true
+dppm service start [application]
+dppm service boot [application] true
 ```
 
 If not specified, an user, group and application name will be created.

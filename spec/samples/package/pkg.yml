@@ -1,7 +1,6 @@
 package: test
 name: Test
 type: app
-keywords: [test]
 license: MIT
 url: http://localhost
 description: Test Package

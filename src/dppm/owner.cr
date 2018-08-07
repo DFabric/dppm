@@ -36,7 +36,7 @@ module Owner
     end
   end
 
-  def all_groups
+  def all_gids
     a = Array(Int32).new
     File.read("/etc/group").each_line do |line|
       a << line.split(':')[2].to_i
@@ -44,7 +44,7 @@ module Owner
     a
   end
 
-  def all_users
+  def all_uids
     a = Array(Int32).new
     File.read("/etc/passwd").each_line do |line|
       a << line.split(':', 5)[2].to_i
@@ -54,17 +54,19 @@ module Owner
 
   def available_id
     id = 1000
-    users = all_users
-    groups = all_groups
-    while all_users.includes?(id)
+    uids = all_uids
+    gids = all_gids
+    while uids.includes?(id) || gids.includes?(id)
       id += 1
     end
     id
   end
 
-  def add(name, description)
-    id = available_id
+  def add_user(id, name, description)
     File.open "/etc/passwd", "a", &.puts "#{name}:x:#{id}:#{id}:#{description}:/:/bin/false"
+  end
+
+  def add_group(id, name)
     File.open "/etc/group", "a", &.puts "#{name}:x:#{id}:"
   end
 
@@ -76,8 +78,17 @@ module Owner
     File.write file, data
   end
 
-  def del_all(name)
+  def del_user(name)
     del name, "/etc/passwd"
+    Log.info "user deleted", name
+  end
+
+  def del_group(name)
     del name, "/etc/group"
+    Log.info "group deleted", name
+  end
+
+  def generated?(name, package)
+    name.starts_with?(package + '_') && name.ascii_alphanumeric_underscore?
   end
 end

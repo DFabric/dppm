@@ -41,9 +41,10 @@ module Cmd
           end
           # New condition block
         elsif line = raw_line.as_h?
-          if line.first_key.to_s[0..3] == "elif" && last_cond
+          first_key = line.first_key.to_s
+          if first_key[0..3] == "elif" && last_cond
             # Previous if/elif is true
-          elsif cond(var(line.first_key).to_s, last_cond) || (line.first_key.to_s == "else" && !last_cond)
+          elsif cond(var(first_key), last_cond) || (first_key == "else" && !last_cond)
             line.each_value do |subline|
               if array = subline.as_a?
                 run array
@@ -61,14 +62,14 @@ module Cmd
       end
     end
 
-    private def var(cmd)
+    private def var(cmd : String)
       # Check if variables in the command are defined
-      cmd.to_s.scan(/(?<!\\)\${[a-zA-Z0-9_]+}/).each do |var|
+      cmd.scan(/(?<!\\)\${[a-zA-Z0-9_]+}/).each do |var|
         raise "unknown variable: " + var[0] if !@extvars[var[0]]?
       end
 
       # Replace vars by their values
-      cmd.to_s.gsub(/(?<!\\)\${([a-zA-Z0-9_]+)}/, @extvars)
+      cmd.gsub(/(?<!\\)\${([a-zA-Z0-9_]+)}/, @extvars)
         # Remove a slash for escpaded vars
         .gsub(/\\(\${[a-zA-Z0-9_]+})/, "\\1")
     end
@@ -88,15 +89,19 @@ module Cmd
         when "false" then return false
         when .ascii_alphanumeric_underscore?
           if block.starts_with? '!'
-            return true if !@vars[block.lchop]?
+            return !@vars[block.lchop]?
           else
-            return true if @vars[block.lchop]?
+            return @vars[block.lchop]?
           end
         else
           vars = block.split(" == ", 2)
-          return command(vars[0]) == command(vars[1]) if vars[1]?
+          if second_var = vars[1]?
+            return command(vars[0]) == command(second_var)
+          end
           vars = block.split(" != ", 2)
-          return command(vars[0]) != command(vars[1]) if vars[1]?
+          if second_var = vars[1]?
+            return command(vars[0]) != command(second_var)
+          end
         end
       end
       false
@@ -184,6 +189,7 @@ module Cmd
         HTTPget.file cmd[1], file
         "file retrieved"
         # Compression
+        # Use the system `tar` and `unzip` for now
       when "unzip"     then execute "/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]; "zip archive extracted"
       when "untar_bz2" then execute "/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]; "bzip2 archive extracted"
       when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]; "gzip archive extracted"
@@ -207,9 +213,7 @@ module Cmd
     end
 
     private def execute(bin, array)
-      # Use the system `tar`, for now
-      command = Exec.new(bin, array).out
-      command.empty? ? "" : command
+      Exec.new(bin, array).out
     end
   end
 end

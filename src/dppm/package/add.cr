@@ -6,7 +6,8 @@ struct Package::Add
     version : String,
     vars : Hash(String, String),
     path : Package::Path
-  @add_user_group = false
+  @add_user = false
+  @add_group = false
   @deps = Hash(String, String).new
 
   def initialize(@vars)
@@ -22,14 +23,6 @@ struct Package::Add
     @name = vars["name"]
     @pkgdir = @vars["pkgdir"] = "#{@path.app}/#{@name}"
 
-    if owner = vars["owner"]?
-      @vars["user"] = @vars["group"] = owner
-    elsif @vars["user"]? || @vars["group"]?
-      raise "either both or none of user and group need to be specified"
-    else
-      @vars["user"] = @vars["group"] = @name
-      @add_user_group = true
-    end
     @deps = @build.deps
 
     Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
@@ -57,6 +50,18 @@ struct Package::Add
     end
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
     @vars["port"] = port if vars["port"]?
+
+    owner_id = Owner.available_id.to_s
+    if !@vars["user"]? && !@vars["uid"]?
+      @vars["user"] = @name
+      @vars["uid"] = owner_id
+      @add_user = true
+    end
+    if !@vars["group"]? && !@vars["gid"]?
+      @vars["group"] = @name
+      @vars["gid"] = owner_id
+      @add_group = true
+    end
   end
 
   private def getname
@@ -118,22 +123,24 @@ struct Package::Add
       conf = ConfFile::Config.new @pkgdir
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
-        conf.set variable, @vars[variable] if @vars[variable]?
+        if variable_value = @vars[variable]?
+          conf.set variable, variable_value
+        end
       end
     end
 
     # php-fpm based application
-    if @pkg["keywords"].as_a.includes? "php-fpm"
-      php_fpm = YAML.parse File.read(@pkgdir + "/lib/php/pkg.yml")
-      @pkg.as_h[YAML::Any.new "exec"] = YAML::Any.new php_fpm["exec"].as_h
+    # if "php-fpm"
+    # php_fpm = YAML.parse File.read(@pkgdir + "/lib/php/pkg.yml")
+    # @pkg.as_h[YAML::Any.new "exec"] = YAML::Any.new php_fpm["exec"].as_h
 
-      # Copy files and directories if not present
-      FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf.default", @pkgdir + "/etc/php-fpm.conf") if !File.exists? @pkgdir + "/etc/php-fpm.conf"
-      Dir.mkdir @pkgdir + "/etc/php-fpm.d" if !File.exists? @pkgdir + "/etc/php-fpm.d"
-      FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "/etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "/etc/php-fpm.d/www.conf"
+    # # Copy files and directories if not present
+    # FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf.default", @pkgdir + "/etc/php-fpm.conf") if !File.exists? @pkgdir + "/etc/php-fpm.conf"
+    # Dir.mkdir @pkgdir + "/etc/php-fpm.d" if !File.exists? @pkgdir + "/etc/php-fpm.d"
+    # FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "/etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "/etc/php-fpm.d/www.conf"
 
-      Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run @pkg["tasks"]["build"].as_a }
-    end
+    # Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run @pkg["tasks"]["build"].as_a }
+    # end
 
     # Running the add task
     Log.info "running configuration tasks", @package
@@ -143,8 +150,9 @@ struct Package::Add
 
     if Localhost.service.writable?
       # Set the user and group owner
-      Owner.add(@vars["user"], @pkg["description"]) if @add_user_group
-      Utils.chown_r @pkgdir, Owner.to_id(@vars["user"], "uid"), Owner.to_id(@vars["group"], "gid")
+      Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"]) if @add_user
+      Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
+      Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
 
       # Create system services
       Localhost.service.create @pkg, @vars

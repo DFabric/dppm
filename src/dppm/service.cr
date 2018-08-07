@@ -11,19 +11,19 @@ module Service
   end
   end
 
-  def self.cli(services : Array(String), action, boot)
+  def self.cli_boot(service, state)
+    Localhost.service.system.new(service).boot Utils.to_b(state)
+  end
+
+  def self.cli_status(services : Array(String))
     (services.empty? ? Localhost.service.system : services).each do |app|
       service = Localhost.service.system.new app
-      print app
       if service.exists?
-        service.action(action) if action
-        puts "\nrun: #{(r = service.run?) ? r.colorize.green : r.colorize.red}"
-        if boot_str = boot
-          service.boot(Utils.to_b boot_str)
-        end
+        puts app
+        puts "run: #{(r = service.run?) ? r.colorize.green : r.colorize.red}"
         puts "boot: #{(b = service.boot?) ? b.colorize.green : b.colorize.red}\n\n"
       else
-        puts " doesn't exist"
+        puts "service doesn't exist: " + app
       end
     end
   end

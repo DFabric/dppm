@@ -54,8 +54,8 @@ struct Package::Build
       src = @pkg["tags"][tag]["src"].as_s
       # Test if the src is an URL or a version number
       if Utils.is_http? src
-        regex = if @pkg["tags"][tag]["regex"]?
-                  @pkg["tags"][tag]["regex"]
+        regex = if regex_tag = @pkg["tags"][tag]["regex"]?
+                  regex_tag
                 else
                   @pkg["tags"]["self"]["regex"]
                 end.as_s
@@ -71,7 +71,7 @@ struct Package::Build
       raise "fail to get a version"
     end
   rescue ex
-    raise "can't obtain the version: " + ex.to_s
+    raise "can't obtain the version: #{ex}"
   end
 
   def simulate

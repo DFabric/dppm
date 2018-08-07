@@ -81,7 +81,7 @@ describe Cmd::Run do
     end
   end
 
-  describe "condtions" do
+  describe "conditions" do
     it "simple if condition" do
       cmd.run([YAML.parse "if file_exists? . == true: \n- touch if_cond"])
       File.exists?("if_cond").should be_true

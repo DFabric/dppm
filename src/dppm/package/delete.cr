@@ -50,10 +50,13 @@ struct Package::Delete
   def run
     Log.info "deleting", @pkgdir
     Localhost.service.delete @name if @service
-    if Localhost.service.writable? && @user.starts_with?(@package) && @user.split('_').last.lowercase_number?
-      Owner.del_all @user
-      Log.info "user and group deleted", @user
+    if Localhost.service.writable? && Owner.generated? @user, @package
+      Owner.del_user @user
     end
+    if Localhost.service.writable? && Owner.generated? @group, @package
+      Owner.del_group @group
+    end
+
     FileUtils.rm_rf @pkgdir
     Log.info "delete completed", @pkgdir
   end

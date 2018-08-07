@@ -7,7 +7,7 @@ struct Package::CLI
 
   {% for task in %w(add build delete) %}
   def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, variables {% if task == "add" %}, contained{% end %})
-    Log.info "initializing", "add"
+    Log.info "initializing", {{task}}
     @vars["package"] = package
     @vars["prefix"] = prefix
     {% if task == "add" %} @vars["contained"] = contained.to_s {% end %}

@@ -42,7 +42,8 @@ module ConfFile
       data = INI.build data, space
     when "json"
       json = JSON.parse data
-      json[path] = JSON::Any.new case Utils.to_type value
+      value = Utils.to_type value
+      json[path] = JSON::Any.new case value
       when .is_a? Hash(String, String) then Hash(String, JSON::Any).new
       when .is_a? Array(String)        then Array(JSON::Any).new
       else
@@ -51,7 +52,8 @@ module ConfFile
       data = json.to_pretty_json
     when "yml", "yaml"
       yaml = YAML.parse data
-      yaml[path] = YAML::Any.new case Utils.to_type value
+      value = Utils.to_type value
+      yaml[path] = YAML::Any.new case value
       when .is_a? Hash(String, String) then Hash(YAML::Any, YAML::Any).new
       when .is_a? Array(String)        then Array(YAML::Any).new
       else
