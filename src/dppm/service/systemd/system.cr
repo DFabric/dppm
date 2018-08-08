@@ -13,8 +13,6 @@ struct Service::Systemd::System
     @boot = "/etc/systemd/system/multi-user.target.wants/#{@service}.service"
   end
 
-  Systemd.change_state
-
   def self.each
     Dir["/lib/systemd/system/*.service", "/etc/systemd/system/*.service"].each do |service|
       yield File.basename(service)[0..-9]

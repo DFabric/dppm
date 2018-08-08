@@ -162,7 +162,7 @@ module CLI
               action:    "::Service.cli_status",
             },
             boot: {
-              info:      "Auto-start the service at boot",
+              info:      "\t Auto-start the service at boot",
               arguments: %w(service state),
               action:    "::Service.cli_boot",
             },
@@ -172,7 +172,7 @@ module CLI
               action:    "puts Localhost.service.system.new().start",
             },
             stop: {
-              info:      "Stop the service",
+              info:      "\t Stop the service",
               arguments: %w(service),
               action:    "puts Localhost.service.system.new().stop",
             },

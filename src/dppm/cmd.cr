@@ -163,7 +163,7 @@ module Cmd
       when "symlink" then File.symlink cmd[1], cmd[2]; "symbolic link created"
       when "write"   then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' ')); "text written"
       when "chmod"   then File.chmod cmd[1], cmd[2].to_i(8); "permissions changed"
-      when "chown" then File.chown cmd[1], Owner.to_id(cmd[2], "uid"), Owner.to_id(cmd[3], "gid"); "owner changed"
+      when "chown" then File.chown cmd[1], Owner.to_uid(cmd[2]), Owner.to_gid(cmd[3]); "owner changed"
       # Custom
 
 
@@ -179,7 +179,7 @@ module Cmd
       when .ends_with? ".del" then ConfFile.del(cmd[1], cmd[2], cmd[0][0..-5]).to_s
       when .ends_with? ".set" then ConfFile.set(cmd[1], cmd[2], cmd[3..-1].join(' '), cmd[0][0..-5]).to_s
       when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
-      when "chown_r" then Utils.chown_r cmd[3], Owner.to_id(cmd[1], "uid"), Owner.to_id(cmd[2], "gid"); "owner changed"
+      when "chown_r" then Utils.chown_r cmd[3], Owner.to_uid(cmd[1]), Owner.to_gid(cmd[2]); "owner changed"
       # Download
 
 

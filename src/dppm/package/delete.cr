@@ -3,7 +3,8 @@ struct Package::Delete
     package : String,
     pkgdir : String,
     path : Package::Path,
-    vars : Hash(String, String)
+    vars : Hash(String, String),
+    pkg : YAML::Any
   @service_path : String
   @user : String
   @group : String
@@ -15,8 +16,8 @@ struct Package::Delete
     @pkgdir = @path.app + '/' + @name
 
     file = File.info @pkgdir
-    @user = Owner.from_id file.owner, "uid"
-    @group = Owner.from_id file.group, "gid"
+    @user = Owner.to_user file.owner
+    @group = Owner.to_group file.group
 
     # Checks
     Package.pkg_exists? @pkgdir
@@ -29,10 +30,11 @@ struct Package::Delete
       Log.warn "no system service found", @name
     end
     if !Localhost.service.writable? && @service
-      raise "a service is found - root permissions required: " + @name
+      raise "root permissions required to delete the service: " + @name
     end
     Log.info "getting package name", @pkgdir + "/pkg.yml"
-    @package = YAML.parse(File.read(@pkgdir + "/pkg.yml"))["package"].as_s
+    @pkg = YAML.parse(File.read(@pkgdir + "/pkg.yml"))
+    @package = @pkg["package"].as_s
   end
 
   def simulate

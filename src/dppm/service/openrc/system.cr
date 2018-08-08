@@ -9,8 +9,6 @@ struct Service::OpenRC::System
     @boot = "/etc/runlevels/default/" + @service
   end
 
-  OpenRC.change_state
-
   def self.each
     Dir.new("/etc/init.d").each do |service|
       yield service

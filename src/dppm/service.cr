@@ -1,16 +1,4 @@
 module Service
-  macro change_state
-  def action(type)
-    case type
-    {% for action in %w(start stop restart reload) %}
-    when {{action}} then {{action.id}}
-    {% end %}
-    else
-      raise "unknown action: " + type
-    end
-  end
-  end
-
   def self.cli_boot(service, state)
     Localhost.service.system.new(service).boot Utils.to_b(state)
   end

@@ -89,7 +89,7 @@ struct Package::Build
 
     # Build dependencies
     Package::Deps.new(@path).build @vars.reject("--contained"), @deps
-    if @pkg["tasks"]? && (build_task = @pkg["tasks"]["build"]?)
+    if (tasks = @pkg["tasks"]?) && (build_task = tasks["build"]?)
       Log.info "building", @package
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run build_task.as_a }
       # Standard package build
@@ -112,6 +112,6 @@ struct Package::Build
     Log.info "build completed", @pkgdir
   rescue ex
     # FileUtils.rm_rf @pkgdir
-    raise "build failed, deleting: #{@pkgdir}:\n#{ex}"
+    Log.error "build failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

@@ -52,15 +52,29 @@ struct Package::Add
     @vars["port"] = port if vars["port"]?
 
     owner_id = Owner.available_id.to_s
-    if !@vars["user"]? && !@vars["uid"]?
-      @vars["user"] = @name
-      @vars["uid"] = owner_id
-      @add_user = true
+
+    if uid = @vars["uid"]?
+      @vars["user"] = Owner.to_user uid
+    else
+      if user = @vars["user"]?
+        @vars["uid"] = Owner.to_user user
+      else
+        @vars["user"] = @name
+        @vars["uid"] = owner_id
+        @add_user = true
+      end
     end
-    if !@vars["group"]? && !@vars["gid"]?
-      @vars["group"] = @name
-      @vars["gid"] = owner_id
-      @add_group = true
+
+    if gid = @vars["gid"]?
+      @vars["group"] = Owner.to_group gid
+    else
+      if group = @vars["group"]?
+        @vars["gid"] = Owner.to_group group
+      else
+        @vars["group"] = @name
+        @vars["gid"] = owner_id
+        @add_group = true
+      end
     end
   end
 
@@ -116,6 +130,9 @@ struct Package::Add
         end
       end
     end
+    File.chmod(@pkgdir + "/etc", 0o500)
+    File.chmod(@pkgdir + "/srv", 0o550)
+    File.chmod(@pkgdir + "/log", 0o500)
 
     # Set configuration variables in files
     Log.info "setting configuration variables", @name
@@ -144,7 +161,7 @@ struct Package::Add
 
     # Running the add task
     Log.info "running configuration tasks", @package
-    if add_task = @pkg["tasks"]["add"]?
+    if (tasks = @pkg["tasks"]?) && (add_task = tasks["add"]?)
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
     end
 
@@ -165,6 +182,6 @@ struct Package::Add
     Log.info "add completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
-    raise "add failed, deleting: #{@pkgdir}:\n#{ex}"
+    Log.error "add failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

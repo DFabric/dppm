@@ -4,36 +4,42 @@ require "uuid"
 module Owner
   extend self
 
-  def to_id(id, id_type) : Int32
-    file = case id_type
-           when "uid" then "/etc/passwd"
-           when "gid" then "/etc/group"
-           else            raise "only uid or gid can be used"
-           end
-    if id.is_a? Int || id.to_i?
-      id.to_i
+  private def get_id(name, file : String) : Int32
+    if name.is_a? Int || name.to_i?
+      name.to_i
     else
       File.read_lines(file).each do |line|
-        return $1.to_i if line =~ /#{id}:x:(.*?):/
+        return $1.to_i if line =~ /#{name}:x:(.*?):/
       end
-      raise id_type + " not found: " + id
+      raise "name not found in `#{file}`: #{name}"
     end
   end
 
-  def from_id(id, id_type) : String
-    file = case id_type
-           when "uid" then "/etc/passwd"
-           when "gid" then "/etc/group"
-           else            raise "only uid or gid can be used"
-           end
+  def to_uid(user) : Int32
+    get_id user, "/etc/passwd"
+  end
+
+  def to_gid(group) : Int32
+    get_id group, "/etc/group"
+  end
+
+  private def get_name(id, file : String) : String
     if id.is_a? Int || id.to_i?
       File.read_lines(file).each do |line|
         return $1 if line =~ /(.*):x:(#{id}):/
       end
-      raise id_type + " not found: #{id}"
+      raise "ID not found in `#{file}`: #{id}"
     else
       id.to_s
     end
+  end
+
+  def to_user(uid) : String
+    get_name uid, "/etc/passwd"
+  end
+
+  def to_group(gid) : String
+    get_name gid, "/etc/group"
   end
 
   def all_gids
