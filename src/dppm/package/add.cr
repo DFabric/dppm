@@ -31,6 +31,11 @@ struct Package::Add
     raise "directory already exists: " + @pkgdir if File.exists? @pkgdir
     Localhost.service.check_availability @pkg["type"], @name
 
+    # Check database type
+    if (db_type = @vars["database_type"]?) && (databases = @pkg["databases"]?)
+      raise "unsupported database type: " + db_type if !databases[db_type]?
+    end
+
     # Default variables
     unset_vars = Array(String).new
     if pkg_config = @pkg["config"]?
@@ -53,6 +58,7 @@ struct Package::Add
 
     owner_id = Owner.available_id.to_s
 
+    # An user uid and a group gid is required
     if uid = @vars["uid"]?
       @vars["user"] = Owner.to_user uid
     else
@@ -64,7 +70,6 @@ struct Package::Add
         @add_user = true
       end
     end
-
     if gid = @vars["gid"]?
       @vars["group"] = Owner.to_group gid
     else

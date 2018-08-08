@@ -196,8 +196,9 @@ module CLI
     )
   rescue ex
     case ex.cause.to_s
-    when "help" then puts ex; exit 0
-    else             abort ex
+    when "help"                                                            then puts ex; exit 0
+    when "argument_required", "unknown_option", "unknown_command_variable" then abort ex
+    else                                                                        Log.error ex.to_s
     end
   end
 

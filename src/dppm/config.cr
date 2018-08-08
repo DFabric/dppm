@@ -11,13 +11,16 @@ module ConfFile
            when "ini", "INI", "toml"
              data = INI.parse data
              case path.size
-             when 1 then data[path[0].to_s]
-             when 2 then data[path[0].to_s][path[1].to_s]
+             when 1 then data[path[0].to_s]?
+             when 2
+               if ini = data[path[0].to_s]
+                 ini[path[1].to_s]?
+               end
              else
                raise "max key path exceeded: #{path.size}"
              end
-           when "json"        then JSON.parse(data)[path]
-           when "yml", "yaml" then YAML.parse(data)[path]
+           when "json"        then JSON.parse(data)[path]?
+           when "yml", "yaml" then YAML.parse(data)[path]?
            else
              raise "not supported file format: " + format
            end

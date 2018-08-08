@@ -22,8 +22,8 @@ struct Package::Build
     @name = vars["name"] = "#{@package}_#{@version}"
     @pkgdir = vars["pkgdir"] = "#{path.pkg}/#{@name}"
 
-    @arch_alias = vars["arch_alias"] = if @pkg["version"]["alias"]? && (version_alias = @pkg["version"]["alias"][Localhost.arch].as_s?)
-                                         version_alias
+    @arch_alias = vars["arch_alias"] = if (aliases = @pkg["aliases"]?) && (version_alias = aliases[Localhost.arch]?)
+                                         version_alias.as_s
                                        else
                                          Localhost.arch
                                        end
