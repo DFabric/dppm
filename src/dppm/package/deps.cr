@@ -2,7 +2,6 @@ require "yaml"
 require "semantic_compare"
 
 struct Package::Deps
-  getter log
   @path : Package::Path
 
   def initialize(@path)
@@ -10,8 +9,11 @@ struct Package::Deps
 
   def get(pkg, pkgdir, allvers = Hash(String, Array(String)).new)
     # No need to parse if the deps list is empty
-    return allvers if !pkg["deps"]? || pkg["deps"] == ""
-    pkgdeps = pkg["deps"].as_h
+    if pkg_deps = pkg["deps"]?
+      pkgdeps = pkg_deps.as_h
+    else
+      return allvers
+    end
 
     pkgdeps.each_key do |dep|
       if !File.exists? pkgdir + "/lib/#{dep}"
@@ -42,28 +44,28 @@ struct Package::Deps
     allvers
   end
 
-  def build(vars, deps)
+  def build(vars : Hash(String, String), deps, contained = false)
     Log.info "dependencies", "building"
-    Dir.mkdir_p vars["pkgdir"] + "/lib"
-
-    contained = vars.has_key?("--contained") ? true : false
+    pkgdir = vars["pkgdir"]
+    Dir.mkdir_p pkgdir + "/lib"
 
     # Build each dependency
     deps.each do |dep, ver|
-      deppath = "#{vars["prefix"]}/pkg/#{dep}_#{ver}"
-      depdir = "#{vars["pkgdir"]}/lib/#{dep}_#{ver}"
-      if Dir.exists? deppath
-        Log.info "already present", dep + '_' + ver
-        FileUtils.cp_r deppath, depdir if contained
-      else
-        Log.info "building dependency", deppath
+      dep_prefix_pkg = "#{@path.prefix}/pkg/#{dep}_#{ver}"
+      dep_pkgdir_lib = "#{pkgdir}/lib/#{dep}"
+      if !Dir.exists? dep_prefix_pkg
+        Log.info "building dependency", dep_prefix_pkg
         Package::Build.new(vars.merge({"package" => dep,
                                        "version" => ver})).run
-        File.rename deppath, depdir if contained
       end
-      if !File.exists? "#{vars["pkgdir"]}/lib/#{dep}"
-        Log.info "adding symlink to dependency", "#{dep}:#{ver}"
-        File.symlink(contained ? depdir : deppath, "#{vars["pkgdir"]}/lib/#{dep}")
+      if !File.exists? dep_pkgdir_lib
+        if contained
+          Log.info "copying dependency", "#{dep}:#{ver}"
+          FileUtils.cp_r dep_prefix_pkg, dep_pkgdir_lib
+        else
+          Log.info "adding symlink to dependency", "#{dep}:#{ver}"
+          File.symlink dep_prefix_pkg, dep_pkgdir_lib
+        end
       end
       Log.info "dependency added", "#{dep}:#{ver}"
     end

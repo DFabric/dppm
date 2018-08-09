@@ -19,14 +19,14 @@ struct Package::Build
     @pkg = YAML.parse File.read "#{@path.src}/#{@package}/pkg.yml"
     @version = vars["version"] = getversion
     @vars["package"] = @package
-    @name = vars["name"] = "#{@package}_#{@version}"
-    @pkgdir = vars["pkgdir"] = "#{path.pkg}/#{@name}"
+    @name = @vars["name"] = "#{@package}_#{@version}"
+    @pkgdir = @vars["pkgdir"] = "#{path.pkg}/#{@name}"
 
-    @arch_alias = vars["arch_alias"] = if (aliases = @pkg["aliases"]?) && (version_alias = aliases[Localhost.arch]?)
-                                         version_alias.as_s
-                                       else
-                                         Localhost.arch
-                                       end
+    @arch_alias = @vars["arch_alias"] = if (aliases = @pkg["aliases"]?) && (version_alias = aliases[Localhost.arch]?)
+                                          version_alias.as_s
+                                        else
+                                          Localhost.arch
+                                        end
 
     if File.exists? @pkgdir
       Log.info "already present", @pkgdir
@@ -88,7 +88,8 @@ struct Package::Build
     FileUtils.cp_r "#{@path.src}/#{@package}", @pkgdir
 
     # Build dependencies
-    Package::Deps.new(@path).build @vars.reject("--contained"), @deps
+    Package::Deps.new(@path).build @vars.dup, @deps
+
     if (tasks = @pkg["tasks"]?) && (build_task = tasks["build"]?)
       Log.info "building", @package
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run build_task.as_a }
@@ -111,7 +112,7 @@ struct Package::Build
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     Log.info "build completed", @pkgdir
   rescue ex
-    # FileUtils.rm_rf @pkgdir
+    FileUtils.rm_rf @pkgdir
     Log.error "build failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

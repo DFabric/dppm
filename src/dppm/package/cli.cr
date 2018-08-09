@@ -6,11 +6,10 @@ struct Package::CLI
   end
 
   {% for task in %w(add build delete) %}
-  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, variables {% if task == "add" %}, contained{% end %})
+  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, variables {% if task == "add" %}, contained, socket{% end %})
     Log.info "initializing", {{task}}
     @vars["package"] = package
     @vars["prefix"] = prefix
-    {% if task == "add" %} @vars["contained"] = contained.to_s {% end %}
 
     # configuration
     begin
@@ -27,7 +26,13 @@ struct Package::CLI
     # Update cache
     Package::Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src
 
-    task = {{task.camelcase.id}}.new @vars.merge! Localhost.vars
+    # Create task
+    @vars.merge! Localhost.vars
+    {% if task == "add" %}
+      task = {{task.camelcase.id}}.new @vars, contained: contained, socket: socket
+    {% else %}
+      task = {{task.camelcase.id}}.new @vars
+    {% end %}
 
     # puts task.class.to_s.split("::").last.downcase
     Log.info {{task}}, task.simulate

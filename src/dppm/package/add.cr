@@ -9,14 +9,18 @@ struct Package::Add
   @add_user = false
   @add_group = false
   @deps = Hash(String, String).new
+  @features : YAML::Any?
+  @socket : Bool
+  @contained : Bool
 
-  def initialize(@vars)
+  def initialize(@vars, @socket : Bool, @contained : Bool)
     # Build missing dependencies
     @build = Package::Build.new vars.dup
     @path = @build.path
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
     @pkg = @build.pkg
+    @features = @pkg["features"]?
 
     Log.info "getting name", @package
     getname
@@ -54,7 +58,6 @@ struct Package::Add
       end
     end
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
-    @vars["port"] = port if vars["port"]?
 
     owner_id = Owner.available_id.to_s
 
@@ -81,6 +84,8 @@ struct Package::Add
         @add_group = true
       end
     end
+
+    port
   end
 
   private def getname
@@ -96,8 +101,10 @@ struct Package::Add
   end
 
   private def port
-    raise "the port must be an Int32 number: " + port if !@vars["port"].to_i?
-    Localhost.port(@vars["port"].to_i).to_s
+    if port_string = @vars["port"]?
+      Log.info "checking ports availability", port_string
+      @vars["port"] = Localhost.port(port_string.to_i).to_s
+    end
   end
 
   def simulate
@@ -114,15 +121,24 @@ struct Package::Add
     # Create the new application
     @build.run if !@build.exists
     Dir.mkdir @pkgdir
-    if vars.has_key?("--contained")
+
+    app_contained = @contained
+    if (features = @features) && features["contained"].to_s == "true"
+      Log.warn "must be self-contained ", @pkg["package"].as_s
+      app_contained = true
+    end
+    if app_contained
+      Log.info "copying from " + @build.pkgdir, @pkgdir
       FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
-      FileUtils.cp @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+      FileUtils.cp_r @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
     else
+      Log.info "creating symlinks from " + @build.pkgdir, @pkgdir
       File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
       File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
     end
 
-    Package::Deps.new(@path).build @vars.dup, @deps
+    # Build and add missing dependencies
+    Package::Deps.new(@path).build @vars.dup, @deps, @contained
 
     # Copy configurations
     Log.info "copying configurations", @name

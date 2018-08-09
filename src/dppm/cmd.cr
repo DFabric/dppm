@@ -28,10 +28,10 @@ module Cmd
         # Add/change vars
         if line = raw_line.as_s?
           # New variable assignation
-          if (line_var = line.split(" = ")) && line_var[0].ascii_alphanumeric_underscore?
+          if line.size > 4 && (line_var = line.split(" = ")) && line_var[0].ascii_alphanumeric_underscore?
             @vars[line_var[0]] = @extvars["${#{line_var[0]}}"] = command(line_var[1])
             # Print string
-          elsif line[0..3] == "echo"
+          elsif line.starts_with? "echo"
             Log.info "echo", "#{command(var(line[5..-1]))}\n"
           else
             cmd = var line
@@ -42,7 +42,7 @@ module Cmd
           # New condition block
         elsif line = raw_line.as_h?
           first_key = line.first_key.to_s
-          if first_key[0..3] == "elif" && last_cond
+          if first_key.starts_with?("elif") && last_cond
             # Previous if/elif is true
           elsif cond(var(first_key), last_cond) || (first_key == "else" && !last_cond)
             line.each_value do |subline|
@@ -169,8 +169,7 @@ module Cmd
 
       when "dir" then Dir.current
       when "ls"
-        directory = cmdline[3..-1]
-        directory = Dir.current if directory.empty?
+        directory = cmd[1]? ? cmd[1] : Dir.current
         Dir.entries(directory).join('\n')
       when "get"              then ConfFile.get(cmd[1], cmd[2]).to_s
       when "del"              then ConfFile.del(cmd[1], cmd[2]).to_s
@@ -190,7 +189,7 @@ module Cmd
         "file retrieved"
         # Compression
         # Use the system `tar` and `unzip` for now
-      when "unzip"     then execute "/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]; "zip archive extracted"
+      when "unzip"     then execute "/usr/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]; "zip archive extracted"
       when "untar_bz2" then execute "/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]; "bzip2 archive extracted"
       when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]; "gzip archive extracted"
       when "untar_lz"  then execute "/bin/tar", ["axf", cmd[1], "-C", cmd[2]]; "lz archive extracted"

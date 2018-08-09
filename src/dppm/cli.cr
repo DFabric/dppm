@@ -113,7 +113,11 @@ module CLI
               options:   {
                 contained: {
                   short: 'c',
-                  info:  "with self-contained dependencies (no library symlinks)",
+                  info:  "With self-contained dependencies (no library symlinks)",
+                },
+                socket: {
+                  short: 's',
+                  info:  "Use of an UNIX socket instead of a port",
                 },
               },
             },

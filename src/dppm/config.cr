@@ -13,7 +13,7 @@ module ConfFile
              case path.size
              when 1 then data[path[0].to_s]?
              when 2
-               if ini = data[path[0].to_s]
+               if ini = data[path[0].to_s]?
                  ini[path[1].to_s]?
                end
              else
