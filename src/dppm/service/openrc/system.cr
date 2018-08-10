@@ -27,6 +27,16 @@ struct Service::OpenRC::System
     File.writable? @file
   end
 
+  def run?
+    Exec.new("/sbin/rc-service", [@service, "status"]).success?
+  end
+
+  def delete
+    stop
+    boot false if boot?
+    File.delete @file
+  end
+
   def link(src)
     File.symlink src + @init_path, @file
     File.chmod @file, 0o750
@@ -37,10 +47,6 @@ struct Service::OpenRC::System
     return value if value == boot?
 
     value ? File.symlink(@file, @boot) : File.delete(@boot)
-  end
-
-  def run?
-    Exec.new("/sbin/rc-service", [@service, "status"]).success?
   end
 
   {% for action in %w(start stop restart reload) %}

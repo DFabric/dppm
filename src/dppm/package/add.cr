@@ -9,22 +9,20 @@ struct Package::Add
   @add_user = false
   @add_group = false
   @deps = Hash(String, String).new
-  @features : YAML::Any?
   @socket : Bool
-  @contained : Bool
+  @shared : Bool
 
-  def initialize(@vars, @socket : Bool, @contained : Bool)
+  def initialize(@vars, @socket : Bool, @shared : Bool)
     # Build missing dependencies
     @build = Package::Build.new vars.dup
     @path = @build.path
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
     @pkg = @build.pkg
-    @features = @pkg["features"]?
 
     Log.info "getting name", @package
     getname
-    @name = vars["name"]
+    @name = @vars["name"]
     @pkgdir = @vars["pkgdir"] = "#{@path.app}/#{@name}"
 
     @deps = @build.deps
@@ -46,22 +44,33 @@ struct Package::Add
       conf = ConfFile::Config.new "#{path.src}/#{@package}"
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
+        # Skip if a socket is used
+        next if (variable == "port" || variable == "socket") && @socket
         if !@vars[variable]?
           key = conf.get(variable).to_s
           if key.empty?
             unset_vars << variable
           else
             @vars[variable] = key
-            Log.info "default value set for unset variable", var.to_s + ": " + @vars[var.to_s]
+            Log.info "default value set for unset variable", variable + ": " + key
           end
         end
       end
     end
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
-    owner_id = Owner.available_id.to_s
+    create_user_group
+    raise "socket not supported by #{@pkg["name"]}" if @socket
+    # Choose an available port
+    if !@socket && (port_string = @vars["port"]?)
+      Log.info "checking ports availability", port_string
+      @vars["port"] = Localhost.port(port_string.to_i).to_s
+    end
+  end
 
-    # An user uid and a group gid is required
+  # An user uid and a group gid is required
+  private def create_user_group
+    owner_id = Owner.available_id.to_s
     if uid = @vars["uid"]?
       @vars["user"] = Owner.to_user uid
     else
@@ -84,8 +93,6 @@ struct Package::Add
         @add_group = true
       end
     end
-
-    port
   end
 
   private def getname
@@ -97,13 +104,6 @@ struct Package::Add
       @vars["name"].ascii_alphanumeric_underscore? || raise "the name contains other characters than `a-z`, `0-9` and `_`: #{@vars["name"]}"
     else
       raise "unknow type: #{@pkg["type"]}"
-    end
-  end
-
-  private def port
-    if port_string = @vars["port"]?
-      Log.info "checking ports availability", port_string
-      @vars["port"] = Localhost.port(port_string.to_i).to_s
     end
   end
 
@@ -122,23 +122,23 @@ struct Package::Add
     @build.run if !@build.exists
     Dir.mkdir @pkgdir
 
-    app_contained = @contained
-    if (features = @features) && features["contained"].to_s == "true"
-      Log.warn "must be self-contained ", @pkg["package"].as_s
-      app_contained = true
+    app_shared = @shared
+    if @pkg["shared"]?.to_s == "false"
+      Log.warn "must be self-shared ", @pkg["package"].as_s
+      app_shared = false
     end
-    if app_contained
-      Log.info "copying from " + @build.pkgdir, @pkgdir
-      FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
-      FileUtils.cp_r @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
-    else
+    if app_shared
       Log.info "creating symlinks from " + @build.pkgdir, @pkgdir
       File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
       File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+    else
+      Log.info "copying from " + @build.pkgdir, @pkgdir
+      FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
+      FileUtils.cp_r @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
     end
 
     # Build and add missing dependencies
-    Package::Deps.new(@path).build @vars.dup, @deps, @contained
+    Package::Deps.new(@path).build @vars.dup, @deps, @shared
 
     # Copy configurations
     Log.info "copying configurations", @name
@@ -151,9 +151,9 @@ struct Package::Add
         end
       end
     end
-    File.chmod(@pkgdir + "/etc", 0o500)
-    File.chmod(@pkgdir + "/srv", 0o550)
-    File.chmod(@pkgdir + "/log", 0o500)
+    File.chmod(@pkgdir + "/etc", 0o700)
+    File.chmod(@pkgdir + "/srv", 0o750)
+    File.chmod(@pkgdir + "/log", 0o700)
 
     # Set configuration variables in files
     Log.info "setting configuration variables", @name
@@ -161,7 +161,9 @@ struct Package::Add
       conf = ConfFile::Config.new @pkgdir
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
-        if variable_value = @vars[variable]?
+        if variable == "socket"
+          next
+        elsif variable_value = @vars[variable]?
           conf.set variable, variable_value
         end
       end
@@ -203,6 +205,10 @@ struct Package::Add
     Log.info "add completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
-    Log.error "add failed, deleting: #{@pkgdir}:\n#{ex}"
+    service = Localhost.service.system.new(@name)
+    service.delete if service.exists?
+    Owner.del_user(@vars["user"]) if @add_user
+    Owner.del_group(@vars["group"]) if @add_group
+    raise "add failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

@@ -44,7 +44,7 @@ struct Package::Deps
     allvers
   end
 
-  def build(vars : Hash(String, String), deps, contained = false)
+  def build(vars : Hash(String, String), deps, shared = true)
     Log.info "dependencies", "building"
     pkgdir = vars["pkgdir"]
     Dir.mkdir_p pkgdir + "/lib"
@@ -59,12 +59,12 @@ struct Package::Deps
                                        "version" => ver})).run
       end
       if !File.exists? dep_pkgdir_lib
-        if contained
-          Log.info "copying dependency", "#{dep}:#{ver}"
-          FileUtils.cp_r dep_prefix_pkg, dep_pkgdir_lib
-        else
+        if shared
           Log.info "adding symlink to dependency", "#{dep}:#{ver}"
           File.symlink dep_prefix_pkg, dep_pkgdir_lib
+        else
+          Log.info "copying dependency", "#{dep}:#{ver}"
+          FileUtils.cp_r dep_prefix_pkg, dep_pkgdir_lib
         end
       end
       Log.info "dependency added", "#{dep}:#{ver}"

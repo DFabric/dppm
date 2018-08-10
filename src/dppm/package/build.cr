@@ -113,6 +113,6 @@ struct Package::Build
     Log.info "build completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
-    Log.error "build failed, deleting: #{@pkgdir}:\n#{ex}"
+    raise "build failed, deleting: #{@pkgdir}:\n#{ex}"
   end
 end

@@ -60,12 +60,7 @@ module Service
   def delete(service)
     Log.info "deleting the system service", service
     if writable?
-      service = system.new service
-      service.stop
-      service.boot false if service.boot?
-
-      File.delete service.file
-      Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"] if Localhost.service.name == "systemd"
+      system.new(service).delete
     else
       Log.info "root execution needed for system service deletion", service
     end

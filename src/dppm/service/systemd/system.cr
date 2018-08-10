@@ -31,6 +31,17 @@ struct Service::Systemd::System
     File.writable? @file
   end
 
+  def run?
+    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "is-active", @service]).success?
+  end
+
+  def delete
+    stop
+    boot false if boot?
+    File.delete @file
+    Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"]
+  end
+
   def link(src)
     File.symlink src + @init_path, @file
     Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"]
@@ -41,10 +52,6 @@ struct Service::Systemd::System
     return value if value == boot?
 
     value ? File.symlink(@file, @boot) : File.delete(@boot)
-  end
-
-  def run?
-    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "is-active", @service]).success?
   end
 
   {% for action in %w(start stop restart reload) %}

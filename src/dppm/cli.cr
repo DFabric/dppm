@@ -111,9 +111,9 @@ module CLI
               arguments: %w(package variables...),
               action:    "::Package::CLI.new.add",
               options:   {
-                contained: {
-                  short: 'c',
-                  info:  "With self-contained dependencies (no library symlinks)",
+                noshared: {
+                  short: 'n',
+                  info:  "No shared dependencies, copy instead of symlinks",
                 },
                 socket: {
                   short: 's',

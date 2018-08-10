@@ -6,7 +6,7 @@ struct Package::CLI
   end
 
   {% for task in %w(add build delete) %}
-  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, variables {% if task == "add" %}, contained, socket{% end %})
+  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, variables {% if task == "add" %}, noshared, socket{% end %})
     Log.info "initializing", {{task}}
     @vars["package"] = package
     @vars["prefix"] = prefix
@@ -29,7 +29,7 @@ struct Package::CLI
     # Create task
     @vars.merge! Localhost.vars
     {% if task == "add" %}
-      task = {{task.camelcase.id}}.new @vars, contained: contained, socket: socket
+      task = {{task.camelcase.id}}.new @vars, shared: !noshared, socket: socket
     {% else %}
       task = {{task.camelcase.id}}.new @vars
     {% end %}
@@ -44,9 +44,9 @@ struct Package::CLI
     variables.each do |arg|
       case arg
       when .includes? '='
-        var = arg.split '=', 2
-        raise "only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: " + arg if !var[0].ascii_alphanumeric_underscore?
-        @vars[var[0]] = var[1]
+        key, value = arg.split '=', 2
+        raise "only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: " + arg if !key.ascii_alphanumeric_underscore?
+        @vars[key] = value
       else
         raise "invalid variable: #{arg}"
       end
