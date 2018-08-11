@@ -45,7 +45,7 @@ struct Package::Add
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
         # Skip if a socket is used
-        next if (variable == "port" || variable == "socket") && @socket
+        next if variable == "port" && @socket
         if !@vars[variable]?
           key = conf.get(variable).to_s
           if key.empty?
@@ -61,11 +61,24 @@ struct Package::Add
 
     create_user_group
     raise "socket not supported by #{@pkg["name"]}" if @socket
-    # Choose an available port
+
     if !@socket && (port_string = @vars["port"]?)
-      Log.info "checking ports availability", port_string
-      @vars["port"] = Localhost.port(port_string.to_i).to_s
+      find_available_port port_string
     end
+  end
+
+  # Choose an available port
+  private def find_available_port(port_string)
+    Log.info "checking ports availability", port_string
+
+    ports_used = Array(Int32).new
+    port_num = port_string.to_i
+    while !Localhost.port_available? port_num
+      ports_used << port_num
+      port_num += 1
+    end
+    Log.warn "ports unavailable or used", ports_used.join ", " if !ports_used.empty?
+    @vars["port"] = port_num.to_s
   end
 
   # An user uid and a group gid is required
@@ -140,8 +153,8 @@ struct Package::Add
     # Build and add missing dependencies
     Package::Deps.new(@path).build @vars.dup, @deps, @shared
 
-    # Copy configurations
-    Log.info "copying configurations", @name
+    # Copy configurations and data
+    Log.info "copying configurations and data", @name
     {"/etc", "/srv", "/log"}.each do |dir|
       if !File.exists? @pkgdir + dir
         if File.exists? @build.pkgdir + dir

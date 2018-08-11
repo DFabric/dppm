@@ -48,10 +48,27 @@ module CLI
         },
         info: {
           alias: 'i',
-          info:  "Application's informations from its pkg.yml.
-        Special path: `.` for all document, `version` to get the package's version",
-          action:    "puts ::Package.info",
-          arguments: %w(application path),
+          info:  "Packages's informations from its pkg.yml.
+        Special paths:
+        `.`:       get the all document
+        `version`: get the package's version",
+          commands: {
+            app: {
+              info:      "Installed application",
+              arguments: %w(package path),
+              action:    "puts ::Package::Info.app_cli",
+            },
+            pkg: {
+              info:      "Builded packages",
+              arguments: %w(package path),
+              action:    "puts ::Package::Info.pkg_cli",
+            },
+            src: {
+              info:      "Source package",
+              arguments: %w(package path),
+              action:    "puts ::Package::Info.src_cli",
+            },
+          },
           variables: {
             prefix: {
               info:    "Path for dppm packages, sources and apps",
@@ -72,26 +89,27 @@ module CLI
             all: {
               alias:  'a',
               info:   "List everything",
-              action: "List.new().all",
+              action: "::Package::List.new().all",
             },
             applications: {
               alias:  "app",
               info:   "Installed applications",
-              action: "List.new().app",
+              action: "::Package::List.new().app { |app| puts app }",
             },
             packages: {
               alias:  "pkg",
               info:   "Builded packages",
-              action: "List.new().pkg",
+              action: "::Package::List.new().pkg { |pkg| puts pkg }",
             },
             source: {
               alias:  "src",
               info:   "Packages source",
-              action: "List.new().src",
+              action: "::Package::List.new().src { |src| puts src }",
             },
             services: {
+              alias:  's',
               info:   "Applications' services ",
-              action: "List.new().services",
+              action: "::Package::List.new().services_cli",
             },
           },
         },
@@ -129,7 +147,7 @@ module CLI
             },
             cache: {
               alias:  'c',
-              info:   "Update the packages source cache",
+              info:   "Update the packages source cache. `-y` to force",
               action: "::Package::Cache.cli",
             },
             delete: {
@@ -190,6 +208,17 @@ module CLI
               arguments: %w(service),
               action:    "puts Localhost.service.system.new().reload",
             },
+            logs: {
+              info:      "\t Service's logs",
+              arguments: %w(service),
+              action:    "puts ::Service.logs_cli",
+              options:   {
+                error: {
+                  short: 'e',
+                  info:  "Print error logs instead of output logs",
+                },
+              },
+            },
           },
         },
         server: {
@@ -203,46 +232,6 @@ module CLI
     when "help"                                                            then puts ex; exit 0
     when "argument_required", "unknown_option", "unknown_command_variable" then abort ex
     else                                                                        Log.error ex.to_s
-    end
-  end
-
-  struct List
-    @path : ::Package::Path
-
-    def initialize(prefix)
-      @path = ::Package::Path.new prefix
-    end
-
-    def all
-      puts "applications:"
-      app
-      puts "\npackages:"
-      pkg
-      puts "\nsource:"
-      src
-      puts "\nservices run boot:"
-      services
-    end
-
-    def app
-      Dir.each_child(@path.app) { |app| puts app }
-    end
-
-    def pkg
-      Dir.each_child(@path.pkg) { |pkg| puts pkg }
-    end
-
-    def src
-      Dir.each_child(@path.src) { |src| puts src if src[0].ascii_lowercase? }
-    end
-
-    def services
-      Dir.each_child(@path.app) do |app|
-        service = Localhost.service.system.new app
-        if service.exists?
-          puts app + "\t#{(r = service.run?) ? r.colorize.green : r.colorize.red} #{(b = service.boot?) ? b.colorize.green : b.colorize.red}"
-        end
-      end
     end
   end
 end

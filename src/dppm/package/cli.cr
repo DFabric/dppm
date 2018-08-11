@@ -21,10 +21,10 @@ struct Package::CLI
       raise "configuraration error: #{ex}"
     end
 
-    arg_parser variables
+    vars_parser variables
 
     # Update cache
-    Package::Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src
+    Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src
 
     # Create task
     @vars.merge! Localhost.vars
@@ -40,7 +40,7 @@ struct Package::CLI
   end
   {% end %}
 
-  def arg_parser(variables : Array(String))
+  def vars_parser(variables : Array(String))
     variables.each do |arg|
       case arg
       when .includes? '='

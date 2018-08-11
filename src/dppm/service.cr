@@ -16,6 +16,11 @@ module Service
     end
   end
 
+  def self.logs_cli(service, error)
+    log_dir = Localhost.service.system.new(service).log_dir
+    File.read log_dir + (error ? "error.log" : "output.log")
+  end
+
   def check_availability(pkgtype, package)
     if pkgtype != "app"
       raise "only applications can be added to the system"

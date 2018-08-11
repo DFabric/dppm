@@ -1,6 +1,25 @@
-module Package
-  def info(prefix, application, path)
-    file = ::Package::Path.new(prefix).app + '/' + application + "/pkg.yml"
+struct Package::Info
+  @path : String
+  @package : String
+
+  def initialize(path, @package)
+    @path = path + '/' + @package + '/'
+  end
+
+  def self.app_cli(prefix, package, path)
+    new(Path.new(prefix).app, package).pkg path
+  end
+
+  def self.pkg_cli(prefix, package, path)
+    new(Path.new(prefix).pkg, package).pkg path
+  end
+
+  def self.src_cli(prefix, package, path)
+    new(Path.new(prefix).src, package).pkg path
+  end
+
+  def pkg(path)
+    file = @path + "pkg.yml"
     data = File.read file
     case path
     when "."

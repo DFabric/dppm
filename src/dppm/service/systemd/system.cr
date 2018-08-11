@@ -24,15 +24,23 @@ struct Service::Systemd::System
   end
 
   def exists?
-    File.exists? @file
+    File.symlink? @file
   end
 
   def writable?
     File.writable? @file
   end
 
+  def real_file
+    File.real_path @file
+  end
+
   def run?
     Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "is-active", @service]).success?
+  end
+
+  def log_dir
+    File.dirname(File.dirname(File.dirname(real_file))) + "/log/"
   end
 
   def delete
