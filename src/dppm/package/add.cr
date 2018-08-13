@@ -70,10 +70,10 @@ struct Package::Add
   # Choose an available port
   private def find_available_port(port_string)
     Log.info "checking ports availability", port_string
-
     ports_used = Array(Int32).new
     port_num = port_string.to_i
-    while !Localhost.port_available? port_num
+    while !Localhost.tcp_port_available? port_num
+      raise "the limit of 65535 for port numbers is reached, no ports available" if port_num > 65535
       ports_used << port_num
       port_num += 1
     end

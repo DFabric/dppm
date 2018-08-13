@@ -8,9 +8,11 @@ module Version
       regex = hash["regex"]?
     end
 
-    if pkg[kernel]?
-      regex = pkg[kernel][arch] if !regex
-      raise "arch unsupported: " + arch if !src && !regex
+    if pkg_kernel = pkg[kernel]?
+      if !regex
+        raise "unsupported architecure: " + arch if !src
+        regex = pkg_kernel[arch]
+      end
     elsif !src && !regex
       raise "unsupported kernel: " + kernel
     end

@@ -16,7 +16,7 @@ struct Service::Env
     @env_vars = Hash(String, String).new
   end
 
-  def set(var, value) : String
+  def set(var : String, value : String) : String
     # If the var exists
     @env_vars[var] = value
 
@@ -27,7 +27,7 @@ struct Service::Env
     end.lchop
   end
 
-  def get(var) : String
+  def get(var : String) : String
     (var = @env_vars[var]?) ? var : raise "can't get #{var} from #{@env_vars}"
   end
 end

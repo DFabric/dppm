@@ -5,19 +5,10 @@ struct Localhost
   class_getter proc_ver : Array(String) = File.read("/proc/version").split(' ')
   class_getter kernel : String = proc_ver[0].downcase
   class_getter kernel_ver : String = proc_ver[2].split('-')[0]
-  class_getter sysinit : String = get_sysinit
+  class_getter sysinit : String = service.name
   class_getter arch : String = get_arch
   class_getter vars : Hash(String, String) = get_vars
-  class_getter service : Service::Systemd | Service::OpenRC = get_service
-
-  def self.get_service
-    case sysinit
-    when "systemd" then Service::Systemd
-    when "openrc"  then Service::OpenRC
-    else
-      raise "unsupported init system"
-    end
-  end
+  class_getter service : Service::Systemd | Service::OpenRC = get_sysinit
 
   # All system environment variables
   private def self.get_vars
@@ -37,33 +28,44 @@ struct Localhost
     when .includes? " aarch64_" then "aarch64"
     when .includes? " armv7_"   then "armhf"
     else
-      raise "unsupported architecure: "
+      Log.error "unsupported architecure: "
     end
   end
 
   private def self.get_sysinit
     init = File.basename File.real_path "/sbin/init"
-    case init
-    when "systemd"           then "systemd"
-    when "busybox", "openrc" then "openrc"
+    if init == "systemd"
+      Service::Systemd
+    elsif File.exists? "/sbin/openrc"
+      Service::OpenRC
     else
-      raise "unsupported init system, consider to migrate to OpenRC if you are still in init.d: " + init
+      Log.error "unsupported init system, consider to migrate to OpenRC if you are still in init.d: " + init
     end
   end
 
-  def self.port_available?(port_num : Int32) : Int32?
-    raise "the limit of 65535 for port numbers is reached" if port_num > 65535
-    # tcp port available?
+  def self.tcp_port_available?(port_num : Int32) : Int32?
     TCPServer.new(port_num).close
-    # ipv4 udp port available?
-    ip4 = UDPSocket.new Socket::Family::INET
-    ip4.bind "127.0.0.1", port_num
-    ip4.close
-    # ipv6 udp port available?
-    ip6 = UDPSocket.new Socket::Family::INET6
-    ip6.bind "::1", port_num
-    ip6.close
     port_num
-  rescue
+  rescue ex : Errno
+  end
+
+  def self.udp_port_available?(port_num : Int32) : Int32?
+    udp_ipv4_port_available(port_num) || udp_ipv6_port_available(port_num)
+  end
+
+  def self.udp_ipv4_port_available?(port_num : Int32) : Int32?
+    sock = UDPSocket.new Socket::Family::INET
+    sock.bind "127.0.0.1", port_num
+    sock.close
+    port_num
+  rescue ex : Errno
+  end
+
+  def self.udp_ipv6_port_available?(port_num : Int32) : Int32?
+    sock = UDPSocket.new Socket::Family::INET6
+    sock.bind "::1", port_num
+    sock.close
+    port_num
+  rescue ex : Errno
   end
 end

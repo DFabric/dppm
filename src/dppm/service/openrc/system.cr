@@ -1,4 +1,4 @@
-struct Service::OpenRC::System
+struct Service::OpenRC::System < Service::System
   getter service : String
   getter file : String
   @boot : String
@@ -15,28 +15,8 @@ struct Service::OpenRC::System
     end
   end
 
-  def boot?
-    File.exists? @boot
-  end
-
-  def exists?
-    File.symlink? @file
-  end
-
-  def writable?
-    File.writable? @file
-  end
-
-  def real_file
-    File.real_path @file
-  end
-
   def run?
     Exec.new("/sbin/rc-service", [@service, "status"]).success?
-  end
-
-  def log_dir
-    File.dirname(File.dirname(File.dirname(real_file))) + "/log/"
   end
 
   def delete
@@ -48,13 +28,6 @@ struct Service::OpenRC::System
   def link(src)
     File.symlink src + @init_path, @file
     File.chmod @file, 0o750
-  end
-
-  def boot(value : Bool)
-    # nothing to do
-    return value if value == boot?
-
-    value ? File.symlink(@file, @boot) : File.delete(@boot)
   end
 
   {% for action in %w(start stop restart reload) %}

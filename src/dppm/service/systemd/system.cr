@@ -1,4 +1,4 @@
-struct Service::Systemd::System
+struct Service::Systemd::System < Service::System
   getter service : String
   getter file : String
   @boot : String
@@ -19,28 +19,8 @@ struct Service::Systemd::System
     end
   end
 
-  def boot?
-    File.exists? @boot
-  end
-
-  def exists?
-    File.symlink? @file
-  end
-
-  def writable?
-    File.writable? @file
-  end
-
-  def real_file
-    File.real_path @file
-  end
-
   def run?
     Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "is-active", @service]).success?
-  end
-
-  def log_dir
-    File.dirname(File.dirname(File.dirname(real_file))) + "/log/"
   end
 
   def delete
@@ -53,13 +33,6 @@ struct Service::Systemd::System
   def link(src)
     File.symlink src + @init_path, @file
     Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"]
-  end
-
-  def boot(value : Bool)
-    # nothing to do
-    return value if value == boot?
-
-    value ? File.symlink(@file, @boot) : File.delete(@boot)
   end
 
   {% for action in %w(start stop restart reload) %}
