@@ -11,6 +11,7 @@ struct Package::Add
   @deps = Hash(String, String).new
   @socket : Bool
   @shared : Bool
+  @service : Service::Systemd::System | Service::OpenRC::System
 
   def initialize(@vars, @socket : Bool, @shared : Bool)
     # Build missing dependencies
@@ -23,6 +24,7 @@ struct Package::Add
     Log.info "getting name", @package
     getname
     @name = @vars["name"]
+    @service = Localhost.service.system.new @name
     @pkgdir = @vars["pkgdir"] = "#{@path.app}/#{@name}"
 
     @deps = @build.deps
@@ -31,7 +33,7 @@ struct Package::Add
 
     # Checks
     raise "directory already exists: " + @pkgdir if File.exists? @pkgdir
-    Localhost.service.check_availability @pkg["type"], @name
+    Localhost.service.system.new(@name).check_availability @pkg["type"]
 
     # Check database type
     if (db_type = @vars["database_type"]?) && (databases = @pkg["databases"]?)
@@ -201,7 +203,7 @@ struct Package::Add
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
     end
 
-    if Localhost.service.writable?
+    if @service.writable?
       # Set the user and group owner
       Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"]) if @add_user
       Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
@@ -209,7 +211,7 @@ struct Package::Add
 
       # Create system services
       Localhost.service.create @pkg, @vars
-      Localhost.service.system.new(@name).link @pkgdir
+      @service.link @pkgdir
       Log.info Localhost.service.name + " system service added", @name
     else
       Log.warn "root execution needed for system service addition", @name
@@ -218,10 +220,9 @@ struct Package::Add
     Log.info "add completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
-    service = Localhost.service.system.new(@name)
-    service.delete if service.exists?
+    @service.delete if @service.exists?
     Owner.del_user(@vars["user"]) if @add_user
     Owner.del_group(@vars["group"]) if @add_group
-    raise "add failed, deleting: #{@pkgdir}:\n#{ex}"
+    raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"
   end
 end

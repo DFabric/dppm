@@ -1,11 +1,11 @@
 module Service
-  def self.cli_boot(service, state)
-    Localhost.service.system.new(service).boot Utils.to_b(state)
+  def cli_boot(service, state)
+    system.new(service).boot Utils.to_b(state)
   end
 
-  def self.cli_status(services : Array(String))
-    (services.empty? ? Localhost.service.system : services).each do |app|
-      service = Localhost.service.system.new app
+  def cli_status(services : Array(String))
+    (services.empty? ? system : services).each do |app|
+      service = system.new app
       if service.exists?
         puts app
         puts "run: #{(r = service.run?) ? r.colorize.green : r.colorize.red}"
@@ -16,19 +16,9 @@ module Service
     end
   end
 
-  def self.logs_cli(service, error)
-    log_dir = Localhost.service.system.new(service).log_dir
+  def logs_cli(service, error)
+    log_dir = system.new(service).log_dir
     File.read log_dir + (error ? "error.log" : "output.log")
-  end
-
-  def check_availability(pkgtype, package)
-    if pkgtype != "app"
-      raise "only applications can be added to the system"
-    elsif system.new(package).exists?
-      raise "system service already exist: " + package
-    elsif !writable?
-      Log.warn "system service unavailable", "root execution needed"
-    end
   end
 
   def creation(sysinit_hash, pkg, vars)
@@ -60,14 +50,5 @@ module Service
     end
 
     sysinit_hash
-  end
-
-  def delete(service)
-    Log.info "deleting the system service", service
-    if writable?
-      system.new(service).delete
-    else
-      Log.info "root execution needed for system service deletion", service
-    end
   end
 end

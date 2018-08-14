@@ -28,19 +28,11 @@ module Service::Systemd
     File.write vars["pkgdir"] + "/etc/init/systemd", sysinit_hash.build
   end
 
-  def writable?
-    File.writable? "/etc/systemd/system/"
-  end
-
   def name
     "systemd"
   end
 
   def version
     Exec.new("/bin/systemctl", ["--version"]).out.match(/ ([0-9]+)\n/).not_nil![1].to_i
-  end
-
-  def log
-    # "journalctl --no-pager -oshort -u " + service
   end
 end

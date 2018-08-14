@@ -8,7 +8,7 @@ module ConfFile
   def get(file, path : Array, format = File.extname(file).lchop)
     data = File.read file
     data = case format.empty? ? File.extname(file) : format
-           when "ini", "INI", "toml"
+           when "ini", "INI"
              data = INI.parse data
              case path.size
              when 1 then data[path[0].to_s]?
@@ -33,7 +33,7 @@ module ConfFile
   def set(file, path : Array, value, format = File.extname(file).lchop)
     data = File.read file
     case format.empty? ? File.extname(file) : format
-    when "ini", "INI", "toml"
+    when "ini", "INI"
       space = data.includes?(" = ") ? true : false
       data = INI.parse data
       case path.size
@@ -77,7 +77,7 @@ module ConfFile
     data = File.read file
 
     case format
-    when "ini", "INI", "toml"
+    when "ini", "INI"
       data = INI.parse data
       case path.size
       when 1 then data.delete path[0].to_s

@@ -4,11 +4,11 @@ struct Package::Delete
     pkgdir : String,
     path : Package::Path,
     vars : Hash(String, String),
-    pkg : YAML::Any
-  @service_path : String
+    pkg : YAML::Any,
+    service : Service::Systemd::System | Service::OpenRC::System
+  @has_service = false
   @user : String
   @group : String
-  @service = false
 
   def initialize(@vars)
     @path = Path.new vars["prefix"]
@@ -19,17 +19,17 @@ struct Package::Delete
     @user = Owner.to_user file.owner
     @group = Owner.to_group file.group
 
+    @service = Localhost.service.system.new @name
+
     # Checks
     Package.pkg_exists? @pkgdir
-    @service_path = Localhost.service.system.new(@name).file
-    if File.exists?(@service_path) &&
-       File.real_path(@service_path) == "#{@pkgdir}/etc/init/#{Localhost.service.name.downcase}"
+    if @service.exists? && File.real_path(@service.file) == "#{@pkgdir}/etc/init/#{Localhost.service.name.downcase}"
       Log.info "a system service is found", @name
-      @service = true
+      @has_service = true
     else
       Log.warn "no system service found", @name
     end
-    if !Localhost.service.writable? && @service
+    if !@service.writable? && @has_service
       raise "root permissions required to delete the service: " + @name
     end
     Log.info "getting package name", @pkgdir + "/pkg.yml"
@@ -45,17 +45,18 @@ struct Package::Delete
       str << "\npkgdir: " << @pkgdir
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
-      str << "\nservice: " << @service_path if @service
+      str << "\nservice: " << @service.file if @has_service
     end
   end
 
   def run
     Log.info "deleting", @pkgdir
-    Localhost.service.delete @name if @service
-    if Localhost.service.writable? && Owner.generated? @user, @package
+    @service.delete @name if @has_service
+    # For now, check if we are root with @service.writable?
+    if @service.writable? && Owner.generated? @user, @package
       Owner.del_user @user
     end
-    if Localhost.service.writable? && Owner.generated? @group, @package
+    if @service.writable? && Owner.generated? @group, @package
       Owner.del_group @group
     end
 

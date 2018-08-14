@@ -1,7 +1,7 @@
 struct Service::Systemd::System < Service::System
   getter service : String
   getter file : String
-  @boot : String
+  getter boot : String
   @init_path = "/etc/init/systemd"
 
   def initialize(@service)

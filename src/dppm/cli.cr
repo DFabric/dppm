@@ -47,11 +47,8 @@ module CLI
           },
         },
         info: {
-          alias: 'i',
-          info:  "Packages's informations from its pkg.yml.
-        Special paths:
-        `.`:       get the all document
-        `version`: get the package's version",
+          alias:    'i',
+          info:     "Packages's informations from its pkg.yml. `.` for the whole document, `version` for the package's version",
           commands: {
             app: {
               info:      "Installed application",
@@ -181,12 +178,12 @@ module CLI
             status: {
               info:      "Service status",
               arguments: %w(services...),
-              action:    "::Service.cli_status",
+              action:    "Localhost.service.cli_status",
             },
             boot: {
               info:      "\t Auto-start the service at boot",
               arguments: %w(service state),
-              action:    "::Service.cli_boot",
+              action:    "Localhost.service.cli_boot",
             },
             start: {
               info:      "Start the service",
@@ -211,7 +208,7 @@ module CLI
             logs: {
               info:      "\t Service's logs",
               arguments: %w(service),
-              action:    "puts ::Service.logs_cli",
+              action:    "puts Localhost.service.logs_cli",
               options:   {
                 error: {
                   short: 'e',

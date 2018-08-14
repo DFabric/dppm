@@ -1,7 +1,7 @@
 struct Service::OpenRC::System < Service::System
   getter service : String
   getter file : String
-  @boot : String
+  getter boot : String
   @init_path = "/etc/init/openrc"
 
   def initialize(@service)

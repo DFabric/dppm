@@ -82,7 +82,7 @@ struct Package::Build
   end
 
   def run
-    raise "package already present: " + @pkgdir if @exists
+    Log.error "package already present: " + @pkgdir if @exists
 
     # Copy the sources to the @package directory to build
     FileUtils.cp_r "#{@path.src}/#{@package}", @pkgdir
@@ -96,7 +96,15 @@ struct Package::Build
       # Standard package build
     else
       Log.info "standard building", @package
-      Dir.cd @pkgdir do
+
+      working_directory = if pkg["type"] == "app"
+                            app = @pkgdir + "/app"
+                            Dir.mkdir app
+                            app
+                          else
+                            @pkgdir
+                          end
+      Dir.cd working_directory do
         package_full = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
         package_archive = package_full + ".tar.xz"
         package_mirror = @vars["mirror"] + package_archive
@@ -104,15 +112,16 @@ struct Package::Build
         HTTPget.file package_mirror
         Log.info "extracting", package_mirror
         Exec.new "/bin/tar", ["Jxf", package_archive]
+
+        # Move out files from the archive folder
         Dir[package_full + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
-        File.delete package_archive
-        FileUtils.rm_r package_full
+        FileUtils.rm_r({package_archive, package_full})
       end
     end
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     Log.info "build completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
-    raise "build failed, deleting: #{@pkgdir}:\n#{ex}"
+    raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"
   end
 end

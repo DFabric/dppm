@@ -17,10 +17,6 @@ module Service::OpenRC
     File.write vars["pkgdir"] + "/etc/init/openrc", sysinit_hash.build
   end
 
-  def writable?
-    File.writable? "/etc/init.d/"
-  end
-
   def name
     "OpenRC"
   end

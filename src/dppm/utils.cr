@@ -24,29 +24,34 @@ module Utils
   def to_array(string)
     array = Array(String | Int32).new
     escape = false
-    current = ""
+    current = IO::Memory.new
 
     string.each_char do |char|
       if escape
-        current += char
+        current << char
         escape = false
       else
         case char
         when '\\' then escape = true
-        when '.', '['
+        when '.'
+          if !array[-1]?.is_a? Int32
+            array << current.to_s
+            current.clear
+          end
+        when '['
           if !current.empty?
-            array << current
-            current = ""
+            array << current.to_s
+            current.clear
           end
         when ']'
-          array << current.to_i
-          current = ""
+          array << current.to_s.to_i
+          current.clear
         else
-          current += char
+          current << char
         end
       end
     end
-    array << current if !current.empty?
+    array << current.to_s if !current.empty?
 
     array
   end
