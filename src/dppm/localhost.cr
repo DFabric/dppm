@@ -3,12 +3,34 @@ require "exec"
 
 struct Localhost
   class_getter proc_ver : Array(String) = File.read("/proc/version").split(' ')
-  class_getter kernel : String = proc_ver[0].downcase
   class_getter kernel_ver : String = proc_ver[2].split('-')[0]
   class_getter sysinit : String = service.name
-  class_getter arch : String = get_arch
   class_getter vars : Hash(String, String) = get_vars
   class_getter service : Service::Systemd | Service::OpenRC = get_sysinit
+
+  # System's kernel
+  {% if flag?(:linux) %}
+    class_getter kernel = "linux"
+  {% elsif flag?(:freebsd) %}
+    class_getter kernel = "freebsd"
+  {% elsif flag?(:openbsd) %}
+    class_getter kernel = "openbsd"
+  {% else %}
+    raise "unsupported system"
+  {% end %}
+
+  # Architecture
+  {% if flag?(:i686) %}
+    class_getter arch = "x86"
+  {% elsif flag?(:x86_64) %}
+    class_getter arch = "x86-64"
+  {% elsif flag?(:arm) %}
+    class_getter arch = "armhf"
+  {% elsif flag?(:aarch64) %}
+    class_getter arch = "arm64"
+  {% else %}
+    raise "unsupported architecure"
+  {% end %}
 
   # All system environment variables
   private def self.get_vars
@@ -19,17 +41,6 @@ struct Localhost
       {% end %}
     }
     {% end %}
-  end
-
-  private def self.get_arch
-    case File.read "/proc/kallsyms"
-    when .includes? " x86_64_"  then "x86-64"
-    when .includes? " x86_"     then "x86"
-    when .includes? " aarch64_" then "aarch64"
-    when .includes? " armv7_"   then "armhf"
-    else
-      Log.error "unsupported architecure: "
-    end
   end
 
   private def self.get_sysinit

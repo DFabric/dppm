@@ -11,7 +11,7 @@ module Service
         puts "run: #{(r = service.run?) ? r.colorize.green : r.colorize.red}"
         puts "boot: #{(b = service.boot?) ? b.colorize.green : b.colorize.red}\n\n"
       else
-        puts "service doesn't exist: " + app
+        abort "service doesn't exist: " + app
       end
     end
   end

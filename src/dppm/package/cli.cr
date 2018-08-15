@@ -6,7 +6,7 @@ struct Package::CLI
   end
 
   {% for task in %w(add build delete) %}
-  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, variables {% if task == "add" %}, noshared, socket{% end %})
+  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, custom_vars {% if task == "add" %}, noshared, socket{% end %})
     Log.info "initializing", {{task}}
     @vars["package"] = package
     @vars["prefix"] = prefix
@@ -21,7 +21,7 @@ struct Package::CLI
       raise "configuraration error: #{ex}"
     end
 
-    vars_parser variables
+    vars_parser custom_vars
 
     # Update cache
     Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src

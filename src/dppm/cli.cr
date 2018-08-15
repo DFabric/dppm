@@ -47,31 +47,9 @@ module CLI
           },
         },
         info: {
-          alias:    'i',
-          info:     "Packages's informations from its pkg.yml. `.` for the whole document, `version` for the package's version",
-          commands: {
-            app: {
-              info:      "Installed application",
-              arguments: %w(package path),
-              action:    "puts ::Package::Info.app_cli",
-            },
-            pkg: {
-              info:      "Builded packages",
-              arguments: %w(package path),
-              action:    "puts ::Package::Info.pkg_cli",
-            },
-            src: {
-              info:      "Source package",
-              arguments: %w(package path),
-              action:    "puts ::Package::Info.src_cli",
-            },
-          },
-          variables: {
-            prefix: {
-              info:    "Path for dppm packages, sources and apps",
-              default: "#{PREFIX}",
-            },
-          },
+          alias:  'i',
+          info:   "General system information",
+          action: "info",
         },
         list: {
           alias:     'l',
@@ -123,7 +101,7 @@ module CLI
             add: {
               alias:     'a',
               info:      "Add a new package (and build its missing dependencies)",
-              arguments: %w(package variables...),
+              arguments: %w(package custom_vars...),
               action:    "::Package::CLI.new.add",
               options:   {
                 noshared: {
@@ -139,7 +117,7 @@ module CLI
             build: {
               alias:     'b',
               info:      "Build a package",
-              arguments: %w(package variables...),
+              arguments: %w(package custom_vars...),
               action:    "::Package::CLI.new.build",
             },
             cache: {
@@ -150,7 +128,7 @@ module CLI
             delete: {
               alias:     'd',
               info:      "Delete an added package",
-              arguments: %w(package variables...),
+              arguments: %w(package custom_vars...),
               action:    "::Package::CLI.new.delete",
             },
           },
@@ -165,6 +143,33 @@ module CLI
             pkgsrc: {
               info: "Source of the packages' pkg.yml and configurations (default in `config`)",
             },
+            prefix: {
+              info:    "Path for dppm packages, sources and apps",
+              default: "#{PREFIX}",
+            },
+          },
+        },
+        query: {
+          alias:    'q',
+          info:     "Query packages's informations from its pkg.yml. `.` for the whole document, `version` for the package's version",
+          commands: {
+            app: {
+              info:      "Installed application",
+              arguments: %w(package path),
+              action:    "puts ::Package::Info.app_cli",
+            },
+            pkg: {
+              info:      "Builded packages",
+              arguments: %w(package path),
+              action:    "puts ::Package::Info.pkg_cli",
+            },
+            src: {
+              info:      "Source package",
+              arguments: %w(package path),
+              action:    "puts ::Package::Info.src_cli",
+            },
+          },
+          variables: {
             prefix: {
               info:    "Path for dppm packages, sources and apps",
               default: "#{PREFIX}",
@@ -229,6 +234,13 @@ module CLI
     when "help"                                                            then puts ex; exit 0
     when "argument_required", "unknown_option", "unknown_command_variable" then abort ex
     else                                                                        Log.error ex.to_s
+    end
+  end
+
+  def info
+    puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
+    Localhost.vars.each do |k, v|
+      puts k + ": " + v
     end
   end
 end
