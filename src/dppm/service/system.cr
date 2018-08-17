@@ -27,7 +27,7 @@ abstract struct Service::System
   end
 
   def writable?
-    File.writable?(File.dirname service)
+    File.writable?(File.dirname file)
   end
 
   def check_availability(pkgtype)
@@ -36,7 +36,7 @@ abstract struct Service::System
     elsif exists?
       raise "system service already exist: " + service
     elsif !writable?
-      Log.warn "system service unavailable", "root execution needed"
+      Log.warn "service creation unavailable, root permissions required", file
     end
   end
 

@@ -29,7 +29,7 @@ struct Package::Delete
     else
       Log.warn "no system service found", @name
     end
-    if !@service.writable? && @has_service
+    if !Owner.root? && @has_service
       raise "root permissions required to delete the service: " + @name
     end
     Log.info "getting package name", @pkgdir + "/pkg.yml"
@@ -52,12 +52,14 @@ struct Package::Delete
   def run
     Log.info "deleting", @pkgdir
     @service.delete @name if @has_service
-    # For now, check if we are root with @service.writable?
-    if @service.writable? && Owner.generated? @user, @package
-      Owner.del_user @user
-    end
-    if @service.writable? && Owner.generated? @group, @package
-      Owner.del_group @group
+
+    if Owner.root?
+      if Owner.generated? @user, @package
+        Owner.del_user @user
+      end
+      if Owner.generated? @group, @package
+        Owner.del_group @group
+      end
     end
 
     FileUtils.rm_rf @pkgdir

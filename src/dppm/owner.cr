@@ -1,12 +1,24 @@
 require "file_utils"
-require "uuid"
 
 module Owner
   extend self
 
+  def current_uid_gid
+    file_name = "/tmp/#{UUID.random}"
+    File.touch file_name
+    file = File.new file_name
+    uid, gid = file.info.owner, file.info.group
+    File.delete file.path
+    {uid, gid}
+  end
+
+  def root? : Bool
+    File.writable? "/"
+  end
+
   private def get_id(name, file : String) : Int32
-    if name.is_a? Int || name.to_i?
-      name.to_i
+    if int = name.to_i?
+      int.to_i
     else
       File.read_lines(file).each do |line|
         return $1.to_i if line =~ /#{name}:x:(.*?):/
@@ -77,11 +89,11 @@ module Owner
   end
 
   def del(name, file)
-    data = ""
-    File.read(file).each_line do |line|
-      data += line + '\n' if !line.starts_with? name
-    end
-    File.write file, data
+    File.write(file, String.build do |str|
+      File.read(file).each_line do |line|
+        str.puts line if !line.starts_with? name
+      end
+    end)
   end
 
   def del_user(name)

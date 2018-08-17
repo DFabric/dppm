@@ -13,10 +13,6 @@ describe Owner do
     Owner.to_uid("0").should eq 0
   end
 
-  it "returns the passed gid as an Int from an Int" do
-    Owner.to_gid(0).should eq 0
-  end
-
   it "converts an uid as to an user name" do
     Owner.to_user("0").should eq "root"
   end

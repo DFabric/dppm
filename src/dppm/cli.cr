@@ -104,9 +104,13 @@ module CLI
               arguments: %w(package custom_vars...),
               action:    "::Package::CLI.new.add",
               options:   {
-                noshared: {
-                  short: 'n',
+                contained: {
+                  short: 'c',
                   info:  "No shared dependencies, copy instead of symlinks",
+                },
+                noservice: {
+                  short: 'n',
+                  info:  "Don't add a system service",
                 },
                 socket: {
                   short: 's',

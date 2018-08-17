@@ -8,12 +8,13 @@ struct Package::Add
     path : Package::Path
   @add_user = false
   @add_group = false
+  @add_service : Bool
   @deps = Hash(String, String).new
   @socket : Bool
   @shared : Bool
   @service : Service::Systemd::System | Service::OpenRC::System
 
-  def initialize(@vars, @socket : Bool, @shared : Bool)
+  def initialize(@vars, @shared : Bool, @add_service : Bool, @socket : Bool)
     # Build missing dependencies
     @build = Package::Build.new vars.dup
     @path = @build.path
@@ -33,7 +34,7 @@ struct Package::Add
 
     # Checks
     raise "directory already exists: " + @pkgdir if File.exists? @pkgdir
-    Localhost.service.system.new(@name).check_availability @pkg["type"]
+    @service.check_availability @pkg["type"] if @add_service
 
     # Check database type
     if (db_type = @vars["database_type"]?) && (databases = @pkg["databases"]?)
@@ -85,28 +86,32 @@ struct Package::Add
 
   # An user uid and a group gid is required
   private def create_user_group
-    owner_id = Owner.available_id.to_s
-    if uid = @vars["uid"]?
-      @vars["user"] = Owner.to_user uid
-    else
-      if user = @vars["user"]?
-        @vars["uid"] = Owner.to_user user
+    if Owner.root?
+      owner_id = Owner.available_id.to_s
+      if uid = @vars["uid"]?
+        @vars["user"] = Owner.to_user uid
       else
-        @vars["user"] = @name
-        @vars["uid"] = owner_id
-        @add_user = true
+        if user = @vars["user"]?
+          @vars["uid"] = Owner.to_user user
+        else
+          @vars["user"] = @name
+          @vars["uid"] = owner_id
+          @add_user = true
+        end
       end
-    end
-    if gid = @vars["gid"]?
-      @vars["group"] = Owner.to_group gid
-    else
-      if group = @vars["group"]?
-        @vars["gid"] = Owner.to_group group
+      if gid = @vars["gid"]?
+        @vars["group"] = Owner.to_group gid
       else
-        @vars["group"] = @name
-        @vars["gid"] = owner_id
-        @add_group = true
+        if group = @vars["group"]?
+          @vars["gid"] = Owner.to_group group
+        else
+          @vars["group"] = @name
+          @vars["gid"] = owner_id
+          @add_group = true
+        end
       end
+    else
+      @vars["group"], @vars["gid"] = Owner.current_uid_gid.map &.to_s
     end
   end
 
@@ -203,24 +208,24 @@ struct Package::Add
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
     end
 
-    if @service.writable?
+    if Owner.root?
       # Set the user and group owner
       Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"]) if @add_user
       Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
       Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
+    end
 
+    if @add_service && @service.writable?
       # Create system services
       Localhost.service.create @pkg, @vars
       @service.link @pkgdir
       Log.info Localhost.service.name + " system service added", @name
-    else
-      Log.warn "root execution needed for system service addition", @name
     end
 
     Log.info "add completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
-    @service.delete if @service.exists?
+    @service.delete if @add_service && @service.exists?
     Owner.del_user(@vars["user"]) if @add_user
     Owner.del_group(@vars["group"]) if @add_group
     raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"

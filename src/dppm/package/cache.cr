@@ -1,11 +1,16 @@
 module Package::Cache
   extend self
 
+  def latest_source?(pkgsrc, src)
+    # != File.info(src).modification_time.to_s("%Y%m%d").to_i
+    HTTPget.string(pkgsrc.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
+    File.info(src).modification_time.to_s("%Y-%m-%dT%H:%M:") == $0
+  end
+
   # Download a cache of package sources
   def update(pkgsrc, src, force = false)
     # Update cache if older than 2 days
-    if force || !(File.exists?(src) || File.symlink?(src)) ||
-       Time.utc_now.to_s("%Y%m%d").to_i - File.info(src).modification_time.to_s("%Y%m%d").to_i > 2
+    if force || !(File.exists?(src) || File.symlink?(src)) || latest_source?(pkgsrc, src)
       FileUtils.rm_r src if File.exists? src
       if Utils.is_http? pkgsrc
         HTTPget.file pkgsrc, src + ".tar.gz"
