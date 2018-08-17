@@ -23,7 +23,7 @@ module Package
       @app = @prefix + "/app"
       @pkg = @prefix + "/pkg"
       @src = @prefix + "/src"
-      FileUtils.mkdir_p [@app, @pkg] if create
+      FileUtils.mkdir_p({@app, @pkg}) if create
     end
   end
 end

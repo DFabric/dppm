@@ -1,9 +1,9 @@
 module Service
-  def cli_boot(service, state)
+  def cli_boot(prefix, service, state)
     system.new(service).boot Utils.to_b(state)
   end
 
-  def cli_status(services : Array(String))
+  def cli_status(prefix, services : Array(String))
     (services.empty? ? system : services).each do |app|
       service = system.new app
       if service.exists?
@@ -16,7 +16,7 @@ module Service
     end
   end
 
-  def logs_cli(service, error)
+  def logs_cli(prefix, service, error)
     log_dir = system.new(service).log_dir
     File.read log_dir + (error ? "error.log" : "output.log")
   end

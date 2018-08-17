@@ -4,11 +4,11 @@ module Owner
   extend self
 
   def current_uid_gid
-    file_name = "/tmp/#{UUID.random}"
-    File.touch file_name
-    file = File.new file_name
-    uid, gid = file.info.owner, file.info.group
-    File.delete file.path
+    file = "/tmp/#{UUID.random}"
+    File.touch file
+    info = File.info file
+    uid, gid = info.owner, info.group
+    File.delete file
     {uid, gid}
   end
 

@@ -28,12 +28,12 @@ module Package::Cache
     end
   end
 
-  def cli(config, mirror, pkgsrc, prefix, noconfirm)
+  def cli(config, mirror, pkgsrc, prefix, no_confirm)
     src = ::Package::Path.new(prefix).src
     if pkgsrc
-      update pkgsrc, src, noconfirm
+      update pkgsrc, src, no_confirm
     else
-      update INI.parse(File.read config)["main"]["pkgsrc"], src, noconfirm
+      update INI.parse(File.read config)["main"]["pkgsrc"], src, no_confirm
     end
   end
 end

@@ -5,13 +5,20 @@ PREFIX      = "/opt/dppm"
 
 module CLI
   extend self
+  include Clicr
   # Global constant variables
   VERSION = "2018-alpha"
 
   def run
-    Clicr.create(
+    create(
       name: "dppm",
       info: "The DPlatform Package Manager",
+      variables: {
+        prefix: {
+          info:    "Base path for dppm packages, sources and apps",
+          default: PREFIX,
+        },
+      },
       commands: {
         config: {
           alias:   'c',
@@ -39,12 +46,12 @@ module CLI
               action:    "puts ::ConfFile::CLI.del",
             },
           },
-          variables: {
-            prefix: {
-              info:    "Path for dppm packages, sources and apps",
-              default: "#{PREFIX}",
-            },
-          },
+        },
+        exec: {
+          alias:     'e',
+          info:      "Execute an application in the foreground",
+          arguments: %w(application),
+          action:    "exec",
         },
         info: {
           alias:  'i',
@@ -52,18 +59,12 @@ module CLI
           action: "info",
         },
         list: {
-          alias:     'l',
-          info:      "List applications, packages, sources or services",
-          variables: {
-            prefix: {
-              info:    "Path for dppm packages, sources and apps",
-              default: "#{PREFIX}",
-            },
-          },
+          alias:    'l',
+          info:     "List applications, packages, sources or services",
           commands: {
             all: {
               alias:  'a',
-              info:   "List everything",
+              info:   "\tList everything",
               action: "::Package::List.new().all",
             },
             applications: {
@@ -78,19 +79,19 @@ module CLI
             },
             source: {
               alias:  "src",
-              info:   "Packages source",
+              info:   "\tPackages source",
               action: "::Package::List.new().src { |src| puts src }",
             },
             services: {
               alias:  's',
-              info:   "Applications' services ",
+              info:   "\tApplications' services ",
               action: "::Package::List.new().services_cli",
             },
           },
         },
         package: {
           options: {
-            noconfirm: {
+            no_confirm: {
               short: 'y',
               info:  "No confirmations",
             },
@@ -147,10 +148,6 @@ module CLI
             pkgsrc: {
               info: "Source of the packages' pkg.yml and configurations (default in `config`)",
             },
-            prefix: {
-              info:    "Path for dppm packages, sources and apps",
-              default: "#{PREFIX}",
-            },
           },
         },
         query: {
@@ -173,12 +170,6 @@ module CLI
               action:    "puts ::Package::Info.src_cli",
             },
           },
-          variables: {
-            prefix: {
-              info:    "Path for dppm packages, sources and apps",
-              default: "#{PREFIX}",
-            },
-          },
         },
         service: {
           alias:    's',
@@ -197,22 +188,22 @@ module CLI
             start: {
               info:      "Start the service",
               arguments: %w(service),
-              action:    "puts Localhost.service.system.new().start",
+              action:    "puts service().start",
             },
             stop: {
               info:      "\t Stop the service",
               arguments: %w(service),
-              action:    "puts Localhost.service.system.new().stop",
+              action:    "puts service().stop",
             },
             restart: {
               info:      "Restart the service",
               arguments: %w(service),
-              action:    "puts Localhost.service.system.new().restart",
+              action:    "puts service().restart",
             },
             reload: {
               info:      "Reload the service",
               arguments: %w(service),
-              action:    "puts Localhost.service.system.new().reload",
+              action:    "puts service().reload",
             },
             logs: {
               info:      "\t Service's logs",
@@ -229,22 +220,51 @@ module CLI
         },
         server: {
           info:   "Start the dppm API server",
-          action: "puts \"available soon!\".to_s",
+          action: "puts server",
         },
       }
     )
+  rescue ex : Help
+    puts ex; exit 0
+  rescue ex : ArgumentRequired | UnknownCommandOrVariable | UnknownOption
+    abort ex
   rescue ex
-    case ex.cause.to_s
-    when "help"                                                            then puts ex; exit 0
-    when "argument_required", "unknown_option", "unknown_command_variable" then abort ex
-    else                                                                        Log.error ex.to_s
-    end
+    Log.error ex.to_s
   end
 
-  def info
+  def info(prefix)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
     Localhost.vars.each do |k, v|
       puts k + ": " + v
     end
+  end
+
+  def exec(prefix, application)
+    app_path = ::Package::Path.new(prefix).app + '/' + application
+    pkg = YAML.parse File.read app_path + "/pkg.yml"
+
+    exec_start = pkg["exec"]["start"].as_s.split(' ')
+    if env = pkg["env"]?
+      env_vars = env.as_h.each_with_object({} of String => String) do |(key, value), memo|
+        memo[key.as_s] = value.as_s
+      end
+    end
+
+    Process.run command: exec_start[0],
+      args: (exec_start[1..-1] if exec_start[1]?),
+      env: env_vars,
+      clear_env: true,
+      shell: false,
+      output: STDOUT,
+      error: STDERR,
+      chdir: app_path
+  end
+
+  def server(prefix)
+    "available soon!"
+  end
+
+  def service(prefix, service)
+    Localhost.service.system.new service
   end
 end

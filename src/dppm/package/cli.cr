@@ -1,12 +1,12 @@
 struct Package::CLI
   @vars = Hash(String, String).new
-  @noconfirm = false
+  @no_confirm = false
 
   def initialize
   end
 
   {% for task in %w(add build delete) %}
-  def {{task.id}}(@noconfirm, config, mirror, pkgsrc, prefix, package, custom_vars {% if task == "add" %}, contained, noservice, socket{% end %})
+  def {{task.id}}(@no_confirm, config, mirror, pkgsrc, prefix, package, custom_vars {% if task == "add" %}, contained, noservice, socket{% end %})
     Log.info "initializing", {{task}}
     @vars["package"] = package
     @vars["prefix"] = prefix
@@ -36,7 +36,7 @@ struct Package::CLI
 
     # puts task.class.to_s.split("::").last.downcase
     Log.info {{task}}, task.simulate
-    task.run if @noconfirm || ::Package.confirm
+    task.run if @no_confirm || ::Package.confirm
   end
   {% end %}
 
