@@ -90,25 +90,21 @@ struct Package::Add
       owner_id = Owner.available_id.to_s
       if uid = @vars["uid"]?
         @vars["user"] = Owner.to_user uid
+      elsif user = @vars["user"]?
+        @vars["uid"] = Owner.to_user user
       else
-        if user = @vars["user"]?
-          @vars["uid"] = Owner.to_user user
-        else
-          @vars["user"] = @name
-          @vars["uid"] = owner_id
-          @add_user = true
-        end
+        @vars["user"] = @name
+        @vars["uid"] = owner_id
+        @add_user = true
       end
       if gid = @vars["gid"]?
         @vars["group"] = Owner.to_group gid
+      elsif group = @vars["group"]?
+        @vars["gid"] = Owner.to_group group
       else
-        if group = @vars["group"]?
-          @vars["gid"] = Owner.to_group group
-        else
-          @vars["group"] = @name
-          @vars["gid"] = owner_id
-          @add_group = true
-        end
+        @vars["group"] = @name
+        @vars["gid"] = owner_id
+        @add_group = true
       end
     else
       @vars["group"], @vars["gid"] = Owner.current_uid_gid.map &.to_s

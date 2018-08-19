@@ -1,3 +1,5 @@
+require "exec"
+
 module Cmd
   def self.find_bin(pkgdir, cmd)
     path = "#{pkgdir}/bin/#{cmd}"
@@ -194,10 +196,9 @@ module Cmd
       when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]; "gzip archive extracted"
       when "untar_lz"  then execute "/bin/tar", ["axf", cmd[1], "-C", cmd[2]]; "lz archive extracted"
       when "untar_xz"  then execute "/bin/tar", ["Jxf", cmd[1], "-C", cmd[2]]; "xz archive extracted"
+      when "exit"      then puts "exit called, exiting."; exit 1
       when "true"      then "true"
       when "false"     then "false"
-      when "exit"
-        puts "exit called, exiting."; exit 1
         # System executable
       when .starts_with? '/' then execute cmd[0], cmd[1..-1]
       else

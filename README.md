@@ -52,7 +52,7 @@ To list [available packages](https://github.com/DFabric/package-sources) (applic
 A typical installation can be:
 
 ```sh
-# add a new application to the system (default: /opt/dppm)
+# add a new application to the system
 dppm p add [application]
 
 # start the service and  auto start the service at boot

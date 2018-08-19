@@ -1,5 +1,4 @@
 require "socket"
-require "exec"
 
 struct Localhost
   class_getter proc_ver : Array(String) = File.read("/proc/version").split(' ')

@@ -1,13 +1,12 @@
 require "clicr"
 
+# Global constant variables
 CONFIG_FILE = "./config.ini"
-PREFIX      = "/opt/dppm"
+PREFIX      = Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/dppm"
 
 module CLI
   extend self
   include Clicr
-  # Global constant variables
-  VERSION = "2018-alpha"
 
   def run
     create(
@@ -226,7 +225,7 @@ module CLI
     )
   rescue ex : Help
     puts ex; exit 0
-  rescue ex : ArgumentRequired | UnknownCommandOrVariable | UnknownOption
+  rescue ex : ArgumentRequired | UnknownCommand | UnknownOption | UnknownVariable
     abort ex
   rescue ex
     Log.error ex.to_s
