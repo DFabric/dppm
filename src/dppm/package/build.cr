@@ -98,15 +98,14 @@ struct Package::Build
       Log.info "standard building", @package
 
       working_directory = if pkg["type"] == "app"
-                            app = @pkgdir + "/app"
-                            Dir.mkdir app
+                            Dir.mkdir(app = @pkgdir + "/app")
                             app
                           else
                             @pkgdir
                           end
       Dir.cd working_directory do
-        package_full = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
-        package_archive = package_full + ".tar.xz"
+        package_full_name = "#{@package}-static_#{@version}_#{Localhost.kernel}_#{Localhost.arch}"
+        package_archive = package_full_name + ".tar.xz"
         package_mirror = @vars["mirror"] + package_archive
         Log.info "downloading", package_mirror
         HTTPget.file package_mirror
@@ -114,8 +113,10 @@ struct Package::Build
         Exec.new "/bin/tar", ["Jxf", package_archive]
 
         # Move out files from the archive folder
-        Dir[package_full + "/*"].each { |entry| File.rename entry, "./" + File.basename entry }
-        FileUtils.rm_r({package_archive, package_full})
+        Dir.cd @pkgdir + '/' + package_full_name do
+          move "./"
+        end
+        FileUtils.rm_r({package_archive, package_full_name})
       end
     end
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
@@ -123,5 +124,19 @@ struct Package::Build
   rescue ex
     FileUtils.rm_rf @pkgdir
     raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"
+  end
+
+  private def move(path)
+    Dir.each_child(path) do |entry|
+      src = path + entry
+      dest = '.' + src
+      p "src: " + src
+      p "dest: " + dest
+      if Dir.exists? dest
+        move src + '/'
+      else
+        File.rename src, dest
+      end
+    end
   end
 end

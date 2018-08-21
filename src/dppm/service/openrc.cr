@@ -22,10 +22,9 @@ module Service::OpenRC
   end
 
   def version
-    Exec.new("/sbin/openrc", ["-V"]).out.match(/([0-9]+\.[0-9]+\.[0-9]+)/).not_nil![1]
-  end
-
-  def log
-    # "/var/log/" + service + ".log"
+    Exec.new("/sbin/openrc", ["-V"]).out =~ /([0-9]+\.[0-9]+\.[0-9]+)/
+    $1.to_i
+  rescue ex
+    raise "can't retrieve the OpenRC version #{ex}"
   end
 end

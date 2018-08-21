@@ -13,9 +13,6 @@ module Service::Systemd
   def create(pkg, vars)
     sysinit_hash = creation Config.new(vars["pkgdir"] + "/etc/init/systemd", file: true), pkg, vars
 
-    # pid is needed for php-fpm based applications
-    # sysinit_hash.set "pidfile", "/run/#{vars["name"]}.pid" if "php-fpm"
-
     # systemd 236 and more supports file logging
     if version >= 236
       sysinit_hash.section["Service"]["StandardOutput"] = "file:#{vars["pkgdir"]}/log/output.log"
@@ -33,6 +30,9 @@ module Service::Systemd
   end
 
   def version
-    Exec.new("/bin/systemctl", ["--version"]).out.match(/ ([0-9]+)\n/).not_nil![1].to_i
+    Exec.new("/bin/systemctl", ["--version"]).out =~ / ([0-9]+)\n/
+    $1.to_i
+  rescue ex
+    raise "can't retrieve the OpenRC version: #{ex}"
   end
 end

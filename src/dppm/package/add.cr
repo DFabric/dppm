@@ -140,7 +140,7 @@ struct Package::Add
 
     app_shared = @shared
     if @pkg["shared"]?.to_s == "false"
-      Log.warn "must be self-shared ", @pkg["package"].as_s
+      Log.warn "can't be shared, must be self-contained", @pkg["package"].as_s
       app_shared = false
     end
     if app_shared
@@ -159,17 +159,19 @@ struct Package::Add
     # Copy configurations and data
     Log.info "copying configurations and data", @name
     {"/etc", "/srv", "/log"}.each do |dir|
-      if !File.exists? @pkgdir + dir
-        if File.exists? @build.pkgdir + dir
-          FileUtils.cp_r @build.pkgdir + dir, @pkgdir + dir
+      dest_dir = @pkgdir + dir
+      src_dir = @build.pkgdir + dir
+      if !File.exists? dest_dir
+        if File.exists? src_dir
+          FileUtils.cp_r src_dir, dest_dir
         else
-          Dir.mkdir @pkgdir + dir
+          Dir.mkdir dest_dir
         end
       end
     end
-    File.chmod(@pkgdir + "/etc", 0o700)
-    File.chmod(@pkgdir + "/srv", 0o750)
-    File.chmod(@pkgdir + "/log", 0o700)
+    File.chmod @pkgdir + "/etc", 0o700
+    File.chmod @pkgdir + "/srv", 0o750
+    File.chmod @pkgdir + "/log", 0o700
 
     # Set configuration variables in files
     Log.info "setting configuration variables", @name
@@ -185,18 +187,13 @@ struct Package::Add
       end
     end
 
-    # php-fpm based application
-    # if "php-fpm"
-    # php_fpm = YAML.parse File.read(@pkgdir + "/lib/php/pkg.yml")
-    # @pkg.as_h[YAML::Any.new "exec"] = YAML::Any.new php_fpm["exec"].as_h
-
-    # # Copy files and directories if not present
-    # FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf.default", @pkgdir + "/etc/php-fpm.conf") if !File.exists? @pkgdir + "/etc/php-fpm.conf"
-    # Dir.mkdir @pkgdir + "/etc/php-fpm.d" if !File.exists? @pkgdir + "/etc/php-fpm.d"
-    # FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.d/www.conf.default", @pkgdir + "/etc/php-fpm.d/www.conf") if !File.exists? @pkgdir + "/etc/php-fpm.d/www.conf"
-
-    # Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run @pkg["tasks"]["build"].as_a }
-    # end
+    # If it's a PHP-FPM based application
+    if (deps = @pkg["deps"]?) && deps.as_h.has_key? "php"
+      php_fpm_conf = @pkgdir + "/etc/php-fpm.conf"
+      FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
+      php_fpm = YAML.parse File.read(@pkgdir + "/lib/php/pkg.yml")
+      @pkg.as_h[YAML::Any.new "exec"] = YAML::Any.new php_fpm["exec"].as_h
+    end
 
     # Running the add task
     Log.info "running configuration tasks", @package

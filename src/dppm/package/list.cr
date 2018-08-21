@@ -12,7 +12,7 @@ struct Package::List
     pkg { |pkg| puts pkg }
     puts "\nsource:"
     src { |src| puts src }
-    puts "\nservices | run | boot:"
+    puts "\nservices:\t\trun | boot"
     services_cli
   end
 

@@ -7,9 +7,12 @@ module Service
     (services.empty? ? system : services).each do |app|
       service = system.new app
       if service.exists?
-        puts app
-        puts "run: #{(r = service.run?) ? r.colorize.green : r.colorize.red}"
-        puts "boot: #{(b = service.boot?) ? b.colorize.green : b.colorize.red}\n\n"
+        puts <<-INFO
+        #{app}
+        run: #{(r = service.run?) ? r.colorize.green : r.colorize.red}
+        boot: #{(b = service.boot?) ? b.colorize.green : b.colorize.red}
+
+        INFO
       else
         abort "service doesn't exist: " + app
       end

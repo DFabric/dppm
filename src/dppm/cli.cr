@@ -37,12 +37,12 @@ module CLI
             set: {
               info:      "Set a value",
               arguments: %w(application path value),
-              action:    "puts ::ConfFile::CLI.set",
+              action:    "::ConfFile::CLI.set() && puts %(done)",
             },
             del: {
               info:      "Delete a path",
               arguments: %w(application path),
-              action:    "puts ::ConfFile::CLI.del",
+              action:    "::ConfFile::CLI.del() && puts %(done)",
             },
           },
         },
@@ -236,6 +236,7 @@ module CLI
     Localhost.vars.each do |k, v|
       puts k + ": " + v
     end
+    p Localhost.service.version
   end
 
   def exec(prefix, application)

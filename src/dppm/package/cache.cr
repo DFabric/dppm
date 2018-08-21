@@ -10,7 +10,7 @@ module Package::Cache
   # Download a cache of package sources
   def update(pkgsrc, src, force = false)
     # Update cache if older than 2 days
-    if force || !(File.exists?(src) || File.symlink?(src)) || latest_source?(pkgsrc, src)
+    if force || (!File.exists?(src) && !File.symlink?(src) && latest_source?(pkgsrc, src))
       FileUtils.rm_r src if File.exists? src
       if Utils.is_http? pkgsrc
         HTTPget.file pkgsrc, src + ".tar.gz"
