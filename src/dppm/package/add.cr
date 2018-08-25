@@ -26,7 +26,7 @@ struct Package::Add
     getname
     @name = @vars["name"]
     @service = Localhost.service.system.new @name
-    @pkgdir = @vars["pkgdir"] = "#{@path.app}/#{@name}"
+    @pkgdir = @vars["pkgdir"] = @path.app + '/' + @name
 
     @deps = @build.deps
 
@@ -117,7 +117,7 @@ struct Package::Add
       raise "only applications can be added to the system"
     elsif @pkg["type"] == "app"
       @vars["name"] ||= Utils.gen_name @package
-      @vars["name"].ascii_alphanumeric_underscore? || raise "the name contains other characters than `a-z`, `0-9` and `_`: #{@vars["name"]}"
+      Utils.ascii_alphanumeric_underscore?(@vars["name"]) || raise "the name contains other characters than `a-z`, `0-9` and `_`: " + @vars["name"]
     else
       raise "unknow type: #{@pkg["type"]}"
     end
@@ -126,7 +126,7 @@ struct Package::Add
   def simulate
     String.build do |str|
       @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      str << "\ndeps: " << @deps.map { |k, v| "#{k}:#{v}" }.join(", ") if !@deps.empty?
+      str << "\ndeps: " << @deps.map { |k, v| k + ':' + v }.join(", ") if !@deps.empty?
     end
   end
 
@@ -187,7 +187,7 @@ struct Package::Add
       end
     end
 
-    # If it's a PHP-FPM based application
+    # PHP-FPM based application
     if (deps = @pkg["deps"]?) && deps.as_h.has_key? "php"
       php_fpm_conf = @pkgdir + "/etc/php-fpm.conf"
       FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf

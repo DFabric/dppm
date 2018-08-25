@@ -30,7 +30,7 @@ module Cmd
         # Add/change vars
         if line = raw_line.as_s?
           # New variable assignation
-          if line.size > 4 && (line_var = line.split(" = ")) && line_var[0].ascii_alphanumeric_underscore?
+          if line.size > 4 && (line_var = line.split(" = ")) && Utils.ascii_alphanumeric_underscore? line_var[0]
             @vars[line_var[0]] = @extvars["${#{line_var[0]}}"] = command(line_var[1])
             # Print string
           elsif line.starts_with? "echo"
@@ -86,23 +86,25 @@ module Cmd
 
     private def ifexpr(expr)
       expr.split(" || ") do |block|
-        case block
-        when "true"  then return true
-        when "false" then return false
-        when .ascii_alphanumeric_underscore?
+        if Utils.ascii_alphanumeric_underscore? block
           if block.starts_with? '!'
             return !@vars[block.lchop]?
           else
             return @vars[block.lchop]?
           end
         else
-          vars = block.split(" == ", 2)
-          if second_var = vars[1]?
-            return command(vars[0]) == command(second_var)
-          end
-          vars = block.split(" != ", 2)
-          if second_var = vars[1]?
-            return command(vars[0]) != command(second_var)
+          case block
+          when "true"  then return true
+          when "false" then return false
+          else
+            vars = block.split(" == ", 2)
+            if second_var = vars[1]?
+              return command(vars[0]) == command(second_var)
+            end
+            vars = block.split(" != ", 2)
+            if second_var = vars[1]?
+              return command(vars[0]) != command(second_var)
+            end
           end
         end
       end

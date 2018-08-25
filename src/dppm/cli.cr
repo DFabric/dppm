@@ -236,7 +236,6 @@ module CLI
     Localhost.vars.each do |k, v|
       puts k + ": " + v
     end
-    p Localhost.service.version
   end
 
   def exec(prefix, application)

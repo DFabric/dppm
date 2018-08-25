@@ -29,7 +29,7 @@ module Service::Systemd
     "systemd"
   end
 
-  def version
+  def version : Int32
     Exec.new("/bin/systemctl", ["--version"]).out =~ / ([0-9]+)\n/
     $1.to_i
   rescue ex

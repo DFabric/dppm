@@ -1,11 +1,12 @@
 require "socket"
 
 struct Localhost
-  class_getter proc_ver : Array(String) = File.read("/proc/version").split(' ')
-  class_getter kernel_ver : String = proc_ver[2].split('-')[0]
-  class_getter sysinit : String = service.name
-  class_getter vars : Hash(String, String) = get_vars
-  class_getter service : Service::Systemd | Service::OpenRC = get_sysinit
+  class_getter proc_ver : Array(String) = File.read("/proc/version").split(' '),
+    kernel_ver : String = proc_ver[2].split('-')[0],
+    sysinit : String = service.name,
+    sysinit_ver : String = service.version.to_s,
+    vars : Hash(String, String) = get_vars,
+    service : Service::Systemd | Service::OpenRC = get_sysinit
 
   # System's kernel
   {% if flag?(:linux) %}
@@ -35,7 +36,7 @@ struct Localhost
   private def self.get_vars
     {% begin %}
     {
-      {% for var in %w(arch kernel kernel_ver sysinit) %}
+      {% for var in %w(arch kernel kernel_ver sysinit sysinit_ver) %}
         {{var}} => {{var.id}},
       {% end %}
     }

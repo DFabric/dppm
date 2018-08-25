@@ -1,12 +1,10 @@
-class String
-  def ascii_alphanumeric_underscore?
-    each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return false }
-    true
-  end
-end
-
 module Utils
   extend self
+
+  def ascii_alphanumeric_underscore?(string)
+    string.each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return }
+    true
+  end
 
   def is_http?(link) : Bool
     link.starts_with?("http://") || link.starts_with?("https://")

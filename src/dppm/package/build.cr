@@ -19,8 +19,8 @@ struct Package::Build
     @pkg = YAML.parse File.read "#{@path.src}/#{@package}/pkg.yml"
     @version = vars["version"] = getversion
     @vars["package"] = @package
-    @name = @vars["name"] = "#{@package}_#{@version}"
-    @pkgdir = @vars["pkgdir"] = "#{path.pkg}/#{@name}"
+    @name = @vars["name"] = @package + '_' + @version
+    @pkgdir = @vars["pkgdir"] = path.pkg + '/' + @name
 
     @arch_alias = @vars["arch_alias"] = if (aliases = @pkg["aliases"]?) && (version_alias = aliases[Localhost.arch]?)
                                           version_alias.as_s
@@ -59,11 +59,8 @@ struct Package::Build
                 else
                   @pkg["tags"]["self"]["regex"]
                 end.as_s
-        if /#{regex}/ =~ HTTPget.string(src)
-          $0
-        else
-          raise "fail to apply the `#{regex}` regex to #{src}"
-        end
+        /(#{regex})/ =~ HTTPget.string(src)
+        $1
       else
         src
       end
@@ -71,13 +68,13 @@ struct Package::Build
       raise "fail to get a version"
     end
   rescue ex
-    raise "can't obtain the version: #{ex}"
+    raise "can't obtain a version: #{ex}"
   end
 
   def simulate
     String.build do |str|
       @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      str << "\ndeps: " << @deps.map { |k, v| "#{k}:#{v}" }.join(", ") if !@deps.empty?
+      str << "\ndeps: " << @deps.map { |k, v| k + ':' + v }.join(", ") if !@deps.empty?
     end
   end
 

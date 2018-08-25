@@ -23,7 +23,8 @@ struct Package::Delete
 
     # Checks
     Package.pkg_exists? @pkgdir
-    if @service.exists? && File.real_path(@service.file) == "#{@pkgdir}/etc/init/#{Localhost.service.name.downcase}"
+    if @service.exists? && File.real_path(@service.file) == @pkgdir
+      "/etc/init/" + Localhost.service.name.downcase
       Log.info "a system service is found", @name
       @has_service = true
     else

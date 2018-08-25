@@ -107,6 +107,6 @@ module Owner
   end
 
   def generated?(name, package)
-    name.starts_with?(package + '_') && name.ascii_alphanumeric_underscore?
+    name.starts_with?(package + '_') && Utils.ascii_alphanumeric_underscore? name
   end
 end

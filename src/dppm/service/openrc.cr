@@ -21,9 +21,9 @@ module Service::OpenRC
     "OpenRC"
   end
 
-  def version
+  def version : String
     Exec.new("/sbin/openrc", ["-V"]).out =~ /([0-9]+\.[0-9]+\.[0-9]+)/
-    $1.to_i
+    $1
   rescue ex
     raise "can't retrieve the OpenRC version #{ex}"
   end
