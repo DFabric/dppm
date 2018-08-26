@@ -141,6 +141,7 @@ module Cmd
       when "file_empty?"  then File.empty?(cmdline[12..-1]).to_s
       when "file_exists?" then File.exists?(cmdline[13..-1]).to_s
       when "file?"        then File.file?(cmdline[6..-1]).to_s
+      when "root_user?"   then Owner.root?.to_s
         # Single arugment
       when "cd"          then Dir.cd cmdline[3..-1]; "working directory moved"
       when "mkdir"       then FileUtils.mkdir cmd[1..-1]; "directory created"
@@ -207,7 +208,7 @@ module Cmd
         # check if the command is available in `bin` of the package and dependencies
         bin = Cmd.find_bin @vars["PKGDIR"], cmd[0]
         if bin.empty?
-          raise "unknown command or variable"
+          raise "unknown command or variable: #{cmd}"
         else
           execute bin, cmd[1..-1]
         end
