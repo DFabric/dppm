@@ -8,7 +8,6 @@ require "uuid"
 require "yaml"
 
 # Third party libraries
-require "crest"
 require "exec"
 require "semantic_compare"
 

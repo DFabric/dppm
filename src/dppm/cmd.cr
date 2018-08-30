@@ -131,7 +131,7 @@ module Cmd
         if dir = cmd[3]?
           Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry} #{dir}/#{File.basename entry}" }
         else
-          Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry}" }
+          Dir[cmd[2]].each { |entry| command cmd1 + ' ' + entry }
         end
         ""
       when "current" then Dir.current
@@ -170,8 +170,6 @@ module Cmd
       when "chmod"   then File.chmod cmd[1], cmd[2].to_i(8); "permissions changed"
       when "chown" then File.chown cmd[1], Owner.to_uid(cmd[2]), Owner.to_gid(cmd[3]); "owner changed"
       # Custom
-
-
       when "dir" then Dir.current
       when "ls"
         directory = cmd[1]? ? cmd[1] : Dir.current
@@ -185,13 +183,12 @@ module Cmd
       when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
       when "chown_r" then Utils.chown_r cmd[3], Owner.to_uid(cmd[1]), Owner.to_gid(cmd[2]); "owner changed"
       # Download
-
-
       when "getstring" then HTTPget.string cmd[1]
       when "getfile"
         file = cmd[2]? ? cmd[2] : File.basename cmd[1]
         HTTPget.file cmd[1], file
         "file retrieved"
+
         # Compression
         # Use the system `tar` and `unzip` for now
       when "unzip"     then execute "/usr/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]; "zip archive extracted"

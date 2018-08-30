@@ -1,11 +1,11 @@
-require "crest"
+require "halite"
 
 # Method for redirections using the cossack http client
 module HTTPget
   extend self
 
   def string(url)
-    response = Crest::Request.execute(method: :get, url: url)
+    response = Halite.follow(5).get url
     case response.status_code
     when 200, 301, 302 then response.body
     else

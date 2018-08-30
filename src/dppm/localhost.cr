@@ -36,7 +36,7 @@ struct Localhost
   private def self.get_vars
     {% begin %}
     {
-      {% for var in %w(arch kernel kernel_ver sysinit sysinit_ver) %}
+      {% for var in %w(arch kernel kernel_ver sysinit sysinit_ver) %}\
         {{var}} => {{var.id}},
       {% end %}
     }
