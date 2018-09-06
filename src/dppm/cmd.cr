@@ -9,7 +9,6 @@ module Cmd
       path = "#{pkgdir}/lib/#{library}/bin/#{cmd}"
       return path if File.executable? path
     end
-    ""
   end
 
   class Run
@@ -31,14 +30,14 @@ module Cmd
         if line = raw_line.as_s?
           # New variable assignation
           if line.size > 4 && (line_var = line.split(" = ")) && Utils.ascii_alphanumeric_underscore? line_var[0]
-            @vars[line_var[0]] = @extvars["${#{line_var[0]}}"] = command(line_var[1])
+            @vars[line_var[0]] = @extvars["${#{line_var[0]}}"] = execute(line_var[1])
             # Print string
           elsif line.starts_with? "echo"
-            Log.info "echo", "#{command(var(line[5..-1]))}\n"
+            Log.info "echo", "#{execute(var(line[5..-1]))}\n"
           else
             cmd = var line
             Log.info "execute", cmd
-            output = command cmd
+            output = execute cmd
             Log.info "output", output if !output.empty?
           end
           # New condition block
@@ -99,11 +98,11 @@ module Cmd
           else
             vars = block.split(" == ", 2)
             if second_var = vars[1]?
-              return command(vars[0]) == command(second_var)
+              return execute(vars[0]) == execute(second_var)
             end
             vars = block.split(" != ", 2)
             if second_var = vars[1]?
-              return command(vars[0]) != command(second_var)
+              return execute(vars[0]) != execute(second_var)
             end
           end
         end
@@ -114,7 +113,7 @@ module Cmd
     # Methods from
     # https://crystal-lang.org/api/Dir.html
     # https://crystal-lang.org/api/File.html
-    def command(cmdline)
+    def execute(cmdline)
       # Check if it's a variable
       if cmdline.starts_with?('"') && cmdline.starts_with?('"')
         return var cmdline[1..-2]
@@ -123,15 +122,15 @@ module Cmd
       end
 
       cmd = cmdline.split ' '
-      case cmd[0]
-      when cmdline.starts_with? '/' then execute cmd[0], cmd[1..-1]
+      case command = cmd[0]
+      when cmdline.starts_with? '/' then Exec.new(cmd[0], cmd[1..-1]).out
         # use globs while executing a command
       when "glob"
         cmd1 = cmd[1]
         if dir = cmd[3]?
-          Dir[cmd[2]].each { |entry| command "#{cmd1} #{entry} #{dir}/#{File.basename entry}" }
+          Dir[cmd[2]].each { |entry| execute "#{cmd1} #{entry} #{dir}/#{File.basename entry}" }
         else
-          Dir[cmd[2]].each { |entry| command cmd1 + ' ' + entry }
+          Dir[cmd[2]].each { |entry| execute cmd1 + ' ' + entry }
         end
         ""
       when "current" then Dir.current
@@ -191,29 +190,24 @@ module Cmd
 
         # Compression
         # Use the system `tar` and `unzip` for now
-      when "unzip"     then execute "/usr/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]; "zip archive extracted"
-      when "untar_bz2" then execute "/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]; "bzip2 archive extracted"
-      when "untar_gz"  then execute "/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]; "gzip archive extracted"
-      when "untar_lz"  then execute "/bin/tar", ["axf", cmd[1], "-C", cmd[2]]; "lz archive extracted"
-      when "untar_xz"  then execute "/bin/tar", ["Jxf", cmd[1], "-C", cmd[2]]; "xz archive extracted"
+      when "unzip"     then Exec.new("/usr/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]); "zip archive extracted"
+      when "untar_bz2" then Exec.new("/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]); "bzip2 archive extracted"
+      when "untar_gz"  then Exec.new("/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]); "gzip archive extracted"
+      when "untar_lz"  then Exec.new("/bin/tar", ["axf", cmd[1], "-C", cmd[2]]); "lz archive extracted"
+      when "untar_xz"  then Exec.new("/bin/tar", ["Jxf", cmd[1], "-C", cmd[2]]); "xz archive extracted"
       when "exit"      then puts "exit called, exiting."; exit 1
       when "true"      then "true"
       when "false"     then "false"
-        # System executable
-      when .starts_with? '/' then execute cmd[0], cmd[1..-1]
       else
         # check if the command is available in `bin` of the package and dependencies
-        bin = Cmd.find_bin @vars["PKGDIR"], cmd[0]
-        if bin.empty?
-          raise "unknown command or variable: #{cmd}"
+        bin = Cmd.find_bin @vars["PKGDIR"], command
+        bin = Process.find_executable(command) if !bin
+        if bin
+          Exec.new(bin, cmd[1..-1]).out
         else
-          execute bin, cmd[1..-1]
+          raise "unknown command or variable: #{cmd}"
         end
       end
-    end
-
-    private def execute(bin, array)
-      Exec.new(bin, array).out
     end
   end
 end

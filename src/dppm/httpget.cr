@@ -5,7 +5,7 @@ module HTTPget
   extend self
 
   def string(url)
-    response = Halite.follow(5).get url
+    response = Halite.follow.get url
     case response.status_code
     when 200, 301, 302 then response.body
     else

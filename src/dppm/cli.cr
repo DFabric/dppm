@@ -52,11 +52,6 @@ module CLI
           arguments: %w(application),
           action:    "exec",
         },
-        info: {
-          alias:  'i',
-          info:   "General system information",
-          action: "info",
-        },
         list: {
           alias:    'l',
           info:     "List applications, packages, sources or services",
@@ -221,6 +216,11 @@ module CLI
           info:   "Start the dppm API server",
           action: "puts server",
         },
+        version: {
+          alias:  'v',
+          info:   "Version with general system information",
+          action: "version",
+        },
       }
     )
   rescue ex : Help
@@ -231,7 +231,7 @@ module CLI
     Log.error ex.to_s
   end
 
-  def info(prefix)
+  def version(prefix)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
     Localhost.vars.each do |k, v|
       puts k + ": " + v

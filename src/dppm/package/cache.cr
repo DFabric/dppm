@@ -2,9 +2,11 @@ module Package::Cache
   extend self
 
   def latest_source?(pkgsrc, src)
-    # != File.info(src).modification_time.to_s("%Y%m%d").to_i
-    HTTPget.string(pkgsrc.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
-    File.info(src).modification_time.to_s("%Y-%m-%dT%H:%M:") == $0
+    if Utils.is_http? pkgsrc
+      # != File.info(src).modification_time.to_s("%Y%m%d").to_i
+      HTTPget.string(pkgsrc.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
+      File.info(src).modification_time.to_s("%Y-%m-%dT%H:%M:") == $0
+    end
   end
 
   # Download a cache of package sources
