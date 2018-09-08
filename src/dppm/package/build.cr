@@ -110,7 +110,7 @@ struct Package::Build
         Exec.new "/bin/tar", ["Jxf", package_archive]
 
         # Move out files from the archive folder
-        Dir.cd @pkgdir + '/' + package_full_name do
+        Dir.cd package_full_name do
           move "./"
         end
         FileUtils.rm_r({package_archive, package_full_name})
@@ -119,7 +119,7 @@ struct Package::Build
     FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
     Log.info "build completed", @pkgdir
   rescue ex
-    FileUtils.rm_rf @pkgdir
+    # FileUtils.rm_rf @pkgdir
     raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"
   end
 
@@ -127,8 +127,6 @@ struct Package::Build
     Dir.each_child(path) do |entry|
       src = path + entry
       dest = '.' + src
-      p "src: " + src
-      p "dest: " + dest
       if Dir.exists? dest
         move src + '/'
       else

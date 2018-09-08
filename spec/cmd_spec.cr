@@ -11,72 +11,72 @@ describe Cmd::Run do
 
   describe "command" do
     it "current" do
-      cmd.command("current").should eq path
+      cmd.execute("current").should eq path
     end
 
     it "ls" do
-      cmd.command("ls .").should eq ".\n..\ntest_file"
+      cmd.execute("ls .").should eq ".\n..\ntest_file"
     end
 
     describe "file_exists?" do
-      it "file" { cmd.command("file_exists? test_file").should eq "true" }
-      it "directory" { cmd.command("file_exists? " + path).should eq "true" }
-      it "false" { cmd.command("file? " + path).should eq "false" }
+      it "file" { cmd.execute("file_exists? test_file").should eq "true" }
+      it "directory" { cmd.execute("file_exists? " + path).should eq "true" }
+      it "false" { cmd.execute("file? " + path).should eq "false" }
     end
 
     describe "file? true" do
-      it "file" { cmd.command("file? test_file").should eq "true" }
-      it "directory" { cmd.command("file? " + path).should eq "false" }
+      it "file" { cmd.execute("file? test_file").should eq "true" }
+      it "directory" { cmd.execute("file? " + path).should eq "false" }
     end
 
     describe "dir_exists?" do
-      it "file" { cmd.command("dir_exists? test_file").should eq "false" }
-      it "directory" { cmd.command("dir_exists? " + path).should eq "true" }
+      it "file" { cmd.execute("dir_exists? test_file").should eq "false" }
+      it "directory" { cmd.execute("dir_exists? " + path).should eq "true" }
     end
 
     it "cd" do
       Dir.cd path do
         Dir.mkdir temppath
-        cmd.command("cd " + File.basename temppath)
+        cmd.execute("cd " + File.basename temppath)
         Dir.current.should eq temppath
         Dir.rmdir temppath
       end
     end
 
     it "cp" do
-      cmd.command("cp test_file other")
+      cmd.execute("cp test_file other")
       File.read("other").should eq "data"
     end
 
     it "mv" do
-      cmd.command("mv test_file moved_file")
+      cmd.execute("mv test_file moved_file")
       File.read("moved_file").should eq "data"
     end
 
     it "rm" do
       File.write "test_rm", ""
-      cmd.command("rm test_rm")
+      cmd.execute("rm test_rm")
       File.exists?("test_rm").should be_false
     end
 
     it "rm_r" do
       Dir.mkdir temppath
-      cmd.command("rm_r " + temppath)
+      cmd.execute("rm_r " + temppath)
       Dir.exists?(temppath).should be_false
     end
 
     it "mkdir" do
-      cmd.command("mkdir " + temppath)
+      cmd.execute("mkdir " + temppath)
       Dir.exists?(temppath).should be_true
     end
 
     it "mkdir_p" do
-      cmd.command("mkdir_p " + temppath + "/some/sub")
+      cmd.execute("mkdir_p " + temppath + "/some/sub")
       Dir.exists?(temppath + "/some/sub").should be_true
     end
 
     it "symlink" do
-      cmd.command("symlink test_file symlinked_file")
+      cmd.execute("symlink test_file symlinked_file")
       File.symlink?("symlinked_file").should be_true
     end
   end

@@ -7,10 +7,11 @@ struct Package::Delete
     pkg : YAML::Any,
     service : Service::Systemd::System | Service::OpenRC::System
   @has_service = false
+  @keep_owner : Bool
   @user : String
   @group : String
 
-  def initialize(@vars)
+  def initialize(@vars, @keep_owner : Bool = false)
     @path = Path.new vars["prefix"]
     @name = vars["package"].gsub(':', '_')
     @pkgdir = @path.app + '/' + @name
@@ -54,13 +55,9 @@ struct Package::Delete
     Log.info "deleting", @pkgdir
     @service.delete @name if @has_service
 
-    if Owner.root?
-      if Owner.generated? @user, @package
-        Owner.del_user @user
-      end
-      if Owner.generated? @group, @package
-        Owner.del_group @group
-      end
+    if !@keep_owner && Owner.root?
+      Owner.del_user @user if @user.starts_with? '_' + @name
+      Owner.del_group @group if @group.starts_with? '_' + @name
     end
 
     FileUtils.rm_rf @pkgdir

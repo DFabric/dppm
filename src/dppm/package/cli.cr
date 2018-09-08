@@ -6,7 +6,9 @@ struct Package::CLI
   end
 
   {% for task in %w(add build delete) %}
-  def {{task.id}}(@no_confirm, config, mirror, pkgsrc, prefix, package, custom_vars {% if task == "add" %}, contained, noservice, socket{% end %})
+  def {{task.id}}(@no_confirm, config, mirror, pkgsrc, prefix, package, custom_vars
+                 {% if task == "add" %}, contained, noservice, socket
+                 {% elsif task == "delete" %}, keep_owner{% end %})
     Log.info "initializing", {{task}}
     @vars["package"] = package
     @vars["prefix"] = prefix
@@ -28,13 +30,13 @@ struct Package::CLI
 
     # Create task
     @vars.merge! Localhost.vars
+    task = {{task.camelcase.id}}.new(@vars,
     {% if task == "add" %}
-      task = {{task.camelcase.id}}.new @vars, shared: !contained, add_service: !noservice, socket: socket
-    {% else %}
-      task = {{task.camelcase.id}}.new @vars
-    {% end %}
+       shared: !contained, add_service: !noservice, socket: socket
+    {% elsif task == "delete" %}
+      keep_owner: keep_owner
+    {% end %})
 
-    # puts task.class.to_s.split("::").last.downcase
     Log.info {{task}}, task.simulate
     task.run if @no_confirm || ::Package.confirm
   end

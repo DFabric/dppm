@@ -129,6 +129,12 @@ module CLI
               info:      "Delete an added package",
               arguments: %w(package custom_vars...),
               action:    "::Package::CLI.new.delete",
+              options:   {
+                keep_owner: {
+                  short: 'o',
+                  info:  "Don't delete the user and group",
+                },
+              },
             },
           },
           variables: {

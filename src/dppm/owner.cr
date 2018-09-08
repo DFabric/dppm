@@ -105,8 +105,4 @@ module Owner
     del name, "/etc/group"
     Log.info "group deleted", name
   end
-
-  def generated?(name, package)
-    name.starts_with?(package + '_') && Utils.ascii_alphanumeric_underscore? name
-  end
 end

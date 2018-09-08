@@ -14,7 +14,7 @@ struct Package::Add
   @shared : Bool
   @service : Service::Systemd::System | Service::OpenRC::System
 
-  def initialize(@vars, @shared : Bool, @add_service : Bool, @socket : Bool)
+  def initialize(@vars, @shared = true, @add_service = true, @socket = false)
     # Build missing dependencies
     @build = Package::Build.new vars.dup
     @path = @build.path
@@ -66,22 +66,8 @@ struct Package::Add
     raise "socket not supported by #{@pkg["name"]}" if @socket
 
     if !@socket && (port_string = @vars["port"]?)
-      find_available_port port_string
+      @vars["port"] = Localhost.available_port(port_string.to_i).to_s
     end
-  end
-
-  # Choose an available port
-  private def find_available_port(port_string)
-    Log.info "checking ports availability", port_string
-    ports_used = Array(Int32).new
-    port_num = port_string.to_i
-    while !Localhost.tcp_port_available? port_num
-      raise "the limit of 65535 for port numbers is reached, no ports available" if port_num > 65535
-      ports_used << port_num
-      port_num += 1
-    end
-    Log.warn "ports unavailable or used", ports_used.join ", " if !ports_used.empty?
-    @vars["port"] = port_num.to_s
   end
 
   # An user uid and a group gid is required
@@ -93,7 +79,7 @@ struct Package::Add
       elsif user = @vars["user"]?
         @vars["uid"] = Owner.to_user user
       else
-        @vars["user"] = @name
+        @vars["user"] = '_' + @name
         @vars["uid"] = owner_id
         @add_user = true
       end
@@ -102,7 +88,7 @@ struct Package::Add
       elsif group = @vars["group"]?
         @vars["gid"] = Owner.to_group group
       else
-        @vars["group"] = @name
+        @vars["group"] = '_' + @name
         @vars["gid"] = owner_id
         @add_group = true
       end
