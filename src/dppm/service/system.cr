@@ -36,7 +36,7 @@ abstract struct Service::System
     elsif exists?
       raise "system service already exist: " + service
     elsif !writable?
-      Log.warn "service creation unavailable, root permissions required", file
+      Log.warn "service creation unavailable, root permissions required", service
     end
   end
 

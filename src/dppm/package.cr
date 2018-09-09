@@ -1,3 +1,5 @@
+require "./package/*"
+
 module Package
   extend self
 

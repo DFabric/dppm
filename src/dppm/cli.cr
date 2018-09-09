@@ -32,17 +32,17 @@ module CLI
             get: {
               info:      "Get a value. Single dot path `.` for all keys",
               arguments: %w(application path),
-              action:    "puts ::ConfFile::CLI.get",
+              action:    "puts ::Config::CLI.get",
             },
             set: {
               info:      "Set a value",
               arguments: %w(application path value),
-              action:    "::ConfFile::CLI.set() && puts %(done)",
+              action:    "::Config::CLI.set() && puts %(done)",
             },
             del: {
               info:      "Delete a path",
               arguments: %w(application path),
-              action:    "::ConfFile::CLI.del() && puts %(done)",
+              action:    "::Config::CLI.del() && puts %(done)",
             },
           },
         },

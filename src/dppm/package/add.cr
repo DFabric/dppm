@@ -44,7 +44,7 @@ struct Package::Add
     # Default variables
     unset_vars = Array(String).new
     if pkg_config = @pkg["config"]?
-      conf = ConfFile::Config.new "#{path.src}/#{@package}"
+      conf = ::Config::Pkg.new path.src + '/' + @package
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
         # Skip if a socket is used
@@ -162,7 +162,7 @@ struct Package::Add
     # Set configuration variables in files
     Log.info "setting configuration variables", @name
     if pkg_config = @pkg["config"]?
-      conf = ConfFile::Config.new @pkgdir
+      conf = ::Config::Pkg.new @pkgdir
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
         if variable == "socket"

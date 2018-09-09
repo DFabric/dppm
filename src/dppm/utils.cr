@@ -1,3 +1,5 @@
+require "uuid"
+
 module Utils
   extend self
 

@@ -1,3 +1,5 @@
+require "./service/**"
+
 module Service
   def cli_boot(prefix, service, state)
     system.new(service).boot Utils.to_b(state)

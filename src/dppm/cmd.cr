@@ -11,7 +11,7 @@ module Cmd
     end
   end
 
-  class Run
+  struct Run
     @extvars = Hash(String, String).new
 
     def initialize(@vars : Hash(String, String))
@@ -29,8 +29,8 @@ module Cmd
         # Add/change vars
         if line = raw_line.as_s?
           # New variable assignation
-          if line.size > 4 && (line_var = line.split(" = ")) && Utils.ascii_alphanumeric_underscore? line_var[0]
-            @vars[line_var[0]] = @extvars["${#{line_var[0]}}"] = execute(line_var[1])
+          if line.size > 4 && (line_var = line.split(" = ", limit: 2)) && (first_line_var = line_var[0]) && Utils.ascii_alphanumeric_underscore? first_line_var
+            @vars[first_line_var] = @extvars["${#{first_line_var}}"] = execute(line_var[1])
             # Print string
           elsif line.starts_with? "echo"
             Log.info "echo", "#{execute(var(line[5..-1]))}\n"
@@ -173,12 +173,12 @@ module Cmd
       when "ls"
         directory = cmd[1]? ? cmd[1] : Dir.current
         Dir.entries(directory).join('\n')
-      when "get"              then ConfFile.get(cmd[1], cmd[2]).to_s
-      when "del"              then ConfFile.del(cmd[1], cmd[2]).to_s
-      when "set"              then ConfFile.set(cmd[1], cmd[2], cmd[3..-1].join(' ')).to_s
-      when .ends_with? ".get" then ConfFile.get(cmd[1], cmd[2], cmd[0][0..-5]).to_s
-      when .ends_with? ".del" then ConfFile.del(cmd[1], cmd[2], cmd[0][0..-5]).to_s
-      when .ends_with? ".set" then ConfFile.set(cmd[1], cmd[2], cmd[3..-1].join(' '), cmd[0][0..-5]).to_s
+      when "get"              then Config.new(cmd[1]).get(cmd[2]).to_s
+      when "del"              then Config.new(cmd[1]).del(cmd[2]).to_s
+      when "set"              then Config.new(cmd[1]).set(cmd[2], cmd[3..-1].join(' ')).to_s
+      when .ends_with? ".get" then Config.new(cmd[1], cmd[0][0..-5]).get(cmd[2]).to_s
+      when .ends_with? ".del" then Config.new(cmd[1], cmd[0][0..-5]).del(cmd[2]).to_s
+      when .ends_with? ".set" then Config.new(cmd[1], cmd[0][0..-5]).set(cmd[2], cmd[3..-1].join(' ')).to_s
       when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
       when "chown_r" then Utils.chown_r cmd[3], Owner.to_uid(cmd[1]), Owner.to_gid(cmd[2]); "owner changed"
       # Download
