@@ -13,7 +13,7 @@
 - easy install, backup and modification of configurations
 - support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
 - can use systemd or OpenRC for system services
-- independent of your system's package manager
+- independent of your system's package manager - self-contained, statically linked binaries
 - standalone installations bundled with all dependencies - DDPM can be safely removed
 
 ## Install
@@ -27,6 +27,7 @@ For Rapberry Pi 3, a 64-bit OS like [Armbian](https://www.armbian.com/) is recom
 Still, [an issue is open](https://github.com/crystal-lang/crystal/issues/5467) for `armhf`.
 
 ## Automatic
+
 Download `dppm` with the helper:
 
 `sh -c "APP=dppm-static $(wget -qO- https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh)"`

@@ -1,6 +1,7 @@
 require "file_utils"
 
 module Owner
+  @@nologin = Process.find_executable("nologin") || "/bin/false"
   extend self
 
   def current_uid_gid
@@ -74,14 +75,14 @@ module Owner
     id = 1000
     uids = all_uids
     gids = all_gids
-    while uids.includes?(id) || gids.includes?(id)
-      id += 1
+    (id..65535).each do |id|
+      return id unless uids.includes?(id) || gids.includes?(id)
     end
-    id
+    raise "the limit of 65535 for id numbers is reached, no ids available"
   end
 
-  def add_user(id, name, description)
-    File.open "/etc/passwd", "a", &.puts "#{name}:x:#{id}:#{id}:#{description}:/:/bin/false"
+  def add_user(id, name, description, shell = @@nologin)
+    File.open "/etc/passwd", "a", &.puts "#{name}:x:#{id}:#{id}:#{description}:/:#{@@nologin}"
   end
 
   def add_group(id, name)

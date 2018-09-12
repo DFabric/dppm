@@ -109,7 +109,7 @@ module CLI
                 },
                 socket: {
                   short: 's',
-                  info:  "Use of an UNIX socket instead of a port",
+                  info:  "\t Use of an UNIX socket instead of a port",
                 },
               },
             },

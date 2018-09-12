@@ -171,7 +171,7 @@ module Cmd
       # Custom
       when "dir" then Dir.current
       when "ls"
-        directory = cmd[1]? ? cmd[1] : Dir.current
+        directory = cmd[1]? || Dir.current
         Dir.entries(directory).join('\n')
       when "get"              then Config.new(cmd[1]).get(cmd[2]).to_s
       when "del"              then Config.new(cmd[1]).del(cmd[2]).to_s
@@ -184,7 +184,7 @@ module Cmd
       # Download
       when "getstring" then HTTPget.string cmd[1]
       when "getfile"
-        file = cmd[2]? ? cmd[2] : File.basename cmd[1]
+        file = cmd[2]? || File.basename cmd[1]
         HTTPget.file cmd[1], file
         "file retrieved"
 

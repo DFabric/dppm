@@ -118,7 +118,7 @@ struct Package::Add
 
   def run
     Log.info "adding to the system", @name
-    FileUtils.mkdir_p [@path.app, @path.pkg]
+    FileUtils.mkdir_p({@path.app, @path.pkg})
 
     # Create the new application
     @build.run if !@build.exists
@@ -159,7 +159,7 @@ struct Package::Add
     File.chmod @pkgdir + "/srv", 0o750
     File.chmod @pkgdir + "/log", 0o700
 
-    # Set configuration variables in files
+    # Set configuration variables
     Log.info "setting configuration variables", @name
     if pkg_config = @pkg["config"]?
       conf = ::Config::Pkg.new @pkgdir
