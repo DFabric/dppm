@@ -3,9 +3,8 @@ struct Config::Pkg
   getter config : ::Config::INI | ::Config::JSON | ::Config::YAML
 
   def initialize(pkgdir)
-    file = Dir[pkgdir + "/etc/config.*"]
-    raise "file not found: #{pkgdir}/etc/config.*" if file.empty?
-    @config = Config.new file.first
+    raise "file not found: #{pkgdir}/etc/config.*" unless config_file = Dir[pkgdir + "/etc/config.*"][0]?
+    @config = Config.new config_file
     @pkg = ::YAML.parse(File.read pkgdir + "/pkg.yml")["config"]
   end
 

@@ -81,18 +81,35 @@ describe Cmd::Run do
     end
   end
 
-  describe "conditions" do
-    it "simple if condition" do
+  describe "variable" do
+    it "allocates a string" do
+      cmd.run([YAML.parse %(a = "b")])
+      cmd.@vars["a"].should eq "b"
+    end
+
+    it "allocates a command output" do
+      cmd.run([YAML.parse %(b = root_user?)])
+      cmd.@vars["b"].should eq "false"
+    end
+
+    it "uses interpolation" do
+      cmd.run([YAML.parse %(c = "${dir}")])
+      cmd.@vars["c"].should eq Dir.current
+    end
+  end
+
+  describe "condition" do
+    it "simple if" do
       cmd.run([YAML.parse "if file_exists? . == true: \n- touch if_cond"])
       File.exists?("if_cond").should be_true
     end
 
-    it "simple else condition" do
+    it "simple else" do
       cmd.run([YAML.parse("if file_exists? . != true: \n- ls ."), YAML.parse("else: \n- touch else_cond")])
       File.exists?("else_cond").should be_true
     end
 
-    it "simple elif condition" do
+    it "simple elif" do
       cmd.run([YAML.parse("if file_exists? . != true: \n- ls ."), YAML.parse("if file_exists? . == true: \n- touch elif_cond")])
       File.exists?("elif_cond").should be_true
     end

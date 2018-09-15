@@ -12,12 +12,9 @@ module Cmd
   end
 
   struct Run
-    @extvars = Hash(String, String).new
-
     def initialize(@vars : Hash(String, String))
       # Create a PATH variable
       @vars = @vars.map { |k, v| [k.upcase, v] }.to_h
-      @vars.each { |k, v| @extvars["${#{k}}"] = v }
     end
 
     def run(yaml : Array)
@@ -30,12 +27,12 @@ module Cmd
         if line = raw_line.as_s?
           # New variable assignation
           if line.size > 4 && (line_var = line.split(" = ", limit: 2)) && (first_line_var = line_var[0]) && Utils.ascii_alphanumeric_underscore? first_line_var
-            @vars[first_line_var] = @extvars["${#{first_line_var}}"] = execute(line_var[1])
+            @vars[first_line_var] = execute(line_var[1])
             # Print string
           elsif line.starts_with? "echo"
-            Log.info "echo", "#{execute(var(line[5..-1]))}\n"
+            Log.info "echo", "#{execute(var_reader(line[5..-1]))}\n"
           else
-            cmd = var line
+            cmd = var_reader line
             Log.info "execute", cmd
             output = execute cmd
             Log.info "output", output if !output.empty?
@@ -45,7 +42,7 @@ module Cmd
           first_key = line.first_key.to_s
           if first_key.starts_with?("elif") && last_cond
             # Previous if/elif is true
-          elsif cond(var(first_key), last_cond) || (first_key == "else" && !last_cond)
+          elsif cond(var_reader(first_key), last_cond) || (first_key == "else" && !last_cond)
             line.each_value do |subline|
               if array = subline.as_a?
                 run array
@@ -63,23 +60,55 @@ module Cmd
       end
     end
 
-    private def var(cmd : String)
+    private def var_reader(cmd : String)
       # Check if variables in the command are defined
-      cmd.scan(/(?<!\\)\${[a-zA-Z0-9_]+}/).each do |var|
-        raise "unknown variable: " + var[0] if !@extvars[var[0]]?
+      escape = false
+      building_command = false
+      command = IO::Memory.new
+      reader = Char::Reader.new cmd
+      String.build do |str|
+        while reader.has_next?
+          if escape
+            str << reader.current_char
+            escape = false
+          else
+            case char = reader.current_char
+            when '\\' then escape = true
+            when '$'
+              if reader.peek_next_char == '{'
+                building_command = true
+                reader.next_char
+              else
+                str << char
+              end
+            when '}'
+              if building_command
+                str << execute command.to_s
+                building_command = false
+                command.clear
+              else
+                str << char
+              end
+            else
+              if building_command
+                command << char
+              else
+                str << char
+              end
+            end
+          end
+          reader.next_char
+        end
+        str << command
       end
-
-      # Replace vars by their values
-      cmd.gsub(/(?<!\\)\${([a-zA-Z0-9_]+)}/, @extvars)
-        # Remove a slash for escpaded vars
-        .gsub(/\\(\${[a-zA-Z0-9_]+})/, "\\1")
     end
 
     private def cond(expr, last_cond)
-      case name = expr.split(' ', limit: 2).first
-      when "if"    then ifexpr expr[3..-1]
-      when "elif"  then ifexpr expr[5..-1] if !last_cond
-      when !"else" then raise "unknown condition: " + name
+      line = expr.split(' ', limit: 2)
+      case line[0]
+      when "if"    then ifexpr line[1]
+      when "elif"  then ifexpr line[1] if !last_cond
+      when !"else" then raise "unknown condition: " + line[0]
       end
     end
 
@@ -116,21 +145,20 @@ module Cmd
     def execute(cmdline)
       # Check if it's a variable
       if cmdline.starts_with?('"') && cmdline.starts_with?('"')
-        return var cmdline[1..-2]
-      elsif @vars[cmdline]?
-        return @vars[cmdline]
+        return var_reader cmdline[1..-2]
+      elsif variable = @vars[cmdline]?
+        return variable
       end
 
       cmd = cmdline.split ' '
       case command = cmd[0]
-      when cmdline.starts_with? '/' then Exec.new(cmd[0], cmd[1..-1]).out
+      when cmdline.starts_with? '/' then Exec.new(command, cmd[1..-1]).out
         # use globs while executing a command
       when "glob"
-        cmd1 = cmd[1]
         if dir = cmd[3]?
-          Dir[cmd[2]].each { |entry| execute "#{cmd1} #{entry} #{dir}/#{File.basename entry}" }
+          Dir[cmd[2]].each { |entry| execute "#{cmd[1]} #{entry} #{dir}/#{File.basename entry}" }
         else
-          Dir[cmd[2]].each { |entry| execute cmd1 + ' ' + entry }
+          Dir[cmd[2]].each { |entry| execute cmd[1] + ' ' + entry }
         end
         ""
       when "current" then Dir.current
@@ -142,23 +170,24 @@ module Cmd
       when "file?"        then File.file?(cmdline[6..-1]).to_s
       when "root_user?"   then Owner.root?.to_s
         # Single arugment
-      when "cd"          then Dir.cd cmdline[3..-1]; "working directory moved"
-      when "mkdir"       then FileUtils.mkdir cmd[1..-1]; "directory created"
-      when "mkdir_p"     then FileUtils.mkdir_p cmd[1..-1]; "directory created"
-      when "mv"          then cmd[3]? ? FileUtils.mv(cmd[1..-2], cmd[-1]) : File.rename cmd[1], cmd[2]; "file moved"
-      when "rmdir"       then FileUtils.rmdir cmd[1..-1]; "directory removed"
-      when "rm"          then FileUtils.rm cmd[1..-1]; "file removed"
-      when "rm_r"        then FileUtils.rm_r cmd[1..-1]; "directory removed"
-      when "rm_rf"       then FileUtils.rm_rf cmd[1..-1]; "directory removed"
-      when "dirname"     then File.dirname cmdline[8..-1]
-      when "read"        then File.read cmdline[5..-1]
-      when "size"        then File.size(cmdline[5..-1]).to_s
-      when "touch"       then File.touch cmdline[6..-1]; "file created/updated"
-      when "readable?"   then File.readable?(cmdline[10..-1]).to_s
-      when "symlink?"    then File.symlink?(cmdline[9..-1]).to_s
-      when "writable?"   then File.writable?(cmdline[10..-1]).to_s
-      when "expand_path" then File.expand_path cmdline[12..-1]
-      when "real_path"   then File.real_path cmdline[10..-1]
+      when "cd"            then Dir.cd cmdline[3..-1]; "working directory moved"
+      when "mkdir"         then FileUtils.mkdir cmd[1..-1]; "directory created"
+      when "mkdir_p"       then FileUtils.mkdir_p cmd[1..-1]; "directory created"
+      when "mv"            then cmd[3]? ? FileUtils.mv(cmd[1..-2], cmd[-1]) : File.rename cmd[1], cmd[2]; "file moved"
+      when "rmdir"         then FileUtils.rmdir cmd[1..-1]; "directory removed"
+      when "rm"            then FileUtils.rm cmd[1..-1]; "file removed"
+      when "rm_r"          then FileUtils.rm_r cmd[1..-1]; "directory removed"
+      when "rm_rf"         then FileUtils.rm_rf cmd[1..-1]; "directory removed"
+      when "dirname"       then File.dirname cmdline[8..-1]
+      when "read"          then File.read cmdline[5..-1]
+      when "file_size"     then File.size(cmdline[5..-1]).to_s
+      when "touch"         then File.touch cmdline[6..-1]; "file created/updated"
+      when "readable?"     then File.readable?(cmdline[10..-1]).to_s
+      when "symlink?"      then File.symlink?(cmdline[9..-1]).to_s
+      when "writable?"     then File.writable?(cmdline[10..-1]).to_s
+      when "expand_path"   then File.expand_path cmdline[12..-1]
+      when "real_path"     then File.real_path cmdline[10..-1]
+      when "random_base64" then Random::Secure.urlsafe_base64(cmd[1].to_i).to_s
         # Double argument with space separator
       when "append"  then File.open cmd[1], "a", &.print Utils.to_type(cmd[2..-1].join(' ')); "text appended"
       when "cp"      then FileUtils.cp cmd[1], cmd[2]; "file copied"
@@ -172,22 +201,22 @@ module Cmd
       when "dir" then Dir.current
       when "ls"
         directory = cmd[1]? || Dir.current
-        Dir.entries(directory).join('\n')
+        Dir.entries(directory).join '\n'
       when "get"              then Config.new(cmd[1]).get(cmd[2]).to_s
       when "del"              then Config.new(cmd[1]).del(cmd[2]).to_s
       when "set"              then Config.new(cmd[1]).set(cmd[2], cmd[3..-1].join(' ')).to_s
-      when .ends_with? ".get" then Config.new(cmd[1], cmd[0][0..-5]).get(cmd[2]).to_s
-      when .ends_with? ".del" then Config.new(cmd[1], cmd[0][0..-5]).del(cmd[2]).to_s
-      when .ends_with? ".set" then Config.new(cmd[1], cmd[0][0..-5]).set(cmd[2], cmd[3..-1].join(' ')).to_s
+      when .ends_with? ".get" then Config.new(cmd[1], command[0..-5]).get(cmd[2]).to_s
+      when .ends_with? ".del" then Config.new(cmd[1], command[0..-5]).del(cmd[2]).to_s
+      when .ends_with? ".set" then Config.new(cmd[1], command[0..-5]).set(cmd[2], cmd[3..-1].join(' ')).to_s
       when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
       when "chown_r" then Utils.chown_r cmd[3], Owner.to_uid(cmd[1]), Owner.to_gid(cmd[2]); "owner changed"
       # Download
       when "getstring" then HTTPget.string cmd[1]
       when "getfile"
-        file = cmd[2]? || File.basename cmd[1]
-        HTTPget.file cmd[1], file
+        url = cmd[1]
+        file = cmd[2]? || File.basename url
+        HTTPget.file url, file
         "file retrieved"
-
         # Compression
         # Use the system `tar` and `unzip` for now
       when "unzip"     then Exec.new("/usr/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]); "zip archive extracted"
@@ -200,9 +229,7 @@ module Cmd
       when "false"     then "false"
       else
         # check if the command is available in `bin` of the package and dependencies
-        bin = Cmd.find_bin @vars["PKGDIR"], command
-        bin = Process.find_executable(command) if !bin
-        if bin
+        if bin = Cmd.find_bin(@vars["PKGDIR"], command) || Process.find_executable(command)
           Exec.new(bin, cmd[1..-1]).out
         else
           raise "unknown command or variable: #{cmd}"
