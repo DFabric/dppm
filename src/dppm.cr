@@ -1,3 +1,3 @@
-require "./dppm/*"
+require "./cli"
 
 CLI.run

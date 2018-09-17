@@ -1,3 +1,3 @@
 require "spec"
-require "../src/dppm/**"
+require "../src/logger"
 Log.destination = File.open "/dev/null", "a"

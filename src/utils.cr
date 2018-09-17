@@ -3,8 +3,16 @@ require "uuid"
 module Utils
   extend self
 
-  def ascii_alphanumeric_underscore?(string)
+  def ascii_alphanumeric_underscore?(string : String)
     string.each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return }
+    true
+  end
+
+  def ascii_alphanumeric_dash?(name : String)
+    raise "the name must starts with `a-z` or `0-9`, not a dash  `-`: " + name if name.starts_with? '-'
+    name.each_char do |char|
+      char.ascii_lowercase? || char.ascii_number? || char == '-' || raise "the name contains other characters than `a-z`, `0-9` and `-`: " + name
+    end
     true
   end
 

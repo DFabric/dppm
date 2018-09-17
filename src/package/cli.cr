@@ -15,10 +15,10 @@ struct Package::CLI
 
     # configuration
     begin
-      configuration = INI.parse(File.read config ? config : CONFIG_FILE)
+      configuration = INI.parse(File.read config || CONFIG_FILE)
 
-      @vars["pkgsrc"] = pkgsrc ? pkgsrc : configuration["main"]["pkgsrc"]
-      @vars["mirror"] = mirror ? mirror : configuration["main"]["mirror"]
+      @vars["pkgsrc"] = pkgsrc || configuration["main"]["pkgsrc"]
+      @vars["mirror"] = mirror || configuration["main"]["mirror"]
     rescue ex
       raise "configuraration error: #{ex}"
     end
@@ -29,7 +29,7 @@ struct Package::CLI
     Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src
 
     # Create task
-    @vars.merge! Localhost.vars
+    @vars.merge! ::System::Host.vars
     task = {{task.camelcase.id}}.new(@vars,
     {% if task == "add" %}
        shared: !contained, add_service: !noservice, socket: socket

@@ -1,3 +1,5 @@
+require "./cmd"
+require "./httpget"
 require "./package/*"
 
 module Package

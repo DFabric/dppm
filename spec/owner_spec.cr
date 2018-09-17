@@ -1,23 +1,24 @@
 require "./spec_helper"
+require "../src/system/owner"
 
-describe Owner do
+describe ::System::Owner do
   it "converts an user name to an uid" do
-    Owner.to_uid("root").should eq 0
+    ::System::Owner.to_uid("root").should eq 0
   end
 
   it "converts a group name to a gid" do
-    Owner.to_gid("root").should eq 0
+    ::System::Owner.to_gid("root").should eq 0
   end
 
   it "returns the passed uid as an Int from a String" do
-    Owner.to_uid("0").should eq 0
+    ::System::Owner.to_uid("0").should eq 0
   end
 
   it "converts an uid as to an user name" do
-    Owner.to_user("0").should eq "root"
+    ::System::Owner.to_user("0").should eq "root"
   end
 
   it "converts a group id as Int32 to its name" do
-    Owner.to_group(0).should eq "root"
+    ::System::Owner.to_group(0).should eq "root"
   end
 end

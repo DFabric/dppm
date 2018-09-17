@@ -1,3 +1,5 @@
+require "colorize"
+
 struct Log
   class_setter colorize = true
   class_setter date = false

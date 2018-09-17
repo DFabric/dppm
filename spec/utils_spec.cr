@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../src/utils"
 
 describe Utils do
   it "changes the permissions of the directory recursively" do

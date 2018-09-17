@@ -30,7 +30,7 @@ struct Package::List
 
   def services
     Dir.each_child(@path.app) do |app|
-      service = Localhost.service.system.new app
+      service = ::System::Host.service.system.new app
       yield service if service.exists?
     end
   end

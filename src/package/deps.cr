@@ -29,7 +29,7 @@ struct Package::Deps
         else
           # HTTPget all versions, parse and test if the versions available match
           allvers[dep.to_s] = Array(String).new
-          Version.get(Localhost.kernel, Localhost.arch, yaml["version"]).each do |ver|
+          Version.get(::System::Host.kernel, ::System::Host.arch, yaml["version"]).each do |ver|
             newvers << ver if ver && SemanticCompare.expression ver, pkgdeps[dep].to_s
           end
         end

@@ -1,8 +1,14 @@
 require "clicr"
+require "exec"
+require "./config"
+require "./package"
+require "./logger"
+require "./service"
+require "./system"
 
 # Global constant variables
 CONFIG_FILE = "./config.ini"
-PREFIX      = Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/dppm"
+PREFIX      = ::System::Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/dppm"
 
 module CLI
   extend self
@@ -178,12 +184,12 @@ module CLI
             status: {
               info:      "Service status",
               arguments: %w(services...),
-              action:    "Localhost.service.cli_status",
+              action:    "::System::Host.service.cli_status",
             },
             boot: {
               info:      "\t Auto-start the service at boot",
               arguments: %w(service state),
-              action:    "Localhost.service.cli_boot",
+              action:    "::System::Host.service.cli_boot",
             },
             start: {
               info:      "Start the service",
@@ -208,7 +214,7 @@ module CLI
             logs: {
               info:      "\t Service's logs",
               arguments: %w(service),
-              action:    "puts Localhost.service.logs_cli",
+              action:    "puts ::System::Host.service.logs_cli",
               options:   {
                 error: {
                   short: 'e',
@@ -239,7 +245,7 @@ module CLI
 
   def version(prefix)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
-    Localhost.vars.each do |k, v|
+    ::System::Host.vars.each do |k, v|
       puts k + ": " + v
     end
   end
@@ -270,6 +276,6 @@ module CLI
   end
 
   def service(prefix, service)
-    Localhost.service.system.new service
+    ::System::Host.service.system.new service
   end
 end

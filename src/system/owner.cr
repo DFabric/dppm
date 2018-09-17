@@ -1,6 +1,6 @@
 require "file_utils"
 
-module Owner
+module System::Owner
   @@nologin = Process.find_executable("nologin") || "/bin/false"
   extend self
 

@@ -25,7 +25,7 @@ struct Package::Add
     Log.info "getting name", @package
     getname
     @name = @vars["name"]
-    @service = Localhost.service.system.new @name
+    @service = ::System::Host.service.system.new @name
     @pkgdir = @vars["pkgdir"] = @path.app + '/' + @name
 
     @deps = @build.deps
@@ -66,34 +66,34 @@ struct Package::Add
     raise "socket not supported by #{@pkg["name"]}" if @socket
 
     if !@socket && (port_string = @vars["port"]?)
-      @vars["port"] = Localhost.available_port(port_string.to_i).to_s
+      @vars["port"] = ::System.available_port(port_string.to_i).to_s
     end
   end
 
   # An user uid and a group gid is required
   private def create_user_group
-    if Owner.root?
-      owner_id = Owner.available_id.to_s
+    if ::System::Owner.root?
+      owner_id = ::System::Owner.available_id.to_s
       if uid = @vars["uid"]?
-        @vars["user"] = Owner.to_user uid
+        @vars["user"] = ::System::Owner.to_user uid
       elsif user = @vars["user"]?
-        @vars["uid"] = Owner.to_user user
+        @vars["uid"] = ::System::Owner.to_user user
       else
         @vars["user"] = '_' + @name
         @vars["uid"] = owner_id
         @add_user = true
       end
       if gid = @vars["gid"]?
-        @vars["group"] = Owner.to_group gid
+        @vars["group"] = ::System::Owner.to_group gid
       elsif group = @vars["group"]?
-        @vars["gid"] = Owner.to_group group
+        @vars["gid"] = ::System::Owner.to_group group
       else
         @vars["group"] = '_' + @name
         @vars["gid"] = owner_id
         @add_group = true
       end
     else
-      @vars["group"], @vars["gid"] = Owner.current_uid_gid.map &.to_s
+      @vars["group"], @vars["gid"] = ::System::Owner.current_uid_gid.map &.to_s
     end
   end
 
@@ -103,7 +103,7 @@ struct Package::Add
       raise "only applications can be added to the system"
     elsif @pkg["type"] == "app"
       @vars["name"] ||= Utils.gen_name @package
-      Utils.ascii_alphanumeric_underscore?(@vars["name"]) || raise "the name contains other characters than `a-z`, `0-9` and `_`: " + @vars["name"]
+      Utils.ascii_alphanumeric_dash? @vars["name"]
     else
       raise "unknow type: #{@pkg["type"]}"
     end
@@ -187,26 +187,26 @@ struct Package::Add
       Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
     end
 
-    if Owner.root?
+    if ::System::Owner.root?
       # Set the user and group owner
-      Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"]) if @add_user
-      Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
+      ::System::Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"]) if @add_user
+      ::System::Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
       Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
     end
 
     if @add_service && @service.writable?
       # Create system services
-      Localhost.service.create @pkg, @vars
+      ::System::Host.service.create @pkg, @vars
       @service.link @pkgdir
-      Log.info Localhost.service.name + " system service added", @name
+      Log.info ::System::Host.service.name + " system service added", @name
     end
 
     Log.info "add completed", @pkgdir
   rescue ex
     FileUtils.rm_rf @pkgdir
     @service.delete if @add_service && @service.exists?
-    Owner.del_user(@vars["user"]) if @add_user
-    Owner.del_group(@vars["group"]) if @add_group
+    ::System::Owner.del_user(@vars["user"]) if @add_user
+    ::System::Owner.del_group(@vars["group"]) if @add_group
     raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"
   end
 end

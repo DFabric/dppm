@@ -1,6 +1,6 @@
 struct Config::Pkg
   getter pkg : ::YAML::Any
-  getter config : ::Config::INI | ::Config::JSON | ::Config::YAML
+  getter config : INI | JSON | YAML
 
   def initialize(pkgdir)
     raise "file not found: #{pkgdir}/etc/config.*" unless config_file = Dir[pkgdir + "/etc/config.*"][0]?

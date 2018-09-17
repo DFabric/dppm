@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../src/service"
 
 describe Service do
   Dir.cd __DIR__

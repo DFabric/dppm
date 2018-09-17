@@ -1,5 +1,5 @@
 require "./spec_helper"
-require "yaml"
+require "../src/cmd"
 
 describe Cmd::Run do
   path = Dir.current + "/cmd_test"

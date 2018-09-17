@@ -8,7 +8,7 @@ module Config::CLI
       return config.data if path == "."
       config.get path
     elsif path == "."
-      config = Config::Pkg.new file
+      config = Pkg.new file
       String.build do |str|
         config.pkg.as_h.each_key do |key|
           str << key << ": " << config.get(key.as_s) << '\n'
@@ -18,22 +18,17 @@ module Config::CLI
       Config.new(file).get path
     end
   end
+  
+  private def config(prefix, nopkg, application)
+    file = ::Package::Path.new(prefix).app + '/' + application
+    nopkg ? Config.new(file) : Pkg.new file
+  end
 
   def set(prefix, nopkg : Bool, application, path, value)
-    file = ::Package::Path.new(prefix).app + '/' + application
-    if nopkg
-      Config.new(file).set path, value
-    else
-      Config::Pkg.new(file).set path, value
-    end
+    config(prefix, nopkg, application).set path, value
   end
 
   def del(prefix, nopkg : Bool, application, path)
-    file = ::Package::Path.new(prefix).app + '/' + application
-    if nopkg
-      Config.new(file).del path
-    else
-      Config::Pkg.new(file).del path
-    end
+    config(prefix, nopkg, application).del path
   end
 end

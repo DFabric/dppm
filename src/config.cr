@@ -1,4 +1,5 @@
 require "./config/*"
+require "./utils"
 
 module Config
   def self.new(file : String)
