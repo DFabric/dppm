@@ -1,16 +1,21 @@
-struct Package::CLI
+struct Manager::Application::CLI
   @vars = Hash(String, String).new
-  @no_confirm = false
 
   def initialize
   end
 
-  {% for task in %w(add build delete) %}
-  def {{task.id}}(@no_confirm, config, mirror, pkgsrc, prefix, package, custom_vars
-                 {% if task == "add" %}, contained, noservice, socket
-                 {% elsif task == "delete" %}, keep_owner{% end %})
-    Log.info "initializing", {{task}}
-    @vars["package"] = package
+  def delete(no_confirm, config, mirror, pkgsrc, prefix, application, custom_vars, keep_user_group)
+    Log.info "initializing", "delete"
+
+    task = Delete.new application, prefix, keep_user_group
+
+    Log.info "delete", task.simulate
+    task.run if no_confirm || ::CLI.confirm
+  end
+
+  def add(no_confirm, config, mirror, pkgsrc, prefix, application, custom_vars, contained, noservice, socket)
+    Log.info "initializing", "add"
+    @vars["package"] = application
     @vars["prefix"] = prefix
 
     # configuration
@@ -26,21 +31,15 @@ struct Package::CLI
     vars_parser custom_vars
 
     # Update cache
-    Cache.update @vars["pkgsrc"], ::Package::Path.new(prefix, create: true).src
+    Cache.update @vars["pkgsrc"], Path.new(prefix, create: true).src
 
     # Create task
     @vars.merge! ::System::Host.vars
-    task = {{task.camelcase.id}}.new(@vars,
-    {% if task == "add" %}
-       shared: !contained, add_service: !noservice, socket: socket
-    {% elsif task == "delete" %}
-      keep_owner: keep_owner
-    {% end %})
+    task = Add.new @vars, shared: !contained, add_service: !noservice, socket: socket
 
-    Log.info {{task}}, task.simulate
-    task.run if @no_confirm || ::Package.confirm
+    Log.info "add", task.simulate
+    task.run if no_confirm || ::CLI.confirm
   end
-  {% end %}
 
   def vars_parser(variables : Array(String))
     variables.each do |arg|

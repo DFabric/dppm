@@ -1,8 +1,8 @@
 require "yaml"
 require "semantic_compare"
 
-struct Package::Deps
-  @path : Package::Path
+struct Manager::Package::Deps
+  @path : Path
 
   def initialize(@path)
   end

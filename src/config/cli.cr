@@ -2,7 +2,7 @@ module Config::CLI
   extend self
 
   def get(prefix, nopkg : Bool, application, path)
-    file = ::Package::Path.new(prefix).app + '/' + application
+    file = Path.new(prefix).app + '/' + application
     if nopkg
       config = Config.new path
       return config.data if path == "."
@@ -18,9 +18,9 @@ module Config::CLI
       Config.new(file).get path
     end
   end
-  
+
   private def config(prefix, nopkg, application)
-    file = ::Package::Path.new(prefix).app + '/' + application
+    file = Path.new(prefix).app + '/' + application
     nopkg ? Config.new(file) : Pkg.new file
   end
 

@@ -1,14 +1,14 @@
 require "clicr"
 require "exec"
+require "./manager"
 require "./config"
-require "./package"
 require "./logger"
 require "./service"
 require "./system"
 
 # Global constant variables
 CONFIG_FILE = "./config.ini"
-PREFIX      = ::System::Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/dppm"
+PREFIX      = (::System::Owner.root? ? "/opt" : ENV["HOME"]) + "/dppm"
 
 module CLI
   extend self
@@ -43,12 +43,12 @@ module CLI
             set: {
               info:      "Set a value",
               arguments: %w(application path value),
-              action:    "::Config::CLI.set() && puts %(done)",
+              action:    "Config::CLI.set() && puts %(done)",
             },
             del: {
               info:      "Delete a path",
               arguments: %w(application path),
-              action:    "::Config::CLI.del() && puts %(done)",
+              action:    "Config::CLI.del() && puts %(done)",
             },
           },
         },
@@ -64,81 +64,98 @@ module CLI
           commands: {
             all: {
               alias:  'a',
-              info:   "\tList everything",
-              action: "::Package::List.new().all",
+              info:   "\t List everything",
+              action: "::Manager::List.new().all",
             },
             applications: {
               alias:  "app",
               info:   "Installed applications",
-              action: "::Package::List.new().app { |app| puts app }",
+              action: "Manager::List.new().app { |app| puts app }",
             },
             packages: {
               alias:  "pkg",
               info:   "Builded packages",
-              action: "::Package::List.new().pkg { |pkg| puts pkg }",
+              action: "Manager::List.new().pkg { |pkg| puts pkg }",
             },
             source: {
               alias:  "src",
-              info:   "\tPackages source",
-              action: "::Package::List.new().src { |src| puts src }",
-            },
-            services: {
-              alias:  's',
-              info:   "\tApplications' services ",
-              action: "::Package::List.new().services_cli",
+              info:   "\t Managers source",
+              action: "Manager::List.new().src { |src| puts src }",
             },
           },
         },
-        package: {
+        manager: {
+          alias:   'm',
+          info:    "Operations relative to package management",
           options: {
             no_confirm: {
               short: 'y',
               info:  "No confirmations",
             },
           },
-          alias:    'p',
-          info:     "Operations relative to package management",
           commands: {
-            add: {
-              alias:     'a',
-              info:      "Add a new package (and build its missing dependencies)",
-              arguments: %w(package custom_vars...),
-              action:    "::Package::CLI.new.add",
-              options:   {
-                contained: {
-                  short: 'c',
-                  info:  "No shared dependencies, copy instead of symlinks",
+            app: {
+              alias:    'a',
+              info:     "Manage applications",
+              commands: {
+                add: {
+                  alias:     'a',
+                  info:      "Add a new application package (and build its missing dependencies)",
+                  arguments: %w(application custom_vars...),
+                  action:    "Manager::Application::CLI.new.add",
+                  options:   {
+                    contained: {
+                      short: 'c',
+                      info:  "No shared dependencies, copy instead of symlinks",
+                    },
+                    noservice: {
+                      short: 'n',
+                      info:  "Don't add a system service",
+                    },
+                    socket: {
+                      short: 's',
+                      info:  "\t Use of an UNIX socket instead of a port",
+                    },
+                  },
                 },
-                noservice: {
-                  short: 'n',
-                  info:  "Don't add a system service",
-                },
-                socket: {
-                  short: 's',
-                  info:  "\t Use of an UNIX socket instead of a port",
+                delete: {
+                  alias:     'd',
+                  info:      "Delete an added application",
+                  arguments: %w(application custom_vars...),
+                  action:    "::Manager::Application::CLI.new.delete",
+                  options:   {
+                    keep_user_group: {
+                      short: 'k',
+                      info:  "Don't delete the user and group (for application)",
+                    },
+                  },
                 },
               },
             },
-            build: {
-              alias:     'b',
-              info:      "Build a package",
-              arguments: %w(package custom_vars...),
-              action:    "::Package::CLI.new.build",
-            },
             cache: {
               alias:  'c',
-              info:   "Update the packages source cache. `-y` to force",
-              action: "::Package::Cache.cli",
+              info:   "Update the packages source cache. `-y` to force update",
+              action: "Manager::Cache.cli",
             },
-            delete: {
-              alias:     'd',
-              info:      "Delete an added package",
-              arguments: %w(package custom_vars...),
-              action:    "::Package::CLI.new.delete",
-              options:   {
-                keep_owner: {
-                  short: 'o',
-                  info:  "Don't delete the user and group",
+            package: {
+              alias:    'p',
+              info:     "Manage built packages",
+              commands: {
+                build: {
+                  alias:     'b',
+                  info:      "Build a package",
+                  arguments: %w(package custom_vars...),
+                  action:    "Manager::Package::CLI.build",
+                },
+                # clean: {
+                # info:   "Clean built packages not used by any applications",
+                # action: "::Manager::Cli.clean",
+                # },
+                delete: {
+                  alias:     'd',
+                  info:      "Delete a built package",
+                  arguments: %w(package custom_vars...),
+                  action:    "Manager::Package::CLI.delete",
                 },
               },
             },
@@ -163,17 +180,17 @@ module CLI
             app: {
               info:      "Installed application",
               arguments: %w(package path),
-              action:    "puts ::Package::Info.app_cli",
+              action:    "puts Manager::Info.app_cli",
             },
             pkg: {
               info:      "Builded packages",
               arguments: %w(package path),
-              action:    "puts ::Package::Info.pkg_cli",
+              action:    "puts Manager::Info.pkg_cli",
             },
             src: {
               info:      "Source package",
               arguments: %w(package path),
-              action:    "puts ::Package::Info.src_cli",
+              action:    "puts Manager::Info.src_cli",
             },
           },
         },
@@ -184,12 +201,24 @@ module CLI
             status: {
               info:      "Service status",
               arguments: %w(services...),
-              action:    "::System::Host.service.cli_status",
+              action:    "System::Host.service.cli_status",
+              options:   {
+                system: {
+                  short: 's',
+                  info:  "include system services",
+                },
+                noboot: {
+                  info: "don't include booting status",
+                },
+                norun: {
+                  info: "don't include running status",
+                },
+              },
             },
             boot: {
               info:      "\t Auto-start the service at boot",
               arguments: %w(service state),
-              action:    "::System::Host.service.cli_boot",
+              action:    "System::Host.service.cli_boot",
             },
             start: {
               info:      "Start the service",
@@ -214,7 +243,7 @@ module CLI
             logs: {
               info:      "\t Service's logs",
               arguments: %w(service),
-              action:    "puts ::System::Host.service.logs_cli",
+              action:    "puts System::Host.service.cli_logs",
               options:   {
                 error: {
                   short: 'e',
@@ -243,6 +272,14 @@ module CLI
     Log.error ex.to_s
   end
 
+  def confirm
+    puts "\nContinue? [N/y]"
+    case gets
+    when "Y", "y" then true
+    else               puts "cancelled."
+    end
+  end
+
   def version(prefix)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
     ::System::Host.vars.each do |k, v|
@@ -251,7 +288,7 @@ module CLI
   end
 
   def exec(prefix, application)
-    app_path = ::Package::Path.new(prefix).app + '/' + application
+    app_path = Path.new(prefix).app + '/' + application
     pkg = YAML.parse File.read app_path + "/pkg.yml"
 
     exec_start = pkg["exec"]["start"].as_s.split(' ')

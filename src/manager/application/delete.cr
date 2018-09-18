@@ -1,19 +1,17 @@
-struct Package::Delete
+struct Manager::Application::Delete
   getter name : String,
     package : String,
     pkgdir : String,
-    path : Package::Path,
-    vars : Hash(String, String),
+    prefix : String,
     pkg : YAML::Any,
     service : Service::Systemd::System | Service::OpenRC::System
   @has_service = false
-  @keep_owner : Bool
+  @keep_user_group : Bool
   @user : String
   @group : String
 
-  def initialize(@vars, @keep_owner : Bool = false)
-    @path = Path.new vars["prefix"]
-    @name = vars["package"].gsub(':', '_')
+  def initialize(@name, @prefix, @keep_user_group : Bool = false)
+    @path = Path.new @prefix
     @pkgdir = @path.app + '/' + @name
 
     file = File.info @pkgdir
@@ -23,7 +21,7 @@ struct Package::Delete
     @service = ::System::Host.service.system.new @name
 
     # Checks
-    Package.pkg_exists? @pkgdir
+    Manager.pkg_exists? @pkgdir
     if @service.exists? && (File.real_path(@service.file) == @pkgdir + @service.init_path)
       "/etc/init/" + ::System::Host.service.name.downcase
       Log.info "a system service is found", @name
@@ -43,7 +41,7 @@ struct Package::Delete
     String.build do |str|
       str << "\nname: " << @name
       str << "\npackage: " << @package
-      str << "\nprefix: " << @path.prefix
+      str << "\nprefix: " << @prefix
       str << "\npkgdir: " << @pkgdir
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
@@ -55,7 +53,7 @@ struct Package::Delete
     Log.info "deleting", @pkgdir
     @service.delete @name if @has_service
 
-    if !@keep_owner && ::System::Owner.root?
+    if !@keep_user_group && ::System::Owner.root?
       ::System::Owner.del_user @user if @user.starts_with? '_' + @name
       ::System::Owner.del_group @group if @group.starts_with? '_' + @name
     end

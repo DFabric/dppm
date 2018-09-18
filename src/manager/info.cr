@@ -1,4 +1,4 @@
-struct Package::Info
+struct Manager::Info
   @path : String
   @package : String
 

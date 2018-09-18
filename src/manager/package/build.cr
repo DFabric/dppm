@@ -1,4 +1,4 @@
-struct Package::Build
+struct Manager::Package::Build
   getter package : String,
     name : String,
     pkgdir : String,
@@ -6,7 +6,7 @@ struct Package::Build
     version : String,
     exists = false,
     deps = Hash(String, String).new,
-    path : Package::Path,
+    path : Path,
     vars : Hash(String, String)
   @arch_alias : String
 
@@ -34,7 +34,7 @@ struct Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Package::Deps.new(@path).get(@pkg, @pkgdir).each { |k, v| @deps[k] = v[0] }
+    Deps.new(@path).get(@pkg, @pkgdir).each { |k, v| @deps[k] = v[0] }
   end
 
   private def getversion
@@ -82,10 +82,10 @@ struct Package::Build
     Log.error "package already present: " + @pkgdir if @exists
 
     # Copy the sources to the @package directory to build
-    FileUtils.cp_r "#{@path.src}/#{@package}", @pkgdir
+    FileUtils.cp_r @path.src + '/' + @package, @pkgdir
 
     # Build dependencies
-    Package::Deps.new(@path).build @vars.dup, @deps
+    Deps.new(@path).build @vars.dup, @deps
 
     if (tasks = @pkg["tasks"]?) && (build_task = tasks["build"]?)
       Log.info "building", @package

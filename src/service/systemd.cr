@@ -1,6 +1,7 @@
 module Service::Systemd
   extend self
-  include Service
+  include Cli
+  include Init
 
   def system
     System

@@ -1,11 +1,11 @@
-struct Package::Add
+struct Manager::Application::Add
   getter package : String = "",
     name : String,
     pkgdir : String,
     pkg : YAML::Any,
     version : String,
     vars : Hash(String, String),
-    path : Package::Path
+    path : Path
   @add_user = false
   @add_group = false
   @add_service : Bool

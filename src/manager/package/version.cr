@@ -1,4 +1,4 @@
-module Package::Version
+module Manager::Package::Version
   extend self
 
   def get(kernel, arch, pkg)
