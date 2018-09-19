@@ -53,4 +53,8 @@ struct Manager::Application::CLI
       end
     end
   end
+
+  def self.logs(prefix, config, mirror, pkgsrc, no_confirm, error, application)
+    Application.logs application, prefix, error
+  end
 end

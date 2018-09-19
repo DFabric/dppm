@@ -18,8 +18,8 @@ class Service::OpenRC::Config
   def base
     {"pidfile"    => "/run/${RC_SVCNAME}.pid",
      "supervisor" => "supervise-daemon",
-     "stdout"     => "log/output.log",
-     "stderr"     => "log/error.log",
+     "stdout"     => LOG_OUTPUT_PATH,
+     "stderr"     => LOG_ERROR_PATH,
      "depend"     => {
        "after" => ["net"],
      },

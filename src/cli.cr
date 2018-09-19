@@ -6,10 +6,6 @@ require "./logger"
 require "./service"
 require "./system"
 
-# Global constant variables
-CONFIG_FILE = "./config.ini"
-PREFIX      = (::System::Owner.root? ? "/opt" : ENV["HOME"]) + "/dppm"
-
 module CLI
   extend self
   include Clicr
@@ -96,7 +92,7 @@ module CLI
                   alias:     'd',
                   info:      "Delete an added application",
                   arguments: %w(application custom_vars...),
-                  action:    "::Manager::Application::CLI.new.delete",
+                  action:    "Manager::Application::CLI.new.delete",
                   options:   {
                     keep_user_group: {
                       short: 'k',
@@ -108,6 +104,17 @@ module CLI
                   alias:  'l',
                   info:   "List applications",
                   action: "Manager::List.cli_app",
+                },
+                logs: {
+                  info:      "\t Logs of the application's service",
+                  arguments: %w(application),
+                  action:    "puts Manager::Application::CLI.logs",
+                  options:   {
+                    error: {
+                      short: 'e',
+                      info:  "Print error logs instead of output logs",
+                    },
+                  },
                 },
               },
             },
@@ -198,8 +205,28 @@ module CLI
           alias:    's',
           info:     "Manage applications' services",
           commands: {
+            boot: {
+              info:      "\t Auto-start the service at boot",
+              arguments: %w(service state),
+              action:    "System::Host.service.cli_boot",
+            },
+            reload: {
+              info:      "Reload the service",
+              arguments: %w(service),
+              action:    "puts service().reload",
+            },
+            restart: {
+              info:      "Restart the service",
+              arguments: %w(service),
+              action:    "puts service().restart",
+            },
+            start: {
+              info:      "Start the service",
+              arguments: %w(service),
+              action:    "puts service().start",
+            },
             status: {
-              info:      "Service status",
+              info:      "Status for specified services or all services if none set",
               arguments: %w(services...),
               action:    "System::Host.service.cli_status",
               options:   {
@@ -215,41 +242,10 @@ module CLI
                 },
               },
             },
-            boot: {
-              info:      "\t Auto-start the service at boot",
-              arguments: %w(service state),
-              action:    "System::Host.service.cli_boot",
-            },
-            start: {
-              info:      "Start the service",
-              arguments: %w(service),
-              action:    "puts service().start",
-            },
             stop: {
               info:      "\t Stop the service",
               arguments: %w(service),
               action:    "puts service().stop",
-            },
-            restart: {
-              info:      "Restart the service",
-              arguments: %w(service),
-              action:    "puts service().restart",
-            },
-            reload: {
-              info:      "Reload the service",
-              arguments: %w(service),
-              action:    "puts service().reload",
-            },
-            logs: {
-              info:      "\t Service's logs",
-              arguments: %w(service),
-              action:    "puts System::Host.service.cli_logs",
-              options:   {
-                error: {
-                  short: 'e',
-                  info:  "Print error logs instead of output logs",
-                },
-              },
             },
           },
         },

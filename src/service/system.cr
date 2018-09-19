@@ -15,10 +15,6 @@ abstract struct Service::System
     File.real_path file
   end
 
-  def log_dir
-    File.dirname(File.dirname(File.dirname(real_file))) + "/log/"
-  end
-
   def boot(value : Bool)
     # nothing to do
     return value if value == boot?

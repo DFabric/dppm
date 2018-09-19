@@ -16,8 +16,8 @@ module Service::Systemd
 
     # systemd 236 and more supports file logging
     if version >= 236
-      sysinit_hash.section["Service"]["StandardOutput"] = "file:#{vars["pkgdir"]}/log/output.log"
-      sysinit_hash.section["Service"]["StandardError"] = "file:#{vars["pkgdir"]}/log/error.log"
+      sysinit_hash.section["Service"]["StandardOutput"] = "file:#{vars["pkgdir"]}/" + LOG_OUTPUT_PATH
+      sysinit_hash.section["Service"]["StandardError"] = "file:#{vars["pkgdir"]}/" + LOG_ERROR_PATH
     else
       Log.warn "file logging not supported", "systemd version '#{version}' too old (>=336 needed)"
     end

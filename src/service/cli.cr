@@ -47,9 +47,4 @@ module Service::Cli
       yield system.new app
     end
   end
-
-  def cli_logs(prefix, service, error)
-    log_dir = system.new(service).log_dir
-    File.read log_dir + (error ? "error.log" : "output.log")
-  end
 end
