@@ -5,14 +5,21 @@ struct Manager::List
     @path = Path.new prefix
   end
 
-  def all
+  def self.cli_all(prefix, config, mirror, pkgsrc, no_confirm)
+    list = new prefix
     puts "applications:"
-    app { |app| puts app }
+    list.app { |app| puts app }
     puts "\npackages:"
-    pkg { |pkg| puts pkg }
-    puts "\nsource:"
-    src { |src| puts src }
+    list.pkg { |pkg| puts pkg }
+    puts "\nsources:"
+    list.src { |src| puts src }
   end
+
+  {% for i in %w(app pkg src) %}
+  def self.cli_{{i.id}}(prefix, config, mirror, pkgsrc, no_confirm)
+    new(prefix).{{i.id}} { |i| puts i }
+  end
+  {% end %}
 
   def app
     Dir.each_child(@path.app) { |app| yield app }

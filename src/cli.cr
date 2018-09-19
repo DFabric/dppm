@@ -58,32 +58,6 @@ module CLI
           arguments: %w(application),
           action:    "exec",
         },
-        list: {
-          alias:    'l',
-          info:     "List applications, packages, sources or services",
-          commands: {
-            all: {
-              alias:  'a',
-              info:   "\t List everything",
-              action: "::Manager::List.new().all",
-            },
-            applications: {
-              alias:  "app",
-              info:   "Installed applications",
-              action: "Manager::List.new().app { |app| puts app }",
-            },
-            packages: {
-              alias:  "pkg",
-              info:   "Builded packages",
-              action: "Manager::List.new().pkg { |pkg| puts pkg }",
-            },
-            source: {
-              alias:  "src",
-              info:   "\t Managers source",
-              action: "Manager::List.new().src { |src| puts src }",
-            },
-          },
-        },
         manager: {
           alias:   'm',
           info:    "Operations relative to package management",
@@ -130,12 +104,12 @@ module CLI
                     },
                   },
                 },
+                list: {
+                  alias:  'l',
+                  info:   "List applications",
+                  action: "Manager::List.cli_app",
+                },
               },
-            },
-            cache: {
-              alias:  'c',
-              info:   "Update the packages source cache. `-y` to force update",
-              action: "Manager::Cache.cli",
             },
             package: {
               alias:    'p',
@@ -157,7 +131,33 @@ module CLI
                   arguments: %w(package custom_vars...),
                   action:    "Manager::Package::CLI.delete",
                 },
+                list: {
+                  alias:  'l',
+                  info:   "List packages",
+                  action: "Manager::List.cli_pkg",
+                },
               },
+            },
+            source: {
+              alias:    's',
+              info:     "Manage packages source mirrors",
+              commands: {
+                cache: {
+                  alias:  'c',
+                  info:   "Update the source cache. `-y` to force update",
+                  action: "Manager::Cache.cli",
+                },
+                list: {
+                  alias:  'l',
+                  info:   "List packages",
+                  action: "Manager::List.cli_pkg",
+                },
+              },
+            },
+            list: {
+              alias:  'l',
+              info:   "List all applications, packages and sources",
+              action: "::Manager::List.cli_all",
             },
           },
           variables: {
