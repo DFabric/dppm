@@ -72,7 +72,7 @@ module System::Owner
   end
 
   def available_id
-    id = 1000
+    id = 2000
     uids = all_uids
     gids = all_gids
     (id..65535).each do |id|
@@ -81,8 +81,8 @@ module System::Owner
     raise "the limit of 65535 for id numbers is reached, no ids available"
   end
 
-  def add_user(id, name, description, shell = @@nologin)
-    File.open "/etc/passwd", "a", &.puts "#{name}:x:#{id}:#{id}:#{description}:/:#{@@nologin}"
+  def add_user(id, name, description, home_directory = "/", shell = @@nologin)
+    File.open "/etc/passwd", "a", &.puts "#{name}:x:#{id}:#{id}:#{description}:#{home_directory}:#{@@nologin}"
   end
 
   def add_group(id, name)

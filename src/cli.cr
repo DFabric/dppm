@@ -6,6 +6,9 @@ require "./logger"
 require "./service"
 require "./system"
 
+CONFIG_FILE = "./config.ini"
+PREFIX      = (::System::Owner.root? ? "/opt" : ENV["HOME"]) + "/dppm"
+
 module CLI
   extend self
   include Clicr
@@ -128,10 +131,11 @@ module CLI
                   arguments: %w(package custom_vars...),
                   action:    "Manager::Package::CLI.build",
                 },
-                # clean: {
-                # info:   "Clean built packages not used by any applications",
-                # action: "::Manager::Cli.clean",
-                # },
+                clean: {
+                  alias:  'c',
+                  info:   "Clean unused built packages by the applications",
+                  action: "::Manager::Package::CLI.clean",
+                },
                 delete: {
                   alias:     'd',
                   info:      "Delete a built package",

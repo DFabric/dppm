@@ -1,3 +1,6 @@
+require "./system"
+require "./openrc/*"
+
 module Service::OpenRC
   extend self
   include Cli

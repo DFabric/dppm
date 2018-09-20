@@ -189,7 +189,7 @@ struct Manager::Application::Add
 
     if ::System::Owner.root?
       # Set the user and group owner
-      ::System::Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"]) if @add_user
+      ::System::Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"], @pkgdir + "/srv") if @add_user
       ::System::Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
       Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
     end

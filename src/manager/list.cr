@@ -1,5 +1,5 @@
 struct Manager::List
-  @path : Path
+  getter path : Path
 
   def initialize(prefix)
     @path = Path.new prefix

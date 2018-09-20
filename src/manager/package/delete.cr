@@ -3,27 +3,21 @@ struct Manager::Package::Delete
     package : String,
     pkgdir : String,
     prefix : String,
-    version : String,
-    pkg : YAML::Any
+    version : String
 
   def initialize(@package, @prefix)
-    @path = Path.new @prefix
-    @name, @version = @package.split '_'
-    @pkgdir = @path.pkg + '/' + @package
+    @pkgdir = Path.new(@prefix).pkg + '/' + package
 
     # Checks
     Manager.pkg_exists? @pkgdir
     Log.info "getting package name", @pkgdir + "/pkg.yml"
-    @pkg = YAML.parse(File.read(@pkgdir + "/pkg.yml"))
-    @package = @pkg["package"].as_s
+    @name, @version = package.split '_'
   end
 
   def simulate
     String.build do |str|
-      str << "\npackage: " << @package
       str << "\nname: " << @name
       str << "\nversion: " << @version
-      str << "\nprefix: " << @prefix
       str << "\npkgdir: " << @pkgdir
     end
   end

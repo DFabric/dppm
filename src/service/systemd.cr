@@ -1,3 +1,6 @@
+require "./system"
+require "./systemd/*"
+
 module Service::Systemd
   extend self
   include Cli

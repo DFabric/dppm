@@ -41,7 +41,6 @@ struct Manager::Application::Delete
     String.build do |str|
       str << "\nname: " << @name
       str << "\npackage: " << @package
-      str << "\nprefix: " << @prefix
       str << "\npkgdir: " << @pkgdir
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
