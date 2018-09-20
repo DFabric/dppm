@@ -1,4 +1,4 @@
-abstract struct Service::System
+module Service::System
   def boot?
     File.exists? boot
   end

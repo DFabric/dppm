@@ -1,4 +1,5 @@
-struct Service::Systemd::System < Service::System
+struct Service::Systemd::System
+  include Service::System
   getter service : String
   getter file : String
   getter boot : String

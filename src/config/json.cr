@@ -1,6 +1,7 @@
 require "dynany/json"
 
-class Config::JSON < Config::Format
+struct Config::JSON
+  include Format
   getter data : ::JSON::Any
   getter file : String
 

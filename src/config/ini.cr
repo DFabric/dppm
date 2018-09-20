@@ -1,6 +1,7 @@
 require "ini"
 
-class Config::INI < Config::Format
+struct Config::INI
+  include Format
   getter data : Hash(String, Hash(String, String))
   getter file : String
   getter space : Bool

@@ -1,6 +1,7 @@
 require "dynany/yaml"
 
-class Config::YAML < Config::Format
+struct Config::YAML
+  include Format
   getter data : ::YAML::Any
   getter file : String
 

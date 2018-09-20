@@ -1,4 +1,5 @@
-struct Service::OpenRC::System < Service::System
+struct Service::OpenRC::System
+  include Service::System
   getter service : String
   getter file : String
   getter boot : String

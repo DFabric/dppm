@@ -1,4 +1,4 @@
-abstract class Config::Format
+module Config::Format
   def get(path : String)
     get Utils.to_array(path)
   end
