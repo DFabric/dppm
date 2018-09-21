@@ -38,12 +38,16 @@ module Manager::Package::CLI
     end
 
     # Update cache
-    Cache.update vars["pkgsrc"], Path.new(prefix, create: true).src
+    Source::Cache.update vars["pkgsrc"], Path.new(prefix, create: true).src
 
     # Create task
     vars.merge! ::System::Host.vars
     task = Build.new vars
     Log.info "build", task.simulate
     task.run if no_confirm || ::CLI.confirm
+  end
+
+  def self.query(prefix, config, mirror, pkgsrc, no_confirm, package, path)
+    Query.new(Path.new(prefix).pkg, package).pkg path
   end
 end

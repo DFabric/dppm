@@ -31,7 +31,7 @@ struct Manager::Application::CLI
     vars_parser custom_vars
 
     # Update cache
-    Cache.update @vars["pkgsrc"], Path.new(prefix, create: true).src
+    Source::Cache.update @vars["pkgsrc"], Path.new(prefix, create: true).src
 
     # Create task
     @vars.merge! ::System::Host.vars
@@ -56,5 +56,9 @@ struct Manager::Application::CLI
 
   def self.logs(prefix, config, mirror, pkgsrc, no_confirm, error, application)
     Application.logs application, prefix, error
+  end
+
+  def self.query(prefix, config, mirror, pkgsrc, no_confirm, application, path)
+    Query.new(Path.new(prefix).app, application).pkg path
   end
 end

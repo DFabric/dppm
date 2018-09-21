@@ -119,6 +119,12 @@ module CLI
                     },
                   },
                 },
+                query: {
+                  alias:     'q',
+                  info:      "Query informations from the application's pkg.yml. `.` for the whole document, `version` for the package's version",
+                  arguments: %w(application path),
+                  action:    "puts Manager::Application::CLI.query",
+                },
               },
             },
             package: {
@@ -147,6 +153,12 @@ module CLI
                   info:   "List packages",
                   action: "Manager::List.cli_pkg",
                 },
+                query: {
+                  alias:     'q',
+                  info:      "Query informations from the package's pkg.yml. `.` for the whole document, `version` for the package's version",
+                  arguments: %w(package path),
+                  action:    "puts Manager::Source::CLI.query",
+                },
               },
             },
             source: {
@@ -156,12 +168,18 @@ module CLI
                 cache: {
                   alias:  'c',
                   info:   "Update the source cache. `-y` to force update",
-                  action: "Manager::Cache.cli",
+                  action: "Manager::Source::Cache.cli",
                 },
                 list: {
                   alias:  'l',
-                  info:   "List packages",
+                  info:   "List source packages",
                   action: "Manager::List.cli_pkg",
+                },
+                query: {
+                  alias:     'q',
+                  info:      "Query informations from the packages's pkg.yml. `.` for the whole document, `version` for the package's version",
+                  arguments: %w(package path),
+                  action:    "puts Manager::Source::CLI.query",
                 },
               },
             },
@@ -181,27 +199,6 @@ module CLI
             },
             pkgsrc: {
               info: "Source of the packages' pkg.yml and configurations (default in `config`)",
-            },
-          },
-        },
-        query: {
-          alias:    'q',
-          info:     "Query packages's informations from its pkg.yml. `.` for the whole document, `version` for the package's version",
-          commands: {
-            app: {
-              info:      "Installed application",
-              arguments: %w(package path),
-              action:    "puts Manager::Info.app_cli",
-            },
-            pkg: {
-              info:      "Builded packages",
-              arguments: %w(package path),
-              action:    "puts Manager::Info.pkg_cli",
-            },
-            src: {
-              info:      "Source package",
-              arguments: %w(package path),
-              action:    "puts Manager::Info.src_cli",
             },
           },
         },
