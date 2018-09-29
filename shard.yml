@@ -13,6 +13,8 @@ dependencies:
     github: j8r/dynany
   exec:
     github: j8r/exec.cr
+  tail:
+    github: j8r/tail
   halite:
     github: icyleaf/halite
   semantic_compare:

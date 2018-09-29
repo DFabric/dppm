@@ -111,11 +111,20 @@ module CLI
                 logs: {
                   info:      "\t Logs of the application's service",
                   arguments: %w(application),
-                  action:    "puts Manager::Application::CLI.logs",
+                  action:    "Manager::Application::CLI.logs",
                   options:   {
                     error: {
                       short: 'e',
-                      info:  "Print error logs instead of output logs",
+                      info:  "\t Print error logs instead of output logs",
+                    },
+                    follow: {
+                      short: 'f',
+                      info:  "\t Follow new lines, starting to the last 10 lines by default",
+                    },
+                  },
+                  variables: {
+                    lines: {
+                      info: "\t Number of last lines to print. All lines when no set",
                     },
                   },
                 },

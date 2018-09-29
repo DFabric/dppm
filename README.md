@@ -46,9 +46,9 @@ To show the help:
 
 `dppm --help`
 
-To list [available packages](https://github.com/DFabric/package-sources) (applications and libraries):
+To list [available packages](https://github.com/DFabric/package-sources) (applications, built and available packages):
 
-`dppm list`
+`dppm m list`
 
 A typical installation can be:
 
@@ -66,6 +66,10 @@ If not specified, an user, group and application name will be created.
 Note that `add` will `build` the missing required packages.
 
 Root execution is needed to add a system service (systemd or OpenRC)
+
+To follow last application logs:
+
+`dppm m a logs -f [application]`
 
 ## How to build
 
