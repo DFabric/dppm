@@ -6,7 +6,7 @@ struct Manager::Package::Delete
     version : String
 
   def initialize(@package, @prefix)
-    @pkgdir = Path.new(@prefix).pkg + '/' + package
+    @pkgdir = Path.new(@prefix).package package
 
     # Checks
     Manager.pkg_exists? @pkgdir

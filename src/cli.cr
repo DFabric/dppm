@@ -296,7 +296,7 @@ module CLI
   end
 
   def exec(prefix, application)
-    app_path = Path.new(prefix).app + '/' + application
+    app_path = Path.new(prefix).application application
     pkg = YAML.parse File.read app_path + "/pkg.yml"
 
     exec_start = pkg["exec"]["start"].as_s.split(' ')

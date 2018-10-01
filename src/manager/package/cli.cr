@@ -48,6 +48,6 @@ module Manager::Package::CLI
   end
 
   def self.query(prefix, config, mirror, pkgsrc, no_confirm, package, path)
-    Query.new(Path.new(prefix).pkg, package).pkg path
+    Query.new(Path.new(prefix).package package).pkg path
   end
 end

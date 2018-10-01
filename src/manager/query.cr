@@ -1,13 +1,11 @@
 struct Manager::Query
   @pkgdir : String
-  @package : String
 
-  def initialize(path, @package)
-    @pkgdir = path + '/' + @package + '/'
+  def initialize(@pkgdir)
   end
 
   def pkg(path)
-    file = @pkgdir + "pkg.yml"
+    file = @pkgdir + "/pkg.yml"
     data = File.read file
     case path
     when "."

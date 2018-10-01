@@ -54,19 +54,7 @@ struct Manager::Application::CLI
     end
   end
 
-  def self.logs(prefix, config, mirror, pkgsrc, lines, no_confirm, error, follow, application)
-    log_file = Application.log_file application, prefix, error
-    tail = Tail::File.new log_file
-    if follow
-      tail.follow(lines: (lines ? lines.to_i : 10)) { |log| print log }
-    elsif lines
-      print tail.last_lines(lines: lines.to_i).join '\n'
-    else
-      print File.read log_file
-    end
-  end
-
   def self.query(prefix, config, mirror, pkgsrc, no_confirm, application, path)
-    Query.new(Path.new(prefix).app, application).pkg path
+    Query.new(Path.new(prefix).application application).pkg path
   end
 end

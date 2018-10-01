@@ -12,7 +12,7 @@ struct Manager::Application::Delete
 
   def initialize(@name, @prefix, @keep_user_group : Bool = false)
     @path = Path.new @prefix
-    @pkgdir = @path.app + '/' + @name
+    @pkgdir = @path.application @name
 
     file = File.info @pkgdir
     @user = ::System::Owner.to_user file.owner

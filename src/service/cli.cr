@@ -30,9 +30,7 @@ module Service::Cli
           STDOUT << b.colorize.red << ' '
         end
       end
-      STDOUT << service.service
-      STDOUT << '\n'
-      STDOUT.flush
+      STDOUT.puts service.service
     end
   end
 
