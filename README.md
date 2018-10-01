@@ -69,7 +69,7 @@ Root execution is needed to add a system service (systemd or OpenRC)
 
 To follow last application logs:
 
-`dppm m a logs -f [application]`
+`dppm logs -f [application]`
 
 ## How to build
 

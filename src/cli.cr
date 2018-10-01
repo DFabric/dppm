@@ -2,6 +2,7 @@ require "clicr"
 require "exec"
 require "./manager"
 require "./config"
+require "./logs"
 require "./logger"
 require "./service"
 require "./system"
@@ -57,6 +58,27 @@ module CLI
           arguments: %w(application),
           action:    "exec",
         },
+        logs: {
+          alias:     'l',
+          info:      "Logs of the application's service",
+          arguments: %w(application),
+          action:    "Logs.get() { |log| print log }",
+          options:   {
+            error: {
+              short: 'e',
+              info:  "Print error logs instead of output logs",
+            },
+            follow: {
+              short: 'f',
+              info:  "Follow new lines, starting to the last 10 lines by default",
+            },
+          },
+          variables: {
+            lines: {
+              info: "\t Number of last lines to print. All lines when no set",
+            },
+          },
+        },
         manager: {
           alias:   'm',
           info:    "Operations relative to package management",
@@ -107,26 +129,6 @@ module CLI
                   alias:  'l',
                   info:   "List applications",
                   action: "Manager::List.cli_app",
-                },
-                logs: {
-                  info:      "\t Logs of the application's service",
-                  arguments: %w(application),
-                  action:    "Manager::Application::CLI.logs",
-                  options:   {
-                    error: {
-                      short: 'e',
-                      info:  "\t Print error logs instead of output logs",
-                    },
-                    follow: {
-                      short: 'f',
-                      info:  "\t Follow new lines, starting to the last 10 lines by default",
-                    },
-                  },
-                  variables: {
-                    lines: {
-                      info: "\t Number of last lines to print. All lines when no set",
-                    },
-                  },
                 },
                 query: {
                   alias:     'q',

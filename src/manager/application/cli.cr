@@ -1,5 +1,3 @@
-require "tail"
-
 struct Manager::Application::CLI
   @vars = Hash(String, String).new
 
