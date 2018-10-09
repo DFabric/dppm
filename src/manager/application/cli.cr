@@ -4,7 +4,7 @@ struct Manager::Application::CLI
   def initialize
   end
 
-  def delete(no_confirm, config, mirror, pkgsrc, prefix, application, custom_vars, keep_user_group)
+  def delete(no_confirm, config, mirror, source, prefix, application, custom_vars, keep_user_group)
     Log.info "initializing", "delete"
 
     task = Delete.new application, prefix, keep_user_group
@@ -13,7 +13,7 @@ struct Manager::Application::CLI
     task.run if no_confirm || ::CLI.confirm
   end
 
-  def add(no_confirm, config, mirror, pkgsrc, prefix, application, custom_vars, contained, noservice, socket)
+  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket)
     Log.info "initializing", "add"
     @vars["package"] = application
     @vars["prefix"] = prefix
@@ -22,7 +22,7 @@ struct Manager::Application::CLI
     begin
       configuration = INI.parse(File.read config || CONFIG_FILE)
 
-      @vars["pkgsrc"] = pkgsrc || configuration["main"]["pkgsrc"]
+      @vars["source"] = source || configuration["main"]["source"]
       @vars["mirror"] = mirror || configuration["main"]["mirror"]
     rescue ex
       raise "configuraration error: #{ex}"
@@ -31,7 +31,7 @@ struct Manager::Application::CLI
     vars_parser custom_vars
 
     # Update cache
-    Source::Cache.update @vars["pkgsrc"], Path.new(prefix, create: true).src
+    Source::Cache.update @vars["source"], Path.new(prefix, create: true).src
 
     # Create task
     @vars.merge! ::System::Host.vars
@@ -54,7 +54,7 @@ struct Manager::Application::CLI
     end
   end
 
-  def self.query(prefix, config, mirror, pkgsrc, no_confirm, application, path)
+  def self.query(prefix, config, mirror, source, no_confirm, application, path)
     Query.new(Path.new(prefix).application application).pkg path
   end
 end

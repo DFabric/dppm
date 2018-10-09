@@ -8,7 +8,7 @@ require "./service"
 require "./system"
 
 CONFIG_FILE = "./config.ini"
-PREFIX      = (::System::Owner.root? ? "/opt" : ENV["HOME"]) + "/dppm"
+PREFIX      = ::System::Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/.dppm"
 
 module CLI
   extend self
@@ -206,10 +206,10 @@ module CLI
               default: "#{CONFIG_FILE}",
             },
             mirror: {
-              info: "Mirror of precompiled applications (default in `config`)",
+              info: "Mirror of precompiled applications (default in #{CONFIG_FILE})",
             },
-            pkgsrc: {
-              info: "Source of the packages' pkg.yml and configurations (default in `config`)",
+            source: {
+              info: "Source of the packages' pkg.yml and configurations (default in #{CONFIG_FILE})",
             },
           },
         },

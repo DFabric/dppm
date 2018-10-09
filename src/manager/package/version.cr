@@ -17,12 +17,18 @@ module Manager::Package::Version
       raise "unsupported kernel: " + kernel
     end
 
-    if src && (src_array = src.as_a?)
-      src_array.map &.to_s
+    if src
+      if (src_array = src.as_a?)
+        src_array.map &.as_s
+      else
+        versions = Array(String).new
+        HTTPget.string(src.to_s).each_line do |line|
+          versions << $0 if line =~ /#{regex}/
+        end
+        versions
+      end
     else
-      HTTPget.string(src.to_s).split('\n').map do |line|
-        $0 if line =~ /#{regex}/
-      end.compact!
+      raise "no source url"
     end
   end
 end
