@@ -15,8 +15,8 @@ dependencies:
     github: j8r/exec.cr
   tail:
     github: j8r/tail
-  halite:
-    github: icyleaf/halite
+  cossack:
+    github: crystal-community/cossack
   semantic_compare:
     github: j8r/semantic_compare
 

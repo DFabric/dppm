@@ -1,15 +1,15 @@
-require "halite"
+require "cossack"
 
 # Method for redirections using the cossack http client
 module HTTPget
   extend self
 
   def string(url)
-    response = Halite.follow.get url
-    case response.status_code
+    response = Cossack::Client.new(&.use Cossack::RedirectionMiddleware).get url
+    case response.status
     when 200, 301, 302 then response.body
     else
-      raise "status code #{response.status_code}: " + response.body
+      raise "status code #{response.status}: " + response.body
     end
   rescue ex
     raise "failed to get #{url.colorize.underline}: #{ex}"

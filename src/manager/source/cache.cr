@@ -31,7 +31,7 @@ module Manager::Source::Cache
   end
 
   def cli(config, mirror, source, prefix, no_confirm)
-    src = Path.new(prefix).src
+    src = Path.new(prefix, create: true).src
     if source
       update source, src, no_confirm
     else
