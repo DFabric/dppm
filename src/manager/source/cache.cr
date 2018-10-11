@@ -1,3 +1,5 @@
+require "file_utils"
+
 module Manager::Source::Cache
   extend self
 
