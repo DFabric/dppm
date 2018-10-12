@@ -82,14 +82,14 @@ describe Cmd::Run do
   end
 
   describe "variable" do
-    it "allocates a string" do
+    it "affect a string" do
       cmd.run([YAML.parse %(a = "b")])
       cmd.@vars["a"].should eq "b"
     end
 
-    it "allocates a command output" do
-      cmd.run([YAML.parse %(b = root_user?)])
-      cmd.@vars["b"].should eq "false"
+    it "affect a command output" do
+      cmd.run([YAML.parse %(b = readable? .)])
+      cmd.vars["b"].should eq "true"
     end
 
     it "uses interpolation" do

@@ -14,6 +14,8 @@ module Cmd
   end
 
   struct Run
+    getter vars : Hash(String, String)
+
     def initialize(@vars : Hash(String, String))
       # Create a PATH variable
       @vars = @vars.map { |k, v| [k.upcase, v] }.to_h

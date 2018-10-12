@@ -6,10 +6,11 @@ describe Manager do
   # ::System::Owner.to_uid("root").should eq 0
   # end
   describe "Source::Cache" do
-    temp_prefix_dir = "./spec/temp_dppm_prefix"
+    temp_prefix_dir = __DIR__ + "/temp_dppm_prefix"
     it "downloads with cli using the config.ini mirror" do
+      Dir.mkdir temp_prefix_dir
       begin
-        Manager::Source::Cache.cli "./config.ini", nil, nil, temp_prefix_dir, true
+        Manager::Source::Cache.cli "../config.ini", nil, nil, temp_prefix_dir, true
         Dir.new(temp_prefix_dir).children.should eq ["app", "pkg", "src"]
         Dir[Path.new(temp_prefix_dir).src + "/*/pkg.yml"].empty?.should be_false
       ensure
