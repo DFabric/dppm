@@ -8,15 +8,9 @@ describe Service do
   Dir.mkdir_p library
 
   vars = {
-    "package" => "test",
-    "pkgdir"  => path,
-    "user"    => "1000",
-    "group"   => "1000",
-  }
-  service_vars = {
     "directory" => path,
-    "user"      => "1000",
-    "group"     => "1000",
+    "user"      => "test",
+    "group"     => "test",
   }
 
   {% for sysinit in %w(OpenRC Systemd) %}
@@ -24,7 +18,7 @@ describe Service do
       service = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.create(YAML.parse(File.read "#{__DIR__}/samples/package/pkg.yml"), vars)
+        Service::{{sysinit.id}}.new("test").create(YAML.parse(File.read "#{__DIR__}/samples/package/pkg.yml"), path, "test", "test")
       end
 
       it "parses the service" do
@@ -32,7 +26,7 @@ describe Service do
       end
 
       it "checks values of sections" do
-        service_vars.each do |key, value|
+        vars.each do |key, value|
           value.should eq(service.get key)
         end
       end

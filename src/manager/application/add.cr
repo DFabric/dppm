@@ -8,13 +8,12 @@ struct Manager::Application::Add
     path : Path
   @add_user = false
   @add_group = false
-  @add_service : Bool
   @deps = Hash(String, String).new
   @socket : Bool
   @shared : Bool
-  @service : Service::Systemd::System | Service::OpenRC::System
+  @service : Service::Systemd | Service::OpenRC | Nil
 
-  def initialize(@vars, @shared = true, @add_service = true, @socket = false)
+  def initialize(@vars, @shared = true, add_service = true, @socket = false)
     # Build missing dependencies
     @build = Package::Build.new vars.dup
     @path = @build.path
@@ -25,18 +24,16 @@ struct Manager::Application::Add
     Log.info "getting name", @package
     getname
     @name = @vars["name"]
-    @service = ::System::Host.service.system.new @name
+    if add_service && (service = ::System::Host.service?.try &.new @name)
+      service.check_availability @pkg["type"]
+      @service = service
+    end
     @pkgdir = @vars["pkgdir"] = @path.app + '/' + @name
-
+    raise "application directory already exists: " + @pkgdir if File.exists? @pkgdir
     @deps = @build.deps
 
-    Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
-
-    # Checks
-    raise "application directory already exists: " + @pkgdir if File.exists? @pkgdir
-    @service.check_availability @pkg["type"] if @add_service
-
     # Check database type
+    Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
     if (db_type = @vars["database_type"]?) && (databases = @pkg["databases"]?)
       raise "unsupported database type: " + db_type if !databases[db_type]?
     end
@@ -196,17 +193,21 @@ struct Manager::Application::Add
         Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
       end
 
-      if @add_service && @service.writable?
-        # Create system services
-        ::System::Host.service.create @pkg, @vars
-        @service.link @pkgdir
-        Log.info ::System::Host.service.name + " system service added", @name
+      if (service = @service)
+        begin
+          # Create system services
+          service.create @pkg, @pkgdir, @vars["user"], @vars["group"]
+          service.enable @pkgdir
+          Log.info service.type + " system service added", @name
+        rescue ex
+          Log.warn "fail to add a system service", ex.to_s
+          service.delete
+        end
       end
 
       Log.info "add completed", @pkgdir
     rescue ex
       FileUtils.rm_rf @pkgdir
-      @service.delete if @add_service && @service.exists?
       ::System::Owner.del_user(@vars["user"]) if @add_user
       ::System::Owner.del_group(@vars["group"]) if @add_group
       raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"

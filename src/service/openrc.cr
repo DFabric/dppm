@@ -1,34 +1,59 @@
 require "./system"
-require "./openrc/*"
 
-module Service::OpenRC
-  extend self
-  include Cli
-  include Init
+struct Service::OpenRC
+  include System
+  getter init_path = "/etc/init/openrc"
 
-  def system
-    System
+  def initialize(@name : String)
+    @file = "/etc/init.d/" + @name
+    @boot = "/etc/runlevels/default/" + @name
   end
 
   def config
     Config
   end
 
-  def create(pkg, vars)
-    sysinit_hash = creation Config.new(vars["pkgdir"] + "/etc/init/openrc", file: true), pkg, vars
-
-    # Convert back hashes to service files
-    File.write vars["pkgdir"] + "/etc/init/openrc", sysinit_hash.build
+  private def finalize_create(pkgdir : String, sysinit_hash)
+    # Nothing to do
   end
 
-  def name
+  def self.each
+    Dir.new("/etc/init.d").each do |service|
+      yield service
+    end
+  end
+
+  def run?
+    Exec.new("/sbin/rc-service", [@name, "status"]).success?
+  end
+
+  def delete
+    stop
+    boot false if boot?
+    File.delete @file
+  end
+
+  def enable(pkgdir)
+    File.symlink pkgdir + @init_path, @file
+    File.chmod @file, 0o750
+  end
+
+  {% for action in %w(start stop restart reload) %}
+  def {{action.id}} : Bool
+    Exec.new("/sbin/rc-service", [@name, {{action}}]).success?
+  end
+  {% end %}
+
+  def type
     "OpenRC"
   end
 
-  def version : String
+  def self.version : String
     Exec.new("/sbin/openrc", ["-V"]).out =~ /([0-9]+\.[0-9]+\.[0-9]+)/
     $1
   rescue ex
     raise "can't retrieve the OpenRC version #{ex}"
   end
 end
+
+require "./openrc/*"

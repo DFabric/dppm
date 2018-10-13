@@ -220,7 +220,7 @@ module CLI
             boot: {
               info:      "\t Auto-start the service at boot",
               arguments: %w(service state),
-              action:    "System::Host.service.cli_boot",
+              action:    "Service::CLI.boot",
             },
             reload: {
               info:      "Reload the service",
@@ -240,7 +240,7 @@ module CLI
             status: {
               info:      "Status for specified services or all services if none set",
               arguments: %w(services...),
-              action:    "System::Host.service.cli_status",
+              action:    "Service::CLI.status",
               options:   {
                 system: {
                   short: 's',
@@ -300,11 +300,15 @@ module CLI
     pkg = YAML.parse File.read app_path + "/pkg.yml"
 
     exec_start = pkg["exec"]["start"].as_s.split(' ')
+
+    env_vars = Hash(String, String).new
+    env_vars["PATH"] = Path.env_var app_path
     if env = pkg["env"]?
-      env_vars = env.as_h.each_with_object({} of String => String) do |(key, value), memo|
-        memo[key.as_s] = value.as_s
+      env.as_h.each do |key, value|
+        env_vars[key.as_s] = value.as_s
       end
     end
+    p env_vars
 
     Process.run command: exec_start[0],
       args: (exec_start[1..-1] if exec_start[1]?),
@@ -321,6 +325,6 @@ module CLI
   end
 
   def service(prefix, service)
-    ::System::Host.service.system.new service
+    ::System::Host.service.new service
   end
 end

@@ -4,8 +4,7 @@ struct Manager::Application::Delete
     pkgdir : String,
     prefix : String,
     pkg : YAML::Any,
-    service : Service::Systemd::System | Service::OpenRC::System
-  @has_service = false
+    service : Service::Systemd | Service::OpenRC | Nil
   @keep_user_group : Bool
   @user : String
   @group : String
@@ -18,18 +17,19 @@ struct Manager::Application::Delete
     @user = ::System::Owner.to_user file.owner
     @group = ::System::Owner.to_group file.group
 
-    @service = ::System::Host.service.system.new @name
-
     # Checks
     Manager.pkg_exists? @pkgdir
-    if @service.exists? && (File.real_path(@service.file) == @pkgdir + @service.init_path)
-      "/etc/init/" + ::System::Host.service.name.downcase
-      Log.info "a system service is found", @name
-      @has_service = true
-    else
-      Log.warn "no system service found", @name
+    if service = ::System::Host.service?.try &.new @name
+      if service.exists? && (File.real_path(service.file) == @pkgdir + service.init_path)
+        "/etc/init/" + service.type.downcase
+        Log.info "a system service is found", @name
+        @service = service
+      else
+        Log.warn "no system service found", @name
+        @service = nil
+      end
     end
-    if !::System::Owner.root? && @has_service
+    if @service && !::System::Owner.root?
       raise "root permissions required to delete the service: " + @name
     end
     Log.info "getting package name", @pkgdir + "/pkg.yml"
@@ -44,13 +44,13 @@ struct Manager::Application::Delete
       str << "\npkgdir: " << @pkgdir
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
-      str << "\nservice: " << @service.file if @has_service
+      str << "\nservice: " << @service.try &.file if @service
     end
   end
 
   def run
     Log.info "deleting", @pkgdir
-    @service.delete @name if @has_service
+    @service.try &.delete
 
     if !@keep_user_group && ::System::Owner.root?
       ::System::Owner.del_user @user if @user.starts_with? '_' + @name

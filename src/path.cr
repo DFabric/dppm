@@ -4,7 +4,7 @@ struct Path
   getter src : String
   getter prefix : String
 
-  def initialize(@prefix, create = false)
+  def initialize(@prefix : String, create = false)
     @app = @prefix + "/app"
     @pkg = @prefix + "/pkg"
     @src = @prefix + "/src"
@@ -15,8 +15,8 @@ struct Path
     @app + '/' + name
   end
 
-  def application_log(application, error = false)
-    application + '/' + (error ? LOG_ERROR_PATH : LOG_OUTPUT_PATH)
+  def application_log(name : String, error = false)
+    application(name) + '/' + (error ? LOG_ERROR_PATH : LOG_OUTPUT_PATH)
   end
 
   def package(name : String) : String
@@ -25,5 +25,14 @@ struct Path
 
   def source(name : String) : String
     @src + '/' + name
+  end
+
+  # Creates a PATH environment variable
+  def self.env_var(pkgdir : String) : String
+    String.build do |str|
+      Dir.each_child(pkgdir + "/lib") do |library|
+        str << pkgdir + "/lib/#{library}/bin:"
+      end
+    end.rchop
   end
 end

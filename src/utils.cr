@@ -109,6 +109,6 @@ module Utils
   end
 
   def gen_name(package)
-    package + '_' + UUID.random.to_s.split('-').last
+    package + '-' + UUID.random.to_s.split('-').last
   end
 end
