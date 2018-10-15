@@ -3,41 +3,42 @@ require "file_utils"
 module Manager::Source::Cache
   extend self
 
-  def latest?(source, src)
+  def latest?(source : String, src_path : String)
     if Utils.is_http? source
-      # != File.info(src).modification_time.to_s("%Y%m%d").to_i
+      # != File.info(src_path).modification_time.to_s("%Y%m%d").to_i
       HTTPget.string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
-      File.info(src).modification_time.to_s("%Y-%m-%dT%H:%M:") == $0
+      File.info(src_path).modification_time.to_s("%Y-%m-%dT%H:%M:") == $0
     end
   end
 
   # Download a cache of package sources
-  def update(source, src, force = false)
+  def update(source : String, prefix : String, force : Bool = false)
+    path = Path.new prefix, create: true
     # Update cache if older than 2 days
-    if force || !(File.exists?(src) || File.symlink?(src)) || latest?(source, src)
-      FileUtils.rm_r src if File.exists? src
+    if force || !(File.exists?(path.src) || File.symlink?(path.src)) || latest?(source, path.src)
+      FileUtils.rm_rf path.src
       if Utils.is_http? source
-        HTTPget.file source, src + ".tar.gz"
-        tmp = File.dirname(src)
-        Exec.new("/bin/tar", ["zxf", src + ".tar.gz", "-C", tmp]).out
-        File.delete src + ".tar.gz"
-        File.rename Dir[tmp + "/*packages-source*"][0], src
-        Log.info "cache updated", src
+        file = path.prefix + '/' + File.basename source
+        HTTPget.file source, file
+        Exec.new("/bin/tar", ["zxf", file, "-C", path.prefix]).out
+        File.delete file
+        File.rename Dir[path.prefix + "/*packages-source*"][0], path.src
+        Log.info "cache updated", path.src
       else
-        File.symlink File.real_path(source), src
-        Log.info "symlink added from `#{File.real_path(source)}`", src
+        FileUtils.mkdir_p path.prefix
+        File.symlink File.real_path(source), path.src.rchop
+        Log.info "symlink added from `#{File.real_path(source)}`", path.src.rchop
       end
     else
-      Log.info "cache up-to-date", src
+      Log.info "cache up-to-date", path.src
     end
   end
 
   def cli(config, mirror, source, prefix, no_confirm)
-    src = Path.new(prefix, create: true).src
     if source
-      update source, src, no_confirm
+      update source, prefix, no_confirm
     else
-      update INI.parse(File.read config)["main"]["source"], src, no_confirm
+      update INI.parse(File.read config)["main"]["source"], prefix, no_confirm
     end
   end
 end

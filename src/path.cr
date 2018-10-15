@@ -5,26 +5,14 @@ struct Path
   getter prefix : String
 
   def initialize(@prefix : String, create = false)
-    @app = @prefix + "/app"
-    @pkg = @prefix + "/pkg"
-    @src = @prefix + "/src"
+    @app = @prefix + "/app/"
+    @pkg = @prefix + "/pkg/"
+    @src = @prefix + "/src/"
     FileUtils.mkdir_p({@app, @pkg}) if create
   end
 
-  def application(name : String) : String
-    @app + '/' + name
-  end
-
   def application_log(name : String, error = false)
-    application(name) + '/' + (error ? LOG_ERROR_PATH : LOG_OUTPUT_PATH)
-  end
-
-  def package(name : String) : String
-    @pkg + '/' + name
-  end
-
-  def source(name : String) : String
-    @src + '/' + name
+    app + name + '/' + (error ? Service::LOG_ERROR_PATH : Service::LOG_OUTPUT_PATH)
   end
 
   # Creates a PATH environment variable

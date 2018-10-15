@@ -10,7 +10,7 @@ struct Manager::Package::Clean
     list.pkg { |pkg| @packages << pkg }
     Log.info "excluding used packages by applications", list.path.app
     list.app do |app|
-      app_path = list.path.app + '/' + app
+      app_path = list.path.app + app
       @packages.delete File.basename(File.real_path(app_path + "/app").rstrip("app"))
       lib_path = app_path + "/lib/"
       Dir.each_child lib_path do |lib_package|
@@ -37,5 +37,6 @@ struct Manager::Package::Clean
       Log.info "package deleted", pkg
     end
     Log.info "packages cleaned", @pkgdir
+    self
   end
 end

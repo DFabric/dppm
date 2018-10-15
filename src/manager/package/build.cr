@@ -15,12 +15,12 @@ struct Manager::Package::Build
     @package = @vars["package"].split(':')[0]
     raise "package doesn't exists: " + @package if !File.exists? "#{@path.src}/#{@package}/pkg.yml"
 
-    Log.info "calculing informations", "#{@path.src}/#{@package}/pkg.yml"
-    @pkg = YAML.parse File.read "#{@path.src}/#{@package}/pkg.yml"
+    Log.info "calculing informations", @path.src + @package + "/pkg.yml"
+    @pkg = YAML.parse File.read(@path.src + @package + "/pkg.yml")
     @version = vars["version"] = getversion
     @vars["package"] = @package
     @name = @vars["name"] = @package + '_' + @version
-    @pkgdir = @vars["pkgdir"] = path.pkg + '/' + @name
+    @pkgdir = @vars["pkgdir"] = path.pkg + @name
 
     @arch_alias = @vars["arch_alias"] = if (aliases = @pkg["aliases"]?) && (version_alias = aliases[::System::Host.arch]?)
                                           version_alias.as_s
@@ -83,7 +83,7 @@ struct Manager::Package::Build
 
     begin
       # Copy the sources to the @package directory to build
-      FileUtils.cp_r @path.src + '/' + @package, @pkgdir
+      FileUtils.cp_r(@path.src + package, @pkgdir)
 
       # Build dependencies
       Deps.new(@path).build @vars.dup, @deps
@@ -119,6 +119,7 @@ struct Manager::Package::Build
       end
       FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
       Log.info "build completed", @pkgdir
+      self
     rescue ex
       FileUtils.rm_rf @pkgdir
       raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"

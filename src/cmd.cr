@@ -33,7 +33,7 @@ module Cmd
           if line.size > 4 && (line_var = line.split(" = ", limit: 2)) && (first_line_var = line_var[0]) && Utils.ascii_alphanumeric_underscore? first_line_var
             @vars[first_line_var] = execute(line_var[1])
             # Print string
-          elsif line.starts_with? "echo"
+          elsif line.starts_with? "puts"
             Log.info "echo", "#{execute(var_reader(line[5..-1]))}\n"
           else
             cmd = var_reader line
@@ -116,14 +116,17 @@ module Cmd
       end
     end
 
+    def ascii_alphanumeric_underscore?(string : String)
+      string.each_char { |char| char.ascii_letter? || char.ascii_number? || char == '_' || return }
+      true
+    end
+
     private def ifexpr(expr)
       expr.split(" || ") do |block|
-        if Utils.ascii_alphanumeric_underscore? block
-          if block.starts_with? '!'
-            return !@vars[block.lchop]?
-          else
-            return @vars[block.lchop]?
-          end
+        if block.starts_with?('!') && ascii_alphanumeric_underscore? block.lchop
+          return !@vars[block.lchop]?
+        elsif ascii_alphanumeric_underscore? block
+          return @vars[block]?
         else
           case block
           when "true"  then return true
@@ -228,7 +231,8 @@ module Cmd
       when "untar_gz"  then Exec.new("/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]); "gzip archive extracted"
       when "untar_lz"  then Exec.new("/bin/tar", ["axf", cmd[1], "-C", cmd[2]]); "lz archive extracted"
       when "untar_xz"  then Exec.new("/bin/tar", ["Jxf", cmd[1], "-C", cmd[2]]); "xz archive extracted"
-      when "exit"      then puts "exit called, exiting."; exit 1
+      when "exit"      then Log.info "exit called", "exiting."; exit 1
+      when "error"     then raise "error"
       when "true"      then "true"
       when "false"     then "false"
       else

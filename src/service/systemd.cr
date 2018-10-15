@@ -2,7 +2,7 @@ require "./system"
 
 struct Service::Systemd
   include System
-  getter init_path = "/etc/init/systemd"
+  getter type : String = "systemd"
 
   def initialize(@name : String)
     @file = if File.exists?(service = "/lib/systemd/system/#{@name}.service")
@@ -10,7 +10,8 @@ struct Service::Systemd
             else
               "/etc/systemd/system/#{@name}.service"
             end
-    @boot = "/etc/systemd/system/multi-user.target.wants/#{@name}.service"
+    @boot_file = "/etc/systemd/system/multi-user.target.wants/#{@name}.service"
+    @init_path = Service::ROOT_PATH + @type.downcase
   end
 
   def config
@@ -56,10 +57,6 @@ struct Service::Systemd
     Exec.new("/bin/systemctl", ["-q", "--no-ask-password", {{action}}, @name]).success?
   end
   {% end %}
-
-  def type
-    "systemd"
-  end
 
   def self.version : Int32
     Exec.new("/bin/systemctl", ["--version"]).out =~ / ([0-9]+)\n/

@@ -7,9 +7,6 @@ require "./logger"
 require "./service"
 require "./system"
 
-CONFIG_FILE = "./config.ini"
-PREFIX      = ::System::Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/.dppm"
-
 module CLI
   extend self
   include Clicr
@@ -21,7 +18,7 @@ module CLI
       variables: {
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
-          default: PREFIX,
+          default: Manager::PREFIX,
         },
       },
       commands: {
@@ -97,7 +94,7 @@ module CLI
                   alias:     'a',
                   info:      "Add a new application package (and build its missing dependencies)",
                   arguments: %w(application custom_vars...),
-                  action:    "Manager::Application::CLI.new.add",
+                  action:    "Manager::Application::CLI.add",
                   options:   {
                     contained: {
                       short: 'c',
@@ -117,7 +114,7 @@ module CLI
                   alias:     'd',
                   info:      "Delete an added application",
                   arguments: %w(application custom_vars...),
-                  action:    "Manager::Application::CLI.new.delete",
+                  action:    "Manager::Application::CLI.delete",
                   options:   {
                     keep_user_group: {
                       short: 'k',
@@ -203,13 +200,13 @@ module CLI
           variables: {
             config: {
               info:    "Configuration file path",
-              default: "#{CONFIG_FILE}",
+              default: "#{Manager::CONFIG_FILE}",
             },
             mirror: {
-              info: "Mirror of precompiled applications (default in #{CONFIG_FILE})",
+              info: "Mirror of precompiled applications (default in #{Manager::CONFIG_FILE})",
             },
             source: {
-              info: "Source of the packages' pkg.yml and configurations (default in #{CONFIG_FILE})",
+              info: "Source of the packages' pkg.yml and configurations (default in #{Manager::CONFIG_FILE})",
             },
           },
         },
@@ -280,14 +277,6 @@ module CLI
     Log.error ex.to_s
   end
 
-  def confirm
-    puts "\nContinue? [N/y]"
-    case gets
-    when "Y", "y" then true
-    else               puts "cancelled."
-    end
-  end
-
   def version(prefix)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
     ::System::Host.vars.each do |k, v|
@@ -296,7 +285,7 @@ module CLI
   end
 
   def exec(prefix, application)
-    app_path = Path.new(prefix).application application
+    app_path = Path.new(prefix).app + application
     pkg = YAML.parse File.read app_path + "/pkg.yml"
 
     exec_start = pkg["exec"]["start"].as_s.split(' ')
@@ -308,7 +297,6 @@ module CLI
         env_vars[key.as_s] = value.as_s
       end
     end
-    p env_vars
 
     Process.run command: exec_start[0],
       args: (exec_start[1..-1] if exec_start[1]?),

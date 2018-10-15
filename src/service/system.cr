@@ -1,25 +1,26 @@
 module Service::System
-  getter name : String
-  getter file : String
-  getter boot : String
+  getter name : String,
+    file : String,
+    boot_file : String,
+    init_path : String
 
   def boot? : Bool
-    File.exists? boot
+    File.exists? @boot_file
   end
 
   def exists? : Bool
-    File.symlink?(file) || File.exists?(file)
+    File.symlink?(@file) || File.exists?(@file)
   end
 
   def writable? : Bool
-    File.writable? file
+    File.writable? @file
   end
 
   def boot(value : Bool) : Bool
     case value
     when boot? # nothing to do
-    when true  then File.symlink(file, boot)
-    when false then File.delete(boot)
+    when true  then File.symlink @file, @boot_file
+    when false then File.delete boot_file
     end
     value
   end
@@ -33,28 +34,31 @@ module Service::System
       raise "only applications can be added to the system"
     elsif exists?
       raise "system service already exist: " + name
-    elsif !File.writable? File.dirname(file)
+    elsif !File.writable? File.dirname(@file)
       Log.warn "service creation unavailable, root permissions required", name
     else
       Log.info "service available for creation", name
     end
   end
 
-  def delete
+  def is_app?(pkgdir : String) : Bool
+    real_file == pkgdir + @init_path
+  end
+
+  def check_delete
     if !writable?
-      Log.warn "root execution needed for system service deletion", name
-    elsif exists?
-      Log.info "deleting the system service", name
-      delete
+      Log.error "root execution needed for system service deletion: " + name
+    elsif !exists?
+      Log.error "service doesn't exist: " + name
     end
   end
 
   def create(pkg : YAML::Any, pkgdir : String, user : String, group : String)
     sysinit_hash = config.new(pkgdir + init_path, file: true)
 
-    Dir.mkdir_p pkgdir + "/etc/init"
+    Dir.mkdir_p pkgdir + Service::ROOT_PATH
 
-    Log.info "creating system service", "etc/init/" + name
+    Log.info "creating system service", name
 
     # Set service options
     {description:   pkg["description"].as_s,
@@ -82,6 +86,6 @@ module Service::System
     finalize_create pkgdir, sysinit_hash
 
     # Convert back hashes to service files
-    File.write pkgdir + init_path, sysinit_hash.build
+    File.write pkgdir + @init_path, sysinit_hash.build
   end
 end

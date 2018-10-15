@@ -2,20 +2,49 @@ require "./spec_helper"
 require "../src/manager"
 
 describe Manager do
-  # it "converts an user name to an uid" do
-  # ::System::Owner.to_uid("root").should eq 0
-  # end
-  describe "Source::Cache" do
-    temp_prefix_dir = __DIR__ + "/temp_dppm_prefix"
-    it "downloads with cli using the config.ini mirror" do
-      Dir.mkdir temp_prefix_dir
-      begin
-        Manager::Source::Cache.cli "../config.ini", nil, nil, temp_prefix_dir, true
-        Dir.new(temp_prefix_dir).children.should eq ["app", "pkg", "src"]
-        Dir[Path.new(temp_prefix_dir).src + "/*/pkg.yml"].empty?.should be_false
-      ensure
-        FileUtils.rm_r temp_prefix_dir
-      end
-    end
+  Dir.mkdir TEMP_DPPM_PREFIX
+  package = "test"
+  app_name = ""
+  version = ""
+  it "adds an application" do
+    add = Manager::Application::CLI.add(
+      no_confirm: true,
+      config: "../config.ini",
+      mirror: nil,
+      source: "./samples",
+      prefix: TEMP_DPPM_PREFIX,
+      application: package,
+      custom_vars: Array(String).new,
+      contained: false,
+      noservice: true,
+      socket: false).not_nil!
+    version = add.version
+    (app_name = add.name).starts_with?(package).should be_true
   end
+
+  it "deletes an application" do
+    delete = Manager::Application::CLI.delete(
+      no_confirm: true,
+      config: "../config.ini",
+      mirror: nil,
+      source: "./samples",
+      prefix: TEMP_DPPM_PREFIX,
+      application: app_name,
+      custom_vars: Array(String).new,
+      keep_user_group: true).not_nil!
+    delete.name.should eq app_name
+  end
+
+  it "cleans the unused package" do
+    set = Set(String).new
+    set << package + '_' + version
+    Manager::Package::CLI.clean(
+      no_confirm: true,
+      config: "../config.ini",
+      mirror: nil,
+      source: nil,
+      prefix: TEMP_DPPM_PREFIX).not_nil!.packages.should eq set
+  end
+
+  FileUtils.rm_rf TEMP_DPPM_PREFIX
 end

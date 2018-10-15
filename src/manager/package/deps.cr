@@ -51,7 +51,7 @@ struct Manager::Package::Deps
 
     # Build each dependency
     deps.each do |dep, ver|
-      dep_prefix_pkg = "#{@path.prefix}/pkg/#{dep}_#{ver}"
+      dep_prefix_pkg = "#{@path.pkg}/#{dep}_#{ver}"
       dep_pkgdir_lib = "#{pkgdir}/lib/#{dep}"
       if !Dir.exists? dep_prefix_pkg
         Log.info "building dependency", dep_prefix_pkg

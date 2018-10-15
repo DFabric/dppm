@@ -28,12 +28,12 @@ struct Manager::Application::Add
       service.check_availability @pkg["type"]
       @service = service
     end
-    @pkgdir = @vars["pkgdir"] = @path.app + '/' + @name
+    @pkgdir = @vars["pkgdir"] = @path.app + @name
     raise "application directory already exists: " + @pkgdir if File.exists? @pkgdir
     @deps = @build.deps
 
     # Check database type
-    Log.info "calculing informations", "#{path.src}/#{@package}/pkg.yml"
+    Log.info "calculing informations", path.src + @package + "/pkg.yml"
     if (db_type = @vars["database_type"]?) && (databases = @pkg["databases"]?)
       raise "unsupported database type: " + db_type if !databases[db_type]?
     end
@@ -41,7 +41,7 @@ struct Manager::Application::Add
     # Default variables
     unset_vars = Array(String).new
     if pkg_config = @pkg["config"]?
-      conf = ::Config::Pkg.new path.src + '/' + @package
+      conf = ::Config::Pkg.new path.src + @package
       pkg_config.as_h.each_key do |var|
         variable = var.to_s
         # Skip if a socket is used
@@ -206,6 +206,7 @@ struct Manager::Application::Add
       end
 
       Log.info "add completed", @pkgdir
+      self
     rescue ex
       FileUtils.rm_rf @pkgdir
       ::System::Owner.del_user(@vars["user"]) if @add_user

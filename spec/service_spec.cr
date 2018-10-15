@@ -18,7 +18,7 @@ describe Service do
       service = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.new("test").create(YAML.parse(File.read "#{__DIR__}/samples/package/pkg.yml"), path, "test", "test")
+        Service::{{sysinit.id}}.new("test").create(YAML.parse(File.read "#{__DIR__}/samples/test/pkg.yml"), path, "test", "test")
       end
 
       it "parses the service" do

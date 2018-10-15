@@ -2,11 +2,12 @@ require "./system"
 
 struct Service::OpenRC
   include System
-  getter init_path = "/etc/init/openrc"
+  getter type : String = "openrc"
 
   def initialize(@name : String)
     @file = "/etc/init.d/" + @name
-    @boot = "/etc/runlevels/default/" + @name
+    @boot_file = "/etc/runlevels/default/" + @name
+    @init_path = Service::ROOT_PATH + @type.downcase
   end
 
   def config

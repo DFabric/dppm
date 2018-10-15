@@ -11,7 +11,7 @@ struct Manager::Application::Delete
 
   def initialize(@name, @prefix, @keep_user_group : Bool = false)
     @path = Path.new @prefix
-    @pkgdir = @path.application @name
+    @pkgdir = @path.app + @name
 
     file = File.info @pkgdir
     @user = ::System::Owner.to_user file.owner
@@ -20,18 +20,16 @@ struct Manager::Application::Delete
     # Checks
     Manager.pkg_exists? @pkgdir
     if service = ::System::Host.service?.try &.new @name
-      if service.exists? && (File.real_path(service.file) == @pkgdir + service.init_path)
-        "/etc/init/" + service.type.downcase
+      if service.exists? && service.is_app?(@pkgdir)
         Log.info "a system service is found", @name
+        service.check_delete
         @service = service
       else
         Log.warn "no system service found", @name
         @service = nil
       end
     end
-    if @service && !::System::Owner.root?
-      raise "root permissions required to delete the service: " + @name
-    end
+
     Log.info "getting package name", @pkgdir + "/pkg.yml"
     @pkg = YAML.parse(File.read(@pkgdir + "/pkg.yml"))
     @package = @pkg["package"].as_s
@@ -59,5 +57,6 @@ struct Manager::Application::Delete
 
     FileUtils.rm_rf @pkgdir
     Log.info "delete completed", @pkgdir
+    self
   end
 end
