@@ -198,7 +198,7 @@ struct Manager::Application::Add
           # Create system services
           service.create @pkg, @pkgdir, @vars["user"], @vars["group"]
           service.enable @pkgdir
-          Log.info service.type + " system service added", @name
+          Log.info service.class.type + " system service added", @name
         rescue ex
           Log.warn "fail to add a system service", ex.to_s
           service.delete

@@ -1,23 +1,23 @@
 module Service::CLI
   extend self
 
-  def boot(prefix, service, state)
+  def boot(prefix : String, service : String, state : String)
     ::System::Host.service.new(service).boot Utils.to_b(state)
   end
 
-  private def get_status(prefix, system)
-    if system
-      all_status { |service| yield service }
+  private def get_status(prefix : String, all : Bool, &block : Service::OpenRC | Service::Systemd -> Nil)
+    if all
+      all_status &block
     else
-      app_status(prefix) { |service| yield service }
+      app_status prefix, &block
     end
   end
 
-  def status(prefix, system, noboot : Bool, norun : Bool, services : Array(String))
+  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String)) : Nil
     print "RUN   " if !norun
     print "BOOT  " if !noboot
     puts "SERVICE\n"
-    get_status(prefix, system) do |service|
+    get_status(prefix, all) do |service|
       if !norun
         if r = service.run?
           STDOUT << r.colorize.green << "  "
@@ -42,7 +42,7 @@ module Service::CLI
     end
   end
 
-  def app_status(prefix = PREFIX)
+  def app_status(prefix : String = PREFIX)
     Dir.each_child(Path.new(prefix).app) do |app|
       yield ::System::Host.service.new app
     end

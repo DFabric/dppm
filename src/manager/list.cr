@@ -21,15 +21,15 @@ struct Manager::List
   end
   {% end %}
 
-  def app
-    Dir.each_child(@path.app) { |app| yield app }
+  def app(&block : String -> _)
+    Dir.each_child @path.app, &block
   end
 
-  def pkg
-    Dir.each_child(@path.pkg) { |pkg| yield pkg }
+  def pkg(&block : String -> _)
+    Dir.each_child @path.pkg, &block
   end
 
-  def src
+  def src(&block : String -> _)
     Dir.each_child(@path.src) { |src| yield src if src[0].ascii_lowercase? }
   end
 end

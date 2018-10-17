@@ -2,12 +2,12 @@ require "./system"
 
 struct Service::OpenRC
   include System
-  getter type : String = "openrc"
+  class_getter type : String = "openrc"
 
   def initialize(@name : String)
     @file = "/etc/init.d/" + @name
     @boot_file = "/etc/runlevels/default/" + @name
-    @init_path = Service::ROOT_PATH + @type.downcase
+    @init_path = Service::ROOT_PATH + @@type.downcase
   end
 
   def config
@@ -44,10 +44,6 @@ struct Service::OpenRC
     Exec.new("/sbin/rc-service", [@name, {{action}}]).success?
   end
   {% end %}
-
-  def type
-    "OpenRC"
-  end
 
   def self.version : String
     Exec.new("/sbin/openrc", ["-V"]).out =~ /([0-9]+\.[0-9]+\.[0-9]+)/

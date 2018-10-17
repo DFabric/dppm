@@ -25,7 +25,7 @@ struct System::Host
     elsif File.exists? "/sbin/openrc"
       Service::OpenRC
     else
-      Log.warn "unsupported init system", "consider to migrate to OpenRC if you are still in SysVinit: " + init
+      Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems instead of `" + init + '`'
     end
   end
 
@@ -36,6 +36,8 @@ struct System::Host
     class_getter kernel = "freebsd"
   {% elsif flag?(:openbsd) %}
     class_getter kernel = "openbsd"
+  {% elsif flag?(:darwin) %}
+    class_getter kernel = "darwin"
   {% else %}
     Log.error "unsupported system"
   {% end %}
@@ -60,7 +62,7 @@ struct System::Host
       "arch"        => @@arch,
       "kernel"      => @@kernel,
       "kernel_ver"  => @@kernel_ver.to_s,
-      "sysinit"     => _service ? _service.name : "",
+      "sysinit"     => _service ? _service.type : "",
       "sysinit_ver" => (_service.version if _service).to_s,
     }
   end

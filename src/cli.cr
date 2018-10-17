@@ -239,9 +239,9 @@ module CLI
               arguments: %w(services...),
               action:    "Service::CLI.status",
               options:   {
-                system: {
-                  short: 's',
-                  info:  "include system services",
+                all: {
+                  short: 'a',
+                  info:  "list all system services",
                 },
                 noboot: {
                   info: "don't include booting status",
@@ -278,7 +278,7 @@ module CLI
   end
 
   def version(prefix)
-    puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify + '\n'}}
+    puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify.chomp + " [" + `git describe --tags --long --always`.stringify.chomp + "]\n\n"}}
     ::System::Host.vars.each do |k, v|
       puts k + ": " + v
     end
