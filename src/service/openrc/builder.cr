@@ -1,6 +1,5 @@
-class Service::OpenRC::Config
-  def build
-    # File.write(file,
+struct Service::OpenRC::Config
+  def build : String
     supervise = "\nsupervise_daemon_args=\"\n"
     functions = depend = extra = ""
 

@@ -1,11 +1,11 @@
-class Service::Systemd::Config
+struct Service::Systemd::Config
   def space_array
     {"Unit"    => ["Requires", "Wants", "After", "Before", "Environment"],
      "Service" => [""],
      "Install" => ["WantedBy", "RequiredBy"]}
   end
 
-  private def parse(data)
+  def initialize(data : String)
     @section = INI.parse data
   end
 end

@@ -8,7 +8,7 @@ require "./system"
 module Manager
   extend self
   CONFIG_FILE = "./config.ini"
-  PREFIX      = ::System::Owner.root? ? "/opt/dppm" : ENV["HOME"] + "/.dppm"
+  PREFIX      = ::System::Owner.root? ? "/srv/dppm" : ENV["HOME"] + "/.dppm"
 
   def pkg_exists?(dir)
     raise "doesn't exist: #{dir}/pkg.yml" if !File.exists? dir + "/pkg.yml"

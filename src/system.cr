@@ -31,7 +31,7 @@ module System
   def self.available_port(port = 0) : Int32
     Log.info "checking ports availability", port.to_s
     ports_used = Array(Int32).new
-    (port..Int16::MAX).each do |port|
+    (port..UInt16::MAX).each do |port|
       if tcp_port_available? port
         Log.warn "ports unavailable", ports_used.join ", " if !ports_used.empty?
         return port

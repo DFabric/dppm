@@ -22,7 +22,7 @@ describe Service do
       end
 
       it "parses the service" do
-        service = Service::{{sysinit.id}}::Config.new(path + "etc/init/" + {{sysinit.downcase}}, file: true)
+        service = Service::{{sysinit.id}}::Config.parse(path + "etc/init/" + {{sysinit.downcase}})
       end
 
       it "checks values of sections" do

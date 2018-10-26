@@ -1,7 +1,7 @@
-class Service::OpenRC::Config
+struct Service::OpenRC::Config
   @extras = {"extra_command", "extra_started_commands", "extra_stopped_commands"}
 
-  private def parse(data)
+  def initialize(data : String)
     line_number = 1
     function_name = ""
     function = Array(String).new

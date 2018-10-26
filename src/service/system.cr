@@ -54,7 +54,7 @@ module Service::System
   end
 
   def create(pkg : YAML::Any, pkgdir : String, user : String, group : String)
-    sysinit_hash = config.new(pkgdir + init_path, file: true)
+    sysinit_hash = config.parse pkgdir + init_path
 
     Dir.mkdir_p pkgdir + Service::ROOT_PATH
 

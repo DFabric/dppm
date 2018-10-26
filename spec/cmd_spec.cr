@@ -37,7 +37,7 @@ describe Cmd::Run do
     it "cd" do
       Dir.cd path do
         Dir.mkdir temppath
-        cmd.execute("cd " + File.basename temppath)
+        cmd.execute("cd " + temppath)
         Dir.current.should eq temppath
         Dir.rmdir temppath
       end

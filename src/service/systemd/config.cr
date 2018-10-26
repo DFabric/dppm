@@ -1,17 +1,15 @@
-class Service::Systemd::Config
+struct Service::Systemd::Config
   getter section = Hash(String, Hash(String, String)).new
 
   def initialize
     @section = base
   end
 
-  def initialize(data : String, file = false)
-    if file && File.exists? data
-      parse File.read data
-    elsif file
-      @section = base
+  def self.parse(file : String)
+    if File.exists? file
+      new File.read file
     else
-      parse data
+      new
     end
   end
 
