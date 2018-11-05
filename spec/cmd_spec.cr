@@ -114,6 +114,6 @@ describe Cmd::Run do
       File.exists?("elif_cond").should be_true
     end
   end
-
   FileUtils.rm_r path
+  Dir.cd __DIR__
 end
