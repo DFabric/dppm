@@ -1,4 +1,3 @@
-/.shards
-/dppm
+/bin/dppm
 /lib
 /shard.lock

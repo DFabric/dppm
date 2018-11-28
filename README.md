@@ -77,17 +77,13 @@ You will need a [Crystal](https://crystal-lang.org) development environment
 
 You can either [install it](https://crystal-lang.org/docs/installation) or use a [Docker image](https://hub.docker.com/r/jrei/crystal-alpine)
 
-Install dependencies:
+Install dependencies and build `dppm`:
 
-`shards install`
-
-Build a `dppm` executable:
-
-`crystal build src/dppm.cr`
+`shards build`
 
 Run it
 
-`./dppm --help`
+`./bin/dppm --help`
 
 For more informations, see the [official docs](https://crystal-lang.org/docs/using_the_compiler/)
 

@@ -72,7 +72,7 @@ module CLI
           },
           variables: {
             lines: {
-              info: "\t Number of last lines to print. All lines when no set",
+              info: "Number of last lines to print. All lines when no set",
             },
           },
         },
@@ -106,7 +106,7 @@ module CLI
                     },
                     socket: {
                       short: 's',
-                      info:  "\t Use of an UNIX socket instead of a port",
+                      info:  "Use of an UNIX socket instead of a port",
                     },
                   },
                 },
@@ -181,7 +181,7 @@ module CLI
                 list: {
                   alias:  'l',
                   info:   "List source packages",
-                  action: "Manager::List.cli_pkg",
+                  action: "Manager::List.cli_src",
                 },
                 query: {
                   alias:     'q',
@@ -215,7 +215,7 @@ module CLI
           info:     "Manage applications' services",
           commands: {
             boot: {
-              info:      "\t Auto-start the service at boot",
+              info:      "Auto-start the service at boot",
               arguments: %w(service state),
               action:    "Service::CLI.boot",
             },
@@ -252,7 +252,7 @@ module CLI
               },
             },
             stop: {
-              info:      "\t Stop the service",
+              info:      "Stop the service",
               arguments: %w(service),
               action:    "puts service().stop",
             },
