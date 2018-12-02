@@ -2,28 +2,25 @@ struct Manager::Package::Build
   getter package : String,
     name : String,
     pkgdir : String,
-    pkg : YAML::Any,
+    path : Path,
+    pkg_file : PkgFile,
     version : String,
     exists = false,
     deps = Hash(String, String).new,
-    path : Path,
     vars : Hash(String, String)
   @arch_alias : String
 
   def initialize(@vars)
     @path = Path.new vars["prefix"]
     @package = @vars["package"].split(':')[0]
-    raise "package doesn't exists: " + @package if !File.exists? "#{@path.src}/#{@package}/pkg.yml"
-
-    Log.info "calculing informations", @path.src + @package + "/pkg.yml"
-    @pkg = YAML.parse File.read(@path.src + @package + "/pkg.yml")
+    @pkg_file = PkgFile.new @path.src + @package
     @version = vars["version"] = getversion
     @vars["package"] = @package
     @name = @vars["name"] = @package + '_' + @version
     @pkgdir = @vars["pkgdir"] = path.pkg + @name
 
-    @arch_alias = @vars["arch_alias"] = if (aliases = @pkg["aliases"]?) && (version_alias = aliases[::System::Host.arch]?)
-                                          version_alias.as_s
+    @arch_alias = @vars["arch_alias"] = if (aliases = @pkg_file.aliases) && (version_alias = aliases[::System::Host.arch]?)
+                                          version_alias
                                         else
                                           ::System::Host.arch
                                         end
@@ -34,7 +31,7 @@ struct Manager::Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Deps.new(@path).get(@pkg, @pkgdir).each { |k, v| @deps[k] = v[0] }
+    Deps.new(@path).get(@pkg_file, @pkgdir).each { |k, v| @deps[k] = v[0] }
   end
 
   private def getversion
@@ -48,16 +45,16 @@ struct Manager::Package::Build
     end
     if ver
       # Check if the version number is available
-      raise "not available version number: " + ver if !Version.get(::System::Host.kernel, ::System::Host.arch, @pkg["version"]).includes? ver
+      raise "not available version number: " + ver if !Version.get(::System::Host.kernel, ::System::Host.arch, @pkg_file.version).includes? ver
       ver
     elsif tag
-      src = @pkg["tags"][tag]["src"].as_s
+      src = @pkg_file.tags[tag]["src"].as_s
       # Test if the src is an URL or a version number
       if Utils.is_http? src
-        regex = if regex_tag = @pkg["tags"][tag]["regex"]?
+        regex = if regex_tag = @pkg_file.tags[tag]["regex"]?
                   regex_tag
                 else
-                  @pkg["tags"]["self"]["regex"]
+                  @pkg_file.tags["self"]["regex"]
                 end.as_s
         /(#{regex})/ =~ HTTPget.string(src)
         $1
@@ -88,14 +85,14 @@ struct Manager::Package::Build
       # Build dependencies
       Deps.new(@path).build @vars.dup, @deps
 
-      if (tasks = @pkg["tasks"]?) && (build_task = tasks["build"]?)
+      if (tasks = @pkg_file.tasks) && (build_task = tasks["build"]?)
         Log.info "building", @package
-        Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run build_task.as_a }
+        Dir.cd @pkgdir { Cmd.new(@vars.dup).run build_task.as_a }
         # Standard package build
       else
         Log.info "standard building", @package
 
-        working_directory = if pkg["type"] == "app"
+        working_directory = if pkg_file.type == "app"
                               Dir.mkdir(app = @pkgdir + "/app")
                               app
                             else
@@ -117,7 +114,7 @@ struct Manager::Package::Build
           FileUtils.rm_r({package_archive, package_full_name})
         end
       end
-      FileUtils.rm_rf @pkgdir + "/lib" if pkg["type"] == "app"
+      FileUtils.rm_rf @pkgdir + "/lib" if pkg_file.type == "app"
       Log.info "build completed", @pkgdir
       self
     rescue ex

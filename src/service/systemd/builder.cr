@@ -1,3 +1,5 @@
+require "ini"
+
 struct Service::Systemd::Config
   def build : String
     # Transform the hash to a systemd service

@@ -1,3 +1,4 @@
+require "./format"
 require "dynany/json"
 
 struct Config::JSON

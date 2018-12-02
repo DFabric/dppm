@@ -1,19 +1,20 @@
-struct Manager::Query
-  @pkgdir : String
+require "./pkg_file"
 
-  def initialize(@pkgdir)
+struct Manager::Query
+  @pkg_file : PkgFile
+
+  def initialize(pkgdir)
+    @pkg_file = PkgFile.new pkgdir
   end
 
   def pkg(path)
-    file = @pkgdir + "/pkg.yml"
-    data = File.read file
     case path
     when "."
-      data
+      @pkg_file.any.to_pretty_con
     when "version"
-      File.basename(File.dirname(File.real_path(file))).split('_').last
+      File.basename(File.dirname(File.real_path(@pkg_file.path))).split('_').last
     else
-      YAML.parse(data)[Utils.to_array path].to_yaml
+      @pkg_file.any[Utils.to_array path].to_pretty_con
     end
   end
 end

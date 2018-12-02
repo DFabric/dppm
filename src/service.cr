@@ -1,3 +1,5 @@
+require "exec"
+require "./path"
 require "./service/*"
 
 module Service

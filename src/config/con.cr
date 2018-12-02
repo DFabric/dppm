@@ -1,14 +1,14 @@
 require "./format"
-require "dynany/yaml"
+require "dynany/con"
 
-struct Config::YAML
+struct Config::CON
   include Format
-  getter data : ::YAML::Any
+  getter data : ::CON::Any
   getter file : String
 
   def initialize(@file : String)
     data = File.read @file
-    @data = ::YAML.parse data
+    @data = ::CON.parse data
   end
 
   def get(path : Array)
@@ -17,9 +17,9 @@ struct Config::YAML
 
   def set(path : Array, value)
     value = Utils.to_type value
-    @data[path] = ::YAML::Any.new case value
-    when .is_a? Hash(String, String) then Hash(::YAML::Any, ::YAML::Any).new
-    when .is_a? Array(String)        then Array(::YAML::Any).new
+    @data[path] = ::CON::Any.new case value
+    when .is_a? Hash(String, String) then Hash(String, ::CON::Any).new
+    when .is_a? Array(String)        then Array(::CON::Any).new
     else
       value
     end
@@ -32,6 +32,6 @@ struct Config::YAML
   end
 
   private def write
-    File.write @file, @data.to_yaml
+    File.write @file, @data.to_pretty_con
   end
 end

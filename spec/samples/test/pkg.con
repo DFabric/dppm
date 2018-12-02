@@ -1,0 +1,94 @@
+package     "test"
+name        "Test"
+type        "app"
+license     "ISC"
+docs        "http://localhost/docs"
+url         "http://localhost"
+description "Test Package"
+info        "This is a test package that can be used in UT"
+shared       true
+
+# Fake dependencies
+# deps {
+#   nodejs "6.0.0 || >=6.7.1 <7.0.0"
+#   busybox "^1.26.1"
+# }
+
+config {
+  host "host"
+  port "vars.port"
+}
+version {
+  self {
+    src [ "0.0.1" "0.1.2-beta" ]
+  }
+}
+tags {
+  stable { src "0.0.1" }
+  latest { src "0.1.2-beta" }
+}
+
+exec {
+  start "test start"
+  stop  "test stop"
+}
+
+tasks {
+  build [
+    "test = ls /tmp"
+    "puts '${test}'"
+    "puts glob puts ls '${PKGDIR}*'"
+    "if !PREFIX" [
+      "error 'PREFIX don't exists'"
+    ]
+    "if PREFIX" [
+      "if !ok" [
+        "ok = '0'"
+      ]
+    ]
+    "else" [
+      "error 'Env vars not taken into account: PRPEFIX = ${PREFIX}'"
+    ]
+    "if ok == '0'"[
+      "puts 'good'"
+    ]
+    "else" [
+      "error 'This else should not be printed,${ok} \\${ok} not defined?'"
+    ]
+    "if ok == '1'" [
+      "error 'False test condition should not be printed'"
+    ]
+    "elif false" [
+      "error 'Elif shouldn't be printed'"
+    ]
+    "else" [
+      "if false" [
+        "error 'True test after else printed'"
+      ]
+    ]
+    "if false" [
+      "error 'False test should not be printed'"
+    ]
+    "elif true" [
+      "if true" [
+        "puts 'Another true to be print'"
+      ]
+      "else" [
+        "error 'Don't print this else'"
+      ]
+    ]
+    "else" [
+      "error 'false else condition should not be printed'"
+    ]
+    "puts 'End of tests'"
+  ]
+  add [
+    "json.get etc/config.json vars.port"
+    "json.set etc/config.json vars.port 127"
+    "set etc/config.json host 'localhost'"
+    "set etc/config.json server {}"
+    "read etc/config.json"
+    "set etc/config.json server.url 'test'"
+    "get etc/config.json vars.port"
+  ]
+}

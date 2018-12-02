@@ -22,39 +22,6 @@ module CLI
         },
       },
       commands: {
-        config: {
-          alias:   'c',
-          info:    "Manage application's configuration",
-          options: {
-            nopkg: {
-              short: 'n',
-              info:  "Don't use pkg.yml, directly use the application's configuration file",
-            },
-          },
-          commands: {
-            get: {
-              info:      "Get a value. Single dot path `.` for all keys",
-              arguments: %w(application path),
-              action:    "puts ::Config::CLI.get",
-            },
-            set: {
-              info:      "Set a value",
-              arguments: %w(application path value),
-              action:    "Config::CLI.set() && puts %(done)",
-            },
-            del: {
-              info:      "Delete a path",
-              arguments: %w(application path),
-              action:    "Config::CLI.del() && puts %(done)",
-            },
-          },
-        },
-        exec: {
-          alias:     'e',
-          info:      "Execute an application in the foreground",
-          arguments: %w(application),
-          action:    "exec",
-        },
         logs: {
           alias:     'l',
           info:      "Logs of the application's service",
@@ -122,6 +89,12 @@ module CLI
                     },
                   },
                 },
+                exec: {
+                  alias:     'e',
+                  info:      "Execute an application in the foreground",
+                  arguments: %w(application),
+                  action:    "Manager::Application::CLI.exec",
+                },
                 list: {
                   alias:  'l',
                   info:   "List applications",
@@ -129,7 +102,7 @@ module CLI
                 },
                 query: {
                   alias:     'q',
-                  info:      "Query informations from the application's pkg.yml. `.` for the whole document, `version` for the package's version",
+                  info:      "Query informations from an application. `.` for the whole document, `version` for the package's version",
                   arguments: %w(application path),
                   action:    "puts Manager::Application::CLI.query",
                 },
@@ -163,7 +136,7 @@ module CLI
                 },
                 query: {
                   alias:     'q',
-                  info:      "Query informations from the package's pkg.yml. `.` for the whole document, `version` for the package's version",
+                  info:      "Query informations from a package. `.` for the whole document, `version` for the package's version",
                   arguments: %w(package path),
                   action:    "puts Manager::Source::CLI.query",
                 },
@@ -185,9 +158,36 @@ module CLI
                 },
                 query: {
                   alias:     'q',
-                  info:      "Query informations from the packages's pkg.yml. `.` for the whole document, `version` for the package's version",
+                  info:      "Query informations from a source package. `.` for the whole document, `version` for the package's version",
                   arguments: %w(package path),
                   action:    "puts Manager::Source::CLI.query",
+                },
+              },
+            },
+            config: {
+              alias:   'c',
+              info:    "Manage application's configuration",
+              options: {
+                nopkg: {
+                  short: 'n',
+                  info:  "Don't use pkg file, directly use the application's configuration file",
+                },
+              },
+              commands: {
+                get: {
+                  info:      "Get a value. Single dot path `.` for all keys",
+                  arguments: %w(application path),
+                  action:    "puts Manager::ConfigCLI.get",
+                },
+                set: {
+                  info:      "Set a value",
+                  arguments: %w(application path value),
+                  action:    "Manager::ConfigCLI.set() && puts %(done)",
+                },
+                del: {
+                  info:      "Delete a path",
+                  arguments: %w(application path),
+                  action:    "Manager::ConfigCLI.del() && puts %(done)",
                 },
               },
             },
@@ -200,13 +200,13 @@ module CLI
           variables: {
             config: {
               info:    "Configuration file path",
-              default: "#{Manager::CONFIG_FILE}",
+              default: "#{Manager::MainConfig::FILE}",
             },
             mirror: {
-              info: "Mirror of precompiled applications (default in #{Manager::CONFIG_FILE})",
+              info: "Mirror of precompiled applications (default in #{Manager::MainConfig::FILE})",
             },
             source: {
-              info: "Source of the packages' pkg.yml and configurations (default in #{Manager::CONFIG_FILE})",
+              info: "Source of the packages and configurations (default in #{Manager::MainConfig::FILE})",
             },
           },
         },
@@ -282,30 +282,6 @@ module CLI
     ::System::Host.vars.each do |k, v|
       puts k + ": " + v
     end
-  end
-
-  def exec(prefix, application)
-    app_path = Path.new(prefix).app + application
-    pkg = YAML.parse File.read app_path + "/pkg.yml"
-
-    exec_start = pkg["exec"]["start"].as_s.split(' ')
-
-    env_vars = Hash(String, String).new
-    env_vars["PATH"] = Path.env_var app_path
-    if env = pkg["env"]?
-      env.as_h.each do |key, value|
-        env_vars[key.as_s] = value.as_s
-      end
-    end
-
-    Process.run command: exec_start[0],
-      args: (exec_start[1..-1] if exec_start[1]?),
-      env: env_vars,
-      clear_env: true,
-      shell: false,
-      output: STDOUT,
-      error: STDERR,
-      chdir: app_path
   end
 
   def server(prefix)

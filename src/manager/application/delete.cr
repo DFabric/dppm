@@ -3,13 +3,13 @@ struct Manager::Application::Delete
     package : String,
     pkgdir : String,
     prefix : String,
-    pkg : YAML::Any,
+    pkg_file : PkgFile,
     service : Service::Systemd | Service::OpenRC | Nil
   @keep_user_group : Bool
   @user : String
   @group : String
 
-  def initialize(@name, @prefix, @keep_user_group : Bool = false)
+  def initialize(@name : String, @prefix : String, @keep_user_group : Bool = false)
     @path = Path.new @prefix
     @pkgdir = @path.app + @name
 
@@ -18,7 +18,8 @@ struct Manager::Application::Delete
     @group = ::System::Owner.to_group file.group
 
     # Checks
-    Manager.pkg_exists? @pkgdir
+    @pkg_file = PkgFile.new @pkgdir
+    @package = pkg_file.package
     if service = ::System::Host.service?.try &.new @name
       if service.exists? && service.is_app?(@pkgdir)
         Log.info "a system service is found", @name
@@ -29,10 +30,6 @@ struct Manager::Application::Delete
         @service = nil
       end
     end
-
-    Log.info "getting package name", @pkgdir + "/pkg.yml"
-    @pkg = YAML.parse(File.read(@pkgdir + "/pkg.yml"))
-    @package = @pkg["package"].as_s
   end
 
   def simulate

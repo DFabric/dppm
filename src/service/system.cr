@@ -53,17 +53,18 @@ module Service::System
     end
   end
 
-  def create(pkg : YAML::Any, pkgdir : String, user : String, group : String)
+  def create(pkg_file, pkgdir : String, user : String, group : String)
     sysinit_hash = config.parse pkgdir + init_path
+    (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
 
     Dir.mkdir_p pkgdir + Service::ROOT_PATH
 
     Log.info "creating system service", name
 
     # Set service options
-    {description:   pkg["description"].as_s,
+    {description:   pkg_file.description,
      directory:     pkgdir,
-     command:       "#{pkgdir}/#{pkg["exec"]["start"]}",
+     command:       "#{pkgdir}/#{exec["start"]}",
      user:          user,
      group:         group,
      restart_delay: "9",
@@ -72,15 +73,15 @@ module Service::System
     end
 
     # add a reload directive if available
-    if exec_reload = pkg["exec"]["reload"]?
-      sysinit_hash.set("reload", exec_reload.as_s)
+    if exec_reload = exec["reload"]?
+      sysinit_hash.set("reload", exec_reload)
     end
 
     # Add a PATH environment variable if not empty
     path = Path.env_var pkgdir
     sysinit_hash.env_set("PATH", path) if !path.empty?
-    if pkg_env = pkg["env"]?
-      pkg_env.as_h.each { |var, value| sysinit_hash.env_set var.to_s, value.to_s }
+    if pkg_env = pkg_file.env
+      pkg_env.each { |var, value| sysinit_hash.env_set var, value }
     end
 
     finalize_create pkgdir, sysinit_hash

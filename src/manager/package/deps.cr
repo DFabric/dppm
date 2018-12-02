@@ -1,4 +1,3 @@
-require "yaml"
 require "semantic_compare"
 
 struct Manager::Package::Deps
@@ -7,18 +6,14 @@ struct Manager::Package::Deps
   def initialize(@path)
   end
 
-  def get(pkg, pkgdir, allvers = Hash(String, Array(String)).new)
+  def get(pkg_file : PkgFile, pkgdir, allvers = Hash(String, Array(String)).new)
     # No need to parse if the deps list is empty
-    if pkg_deps = pkg["deps"]?
-      pkgdeps = pkg_deps.as_h
-    else
-      return allvers
-    end
+    (pkgdeps = pkg_file.deps) || return allvers
 
     pkgdeps.each_key do |dep|
       if !File.exists? pkgdir + "/lib/#{dep}"
         Log.info "calculing dependency", dep.to_s
-        yaml = YAML.parse File.read "#{@path.src}/#{dep}/pkg.yml"
+        deps_pkg_file = PkgFile.new "#{@path.src}/#{dep}"
         newvers = Array(String).new
 
         # If an array of versions is already provided by a dependency
@@ -29,16 +24,16 @@ struct Manager::Package::Deps
         else
           # HTTPget all versions, parse and test if the versions available match
           allvers[dep.to_s] = Array(String).new
-          Version.get(::System::Host.kernel, ::System::Host.arch, yaml["version"]).each do |ver|
+          Version.get(::System::Host.kernel, ::System::Host.arch, deps_pkg_file.version).each do |ver|
             newvers << ver if ver && SemanticCompare.expression ver, pkgdeps[dep].to_s
           end
         end
         # Raise an error if two packages require different versions of a same dependency
-        raise "dependency problem for `#{pkg["package"]}`: the versions required by `#{pkgdeps[dep]}` don't match" if !newvers[0]?
+        raise "dependency problem for `#{deps_pkg_file.package}`: the versions required by `#{pkgdeps[dep]}` don't match" if !newvers[0]?
         allvers[dep.to_s] = newvers
 
         # Loops inside dependencies of dependencies
-        allvers = get(YAML.parse(File.read "#{@path.src}/#{dep}/pkg.yml"), pkgdir, allvers) if yaml["deps"]?
+        allvers = get(PkgFile.new(@path.src + dep), pkgdir, allvers) if deps_pkg_file.deps
       end
     end
     allvers

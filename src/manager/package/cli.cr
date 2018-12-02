@@ -26,19 +26,11 @@ module Manager::Package::CLI
     Log.info "initializing", "build"
     vars["package"] = package
     vars["prefix"] = prefix
-
-    # configuration
-    begin
-      configuration = INI.parse(File.read config || CONFIG_FILE)
-
-      vars["source"] = source || configuration["main"]["source"]
-      vars["mirror"] = mirror || configuration["main"]["mirror"]
-    rescue ex
-      raise "configuraration error: #{ex}"
-    end
+    main_config = MainConfig.new config, mirror, source
+    vars["mirror"] = main_config.mirror
 
     # Update cache
-    Source::Cache.update vars["source"], prefix
+    Source::Cache.update main_config.source, prefix
 
     # Create task
     vars.merge! ::System::Host.vars

@@ -1,13 +1,13 @@
-require "./spec_helper"
-require "../src/cmd"
+require "../spec_helper"
+require "../../src/manager"
 
-describe Cmd::Run do
+describe Manager::Cmd do
   path = Dir.current + "/cmd_test"
   temppath = path + "/command"
   Dir.mkdir path
   Dir.cd path
   File.write "test_file", "data"
-  cmd = Cmd::Run.new(Hash(String, String).new)
+  cmd = Manager::Cmd.new(Hash(String, String).new)
 
   describe "command" do
     it "current" do
@@ -81,39 +81,44 @@ describe Cmd::Run do
     end
   end
 
-  describe "variable" do
-    it "affect a string" do
-      cmd.run([YAML.parse %(a = "b")])
-      cmd.@vars["a"].should eq "b"
+  describe "Parse" do
+    describe "variable" do
+      it "affect a string" do
+        cmd.run CON.parse(%<["a = 'b'"]>).as_a
+        cmd.@vars["a"].should eq "b"
+      end
+
+      it "affect a command output" do
+        cmd.run CON.parse(%<["b = readable? ."]>).as_a
+        cmd.vars["b"].should eq "true"
+      end
+
+      it "uses interpolation" do
+        cmd.run CON.parse(%<["c = '${dir}'"]>).as_a
+        cmd.@vars["c"].should eq Dir.current
+      end
     end
 
-    it "affect a command output" do
-      cmd.run([YAML.parse %(b = readable? .)])
-      cmd.vars["b"].should eq "true"
-    end
+    describe "condition" do
+      it "simple if" do
+        pkg = CON.parse(%<[ "if file_exists? . == true" [ "touch if_cond" ] ]>).as_a
+        cmd.run(pkg).should be_nil
+        File.exists?("if_cond").should be_true
+      end
 
-    it "uses interpolation" do
-      cmd.run([YAML.parse %(c = "${dir}")])
-      cmd.@vars["c"].should eq Dir.current
+      it "simple else" do
+        pkg = CON.parse(%<[ "if file_exists? . != true" ["error"] "else" [ "touch else_cond" ] ]>).as_a
+        cmd.run(pkg).should be_nil
+        File.exists?("else_cond").should be_true
+      end
+
+      it "simple elif" do
+        pkg = CON.parse(%<[ "if file_exists? . != true " ["error"] "elif file_exists? . == true" [ "touch elif_cond" ] "else" ["error"] ]>).as_a
+        cmd.run(pkg).should be_nil
+        File.exists?("elif_cond").should be_true
+      end
     end
   end
-
-  describe "condition" do
-    it "simple if" do
-      cmd.run([YAML.parse "if file_exists? . == true: \n- touch if_cond"])
-      File.exists?("if_cond").should be_true
-    end
-
-    it "simple else" do
-      cmd.run([YAML.parse("if file_exists? . != true: \n- ls ."), YAML.parse("else: \n- touch else_cond")])
-      File.exists?("else_cond").should be_true
-    end
-
-    it "simple elif" do
-      cmd.run([YAML.parse("if file_exists? . != true: \n- ls ."), YAML.parse("if file_exists? . == true: \n- touch elif_cond")])
-      File.exists?("elif_cond").should be_true
-    end
-  end
-  FileUtils.rm_r path
   Dir.cd __DIR__
+  FileUtils.rm_r path
 end

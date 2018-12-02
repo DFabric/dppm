@@ -1,3 +1,4 @@
+require "./format"
 require "ini"
 
 struct Config::INI

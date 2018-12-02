@@ -8,9 +8,8 @@ struct Manager::Package::Delete
   def initialize(@package, @prefix)
     @pkgdir = Path.new(@prefix).pkg + package
 
-    # Checks
-    Manager.pkg_exists? @pkgdir
-    Log.info "getting package name", @pkgdir + "/pkg.yml"
+    raise "package directory doesn't exists: " + @pkgdir if !Dir.exists? @pkgdir
+    Log.info "getting package name", @pkgdir
     @name, @version = package.split '_'
   end
 

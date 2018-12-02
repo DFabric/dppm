@@ -1,3 +1,5 @@
+require "ini"
+
 struct Service::Systemd::Config
   def space_array
     {"Unit"    => ["Requires", "Wants", "After", "Before", "Environment"],

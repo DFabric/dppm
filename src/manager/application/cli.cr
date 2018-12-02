@@ -16,20 +16,12 @@ module Manager::Application::CLI
     vars["package"] = application
     vars["prefix"] = prefix
 
-    # configuration
-    begin
-      configuration = INI.parse(File.read config || CONFIG_FILE)
-
-      vars["source"] = source || configuration["main"]["source"]
-      vars["mirror"] = mirror || configuration["main"]["mirror"]
-    rescue ex
-      raise "configuraration error: #{ex}"
-    end
-
+    main_config = MainConfig.new config, mirror, source
+    vars["mirror"] = main_config.mirror
     vars_parser custom_vars, vars
 
     # Update cache
-    Source::Cache.update vars["source"], prefix
+    Source::Cache.update main_config.source, prefix
 
     # Create task
     vars.merge! ::System::Host.vars
@@ -52,7 +44,30 @@ module Manager::Application::CLI
     end
   end
 
-  def self.query(prefix, config, mirror, source, no_confirm, application, path)
+  def query(prefix, application, path, **args)
     Query.new(Path.new(prefix).app + application).pkg path
+  end
+
+  def exec(prefix, application, **args)
+    app_path = Path.new(prefix).app + application
+    pkg_file = PkgFile.new app_path
+
+    if exec = pkg_file.exec
+      exec_start = exec["start"].split(' ')
+    else
+      raise "exec key not present in #{pkg_file.path}"
+    end
+    if env_vars = pkg_file.env
+      env_vars["PATH"] = Path.env_var app_path
+    end
+
+    Process.run command: exec_start[0],
+      args: (exec_start[1..-1] if exec_start[1]?),
+      env: env_vars,
+      clear_env: true,
+      shell: false,
+      output: STDOUT,
+      error: STDERR,
+      chdir: app_path
   end
 end

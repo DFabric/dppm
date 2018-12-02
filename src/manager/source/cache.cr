@@ -38,7 +38,8 @@ module Manager::Source::Cache
     if source
       update source, prefix, no_confirm
     else
-      update INI.parse(File.read config)["main"]["source"], prefix, no_confirm
+      main_config = MainConfig.new config, mirror, nil
+      update main_config.source, prefix, no_confirm
     end
   end
 end

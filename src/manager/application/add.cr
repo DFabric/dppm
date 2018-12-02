@@ -1,11 +1,11 @@
 struct Manager::Application::Add
-  getter package : String = "",
+  getter package : String,
     name : String,
     pkgdir : String,
-    pkg : YAML::Any,
+    path : Path,
+    pkg_file : PkgFile,
     version : String,
-    vars : Hash(String, String),
-    path : Path
+    vars : Hash(String, String)
   @add_user = false
   @add_group = false
   @deps = Hash(String, String).new
@@ -13,19 +13,19 @@ struct Manager::Application::Add
   @shared : Bool
   @service : Service::Systemd | Service::OpenRC | Nil
 
-  def initialize(@vars, @shared = true, add_service = true, @socket = false)
+  def initialize(@vars, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
     # Build missing dependencies
     @build = Package::Build.new vars.dup
     @path = @build.path
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
-    @pkg = @build.pkg
+    @pkg_file = @build.pkg_file
 
     Log.info "getting name", @package
     getname
     @name = @vars["name"]
     if add_service && (service = ::System::Host.service?.try &.new @name)
-      service.check_availability @pkg["type"]
+      service.check_availability @pkg_file.type
       @service = service
     end
     @pkgdir = @vars["pkgdir"] = @path.app + @name
@@ -33,26 +33,25 @@ struct Manager::Application::Add
     @deps = @build.deps
 
     # Check database type
-    Log.info "calculing informations", path.src + @package + "/pkg.yml"
-    if (db_type = @vars["database_type"]?) && (databases = @pkg["databases"]?)
+    Log.info "calculing informations", path.src + @package
+    if (db_type = @vars["database_type"]?) && (databases = @pkg_file.databases)
       raise "unsupported database type: " + db_type if !databases[db_type]?
     end
 
     # Default variables
     unset_vars = Array(String).new
-    if pkg_config = @pkg["config"]?
-      conf = ::Config::Pkg.new path.src + @package
-      pkg_config.as_h.each_key do |var|
-        variable = var.to_s
+    if pkg_config = @pkg_file.config
+      conf = Config::Pkg.new @build.pkgdir, pkg_config
+      pkg_config.each_key do |var|
         # Skip if a socket is used
-        next if variable == "port" && @socket
-        if !@vars[variable]?
-          key = conf.get(variable).to_s
+        next if var == "port" && @socket
+        if !@vars[var]?
+          key = conf.get(var).to_s
           if key.empty?
-            unset_vars << variable
+            unset_vars << var
           else
-            @vars[variable] = key
-            Log.info "default value set for unset variable", variable + ": " + key
+            @vars[var] = key
+            Log.info "default value set for unset variable", var + ": " + key
           end
         end
       end
@@ -60,7 +59,7 @@ struct Manager::Application::Add
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
     create_user_group
-    raise "socket not supported by #{@pkg["name"]}" if @socket
+    raise "socket not supported by #{@pkg_file.name}" if @socket
 
     if !@socket && (port_string = @vars["port"]?)
       @vars["port"] = ::System.available_port(port_string.to_i).to_s
@@ -96,13 +95,14 @@ struct Manager::Application::Add
 
   private def getname
     # lib and others
-    if @pkg["type"] == "lib"
+    case @pkg_file.type
+    when "lib"
       raise "only applications can be added to the system"
-    elsif @pkg["type"] == "app"
+    when "app"
       @vars["name"] ||= Utils.gen_name @package
       Utils.ascii_alphanumeric_dash? @vars["name"]
     else
-      raise "unknow type: #{@pkg["type"]}"
+      raise "unknow type: #{@pkg_file.type}"
     end
   end
 
@@ -124,18 +124,18 @@ struct Manager::Application::Add
       Dir.mkdir @pkgdir
 
       app_shared = @shared
-      if @pkg["shared"]?.to_s == "false"
-        Log.warn "can't be shared, must be self-contained", @pkg["package"].as_s
+      if !@pkg_file.shared
+        Log.warn "can't be shared, must be self-contained", @pkg_file.package
         app_shared = false
       end
       if app_shared
         Log.info "creating symlinks from " + @build.pkgdir, @pkgdir
         File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
-        File.symlink @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+        File.symlink @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
       else
         Log.info "copying from " + @build.pkgdir, @pkgdir
         FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
-        FileUtils.cp_r @build.pkgdir + "/pkg.yml", @pkgdir + "/pkg.yml"
+        FileUtils.cp_r @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
       end
 
       # Build and add missing dependencies
@@ -160,35 +160,34 @@ struct Manager::Application::Add
 
       # Set configuration variables
       Log.info "setting configuration variables", @name
-      if pkg_config = @pkg["config"]?
-        conf = ::Config::Pkg.new @pkgdir
-        pkg_config.as_h.each_key do |var|
-          variable = var.to_s
-          if variable == "socket"
+      if pkg_config = @pkg_file.config
+        conf = Config::Pkg.new @pkgdir, pkg_config
+        pkg_config.each_key do |var|
+          if var == "socket"
             next
-          elsif variable_value = @vars[variable]?
-            conf.set variable, variable_value
+          elsif variable_value = @vars[var]?
+            conf.set var, variable_value
           end
         end
       end
 
       # PHP-FPM based application
-      if (deps = @pkg["deps"]?) && deps.as_h.has_key? "php"
+      if (deps = @pkg_file.deps) && deps.has_key? "php"
         php_fpm_conf = @pkgdir + "/etc/php-fpm.conf"
         FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
-        php_fpm = YAML.parse File.read(@pkgdir + "/lib/php/pkg.yml")
-        @pkg.as_h[YAML::Any.new "exec"] = YAML::Any.new php_fpm["exec"].as_h
+        php_fpm = PkgFile.new @pkgdir + "/lib/php"
+        @pkg_file.exec = php_fpm.exec
       end
 
       # Running the add task
       Log.info "running configuration tasks", @package
-      if (tasks = @pkg["tasks"]?) && (add_task = tasks["add"]?)
-        Dir.cd @pkgdir { Cmd::Run.new(@vars.dup).run add_task.as_a }
+      if (tasks = @pkg_file.tasks) && (add_task = tasks["add"]?)
+        Dir.cd @pkgdir { Cmd.new(@vars.dup).run add_task.as_a }
       end
 
       if ::System::Owner.root?
         # Set the user and group owner
-        ::System::Owner.add_user(@vars["uid"], @vars["user"], @pkg["description"], @pkgdir + "/srv") if @add_user
+        ::System::Owner.add_user(@vars["uid"], @vars["user"], @pkg_file.description, @pkgdir + "/srv") if @add_user
         ::System::Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
         Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
       end
@@ -196,7 +195,7 @@ struct Manager::Application::Add
       if (service = @service)
         begin
           # Create system services
-          service.create @pkg, @pkgdir, @vars["user"], @vars["group"]
+          service.create @pkg_file, @pkgdir, @vars["user"], @vars["group"]
           service.enable @pkgdir
           Log.info service.class.type + " system service added", @name
         rescue ex
