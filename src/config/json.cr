@@ -18,10 +18,9 @@ struct Config::JSON
   def set(path : Array, value)
     value = Utils.to_type value
     @data[path] = ::JSON::Any.new case value
-    when .is_a? Hash(String, String) then Hash(String, ::JSON::Any).new
-    when .is_a? Array(String)        then Array(::JSON::Any).new
-    else
-      value
+    when Hash(String, String) then Hash(String, ::JSON::Any).new
+    when Array(String)        then Array(::JSON::Any).new
+    else                           value
     end
     write
   end

@@ -12,8 +12,7 @@ module Config
     when "json"        then Config::JSON.new file
     when "ini", "INI"  then Config::INI.new file
     when "yml", "yaml" then Config::YAML.new file
-    else
-      raise "not supported file format: " + format
+    else                    raise "not supported file format: " + format
     end
   end
 end

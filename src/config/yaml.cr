@@ -18,10 +18,9 @@ struct Config::YAML
   def set(path : Array, value)
     value = Utils.to_type value
     @data[path] = ::YAML::Any.new case value
-    when .is_a? Hash(String, String) then Hash(::YAML::Any, ::YAML::Any).new
-    when .is_a? Array(String)        then Array(::YAML::Any).new
-    else
-      value
+    when Hash(String, String) then Hash(::YAML::Any, ::YAML::Any).new
+    when Array(String)        then Array(::YAML::Any).new
+    else                           value
     end
     write
   end

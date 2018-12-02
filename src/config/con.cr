@@ -18,10 +18,9 @@ struct Config::CON
   def set(path : Array, value)
     value = Utils.to_type value
     @data[path] = ::CON::Any.new case value
-    when .is_a? Hash(String, String) then Hash(String, ::CON::Any).new
-    when .is_a? Array(String)        then Array(::CON::Any).new
-    else
-      value
+    when Hash(String, String) then Hash(String, ::CON::Any).new
+    when Array(String)        then Array(::CON::Any).new
+    else                           value
     end
     write
   end

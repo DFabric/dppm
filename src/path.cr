@@ -12,7 +12,7 @@ struct Path
   end
 
   def application_log(name : String, error : Bool = false)
-    app + name + '/' + (error ? Service::LOG_ERROR_PATH : Service::LOG_OUTPUT_PATH)
+    @app + name + '/' + (error ? Service::LOG_ERROR_PATH : Service::LOG_OUTPUT_PATH)
   end
 
   # Creates a PATH environment variable
