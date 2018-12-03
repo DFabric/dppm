@@ -15,8 +15,12 @@ module Manager::Source::Cache
   def update(source : String, prefix : String, force : Bool = false)
     path = Path.new prefix, create: true
     # Update cache if older than 2 days
-    if force || !(File.exists?(path.src) || File.symlink?(path.src)) || latest?(source, path.src)
-      FileUtils.rm_rf path.src
+    if force || !(File.exists?(path.src) || File.symlink?(path.src.rchop)) || latest?(source, path.src)
+      if File.symlink? path.src.rchop
+        File.delete path.src.rchop
+      else
+        FileUtils.rm_rf path.src
+      end
       if Utils.is_http? source
         file = path.prefix + '/' + File.basename source
         HTTPget.file source, file

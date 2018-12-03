@@ -101,7 +101,7 @@ struct Manager::Package::Build
         Dir.cd working_directory do
           package_full_name = "#{@package}-static_#{@version}_#{::System::Host.kernel}_#{::System::Host.arch}"
           package_archive = package_full_name + ".tar.xz"
-          package_mirror = @vars["mirror"] + package_archive
+          package_mirror = @vars["mirror"] + '/' + package_archive
           Log.info "downloading", package_mirror
           HTTPget.file package_mirror
           Log.info "extracting", package_mirror

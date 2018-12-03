@@ -72,7 +72,7 @@ module Utils
     when "{}"    then Hash(String, String).new
     when "[]"    then Array(String).new
     else
-      if string.starts_with?('"') && string.ends_with?('"')
+      if string.starts_with?('\'') && string.ends_with?('\'')
         string[1..-2]
       elsif string.to_i64?
         string.to_i64?

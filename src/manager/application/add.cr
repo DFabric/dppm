@@ -41,7 +41,7 @@ struct Manager::Application::Add
     # Default variables
     unset_vars = Array(String).new
     if pkg_config = @pkg_file.config
-      conf = Config::Pkg.new @build.pkgdir, pkg_config
+      conf = Config::Pkg.new @pkg_file.dir, pkg_config
       pkg_config.each_key do |var|
         # Skip if a socket is used
         next if var == "port" && @socket
@@ -205,6 +205,7 @@ struct Manager::Application::Add
       end
 
       Log.info "add completed", @pkgdir
+      Log.info "application information", @pkg_file.info
       self
     rescue ex
       FileUtils.rm_rf @pkgdir

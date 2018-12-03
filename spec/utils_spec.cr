@@ -30,7 +30,7 @@ describe Utils do
 
   describe "String to_type" do
     it "converts a quoted string to an unquoted one" do
-      Utils.to_type("\"string\"", true).should eq "string"
+      Utils.to_type("'string'", true).should eq "string"
     end
     it "returns the passed string" do
       Utils.to_type("string", false).should eq "string"

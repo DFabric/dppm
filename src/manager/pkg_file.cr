@@ -38,7 +38,9 @@ struct Manager::PkgFile
     {% end %}
     @version = @any["version"]
     @tags = @any["tags"]
-    @shared = @any["shared"].as_bool?
+    @shared = if shared = @any["shared"]?
+                shared.as_bool?
+              end
     {% for hash in %w(deps aliases env exec config) %}\
     if {{hash.id}}_any = @any[{{hash}}]?
       {{hash.id}} = Hash(String, String).new

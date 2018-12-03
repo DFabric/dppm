@@ -229,7 +229,5 @@ struct Manager::Cmd
         raise "unknown command or variable: #{cmd}"
       end
     end
-  rescue ex
-    raise "execution failed: `#{cmdline}`"
   end
 end

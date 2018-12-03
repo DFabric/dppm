@@ -1,2 +1,2 @@
-mirror "https://bitbucket.org/dfabric/packages/downloads/"
+mirror "https://bitbucket.org/dfabric/packages/downloads"
 source "https://github.com/DFabric/packages-source/tarball/master"
