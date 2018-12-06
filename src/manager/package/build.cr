@@ -31,7 +31,13 @@ struct Manager::Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Deps.new(@path).get(@pkg_file, @pkgdir).each { |k, v| @deps[k] = v[0] }
+    Deps.new(@path, @pkgdir).resolve(@pkg_file).each do |dep_pkg_file, versions|
+      @deps[dep_pkg_file.package] = if versions.includes?(latest = Version.from_tag "latest", dep_pkg_file)
+                                      latest
+                                    else
+                                      versions[0]
+                                    end
+    end
   end
 
   private def getversion
@@ -45,22 +51,10 @@ struct Manager::Package::Build
     end
     if ver
       # Check if the version number is available
-      raise "not available version number: " + ver if !Version.get(::System::Host.kernel, ::System::Host.arch, @pkg_file.version).includes? ver
+      raise "not available version number: " + ver if !Version.all(::System::Host.kernel, ::System::Host.arch, @pkg_file.version).includes? ver
       ver
     elsif tag
-      src = @pkg_file.tags[tag]["src"].as_s
-      # Test if the src is an URL or a version number
-      if Utils.is_http? src
-        regex = if regex_tag = @pkg_file.tags[tag]["regex"]?
-                  regex_tag
-                else
-                  @pkg_file.tags["self"]["regex"]
-                end.as_s
-        /(#{regex})/ =~ HTTPget.string(src)
-        $1
-      else
-        src
-      end
+      Version.from_tag tag, pkg_file
     else
       raise "fail to get a version"
     end
@@ -83,7 +77,7 @@ struct Manager::Package::Build
       FileUtils.cp_r(@path.src + package, @pkgdir)
 
       # Build dependencies
-      Deps.new(@path).build @vars.dup, @deps
+      Deps.new(@path, @pkgdir).build @vars.dup, @deps
 
       if (tasks = @pkg_file.tasks) && (build_task = tasks["build"]?)
         Log.info "building", @package

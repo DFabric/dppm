@@ -139,7 +139,7 @@ struct Manager::Application::Add
       end
 
       # Build and add missing dependencies
-      Package::Deps.new(@path).build @vars.dup, @deps, @shared
+      Package::Deps.new(@path, @pkgdir).build @vars.dup, @deps, @shared
 
       # Copy configurations and data
       Log.info "copying configurations and data", @name
