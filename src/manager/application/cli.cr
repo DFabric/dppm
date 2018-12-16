@@ -24,7 +24,7 @@ module Manager::Application::CLI
     Source::Cache.update main_config.source, prefix
 
     # Create task
-    vars.merge! ::System::Host.vars
+    vars.merge! Host.vars
     task = Add.new vars, shared: !contained, add_service: !noservice, socket: socket
 
     Log.info "add", task.simulate

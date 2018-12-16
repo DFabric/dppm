@@ -31,10 +31,10 @@ struct Manager::Cmd
       if line = raw_line.as_s?
         @line_number += 1
         # # New variable assignation
-        if line.size > 4 && \
-              (line_var = line.split(" = ", limit: 2)) && \
-                (first_line_var = line_var[0]) && \
-                  Utils.ascii_alphanumeric_underscore? first_line_var
+        if line.size > 4 &&
+           (line_var = line.split(" = ", limit: 2)) &&
+           (first_line_var = line_var[0]) &&
+           Utils.ascii_alphanumeric_underscore? first_line_var
           if (output = execute(line_var[1])).is_a? String
             @vars[first_line_var] = output
           else
@@ -160,7 +160,7 @@ struct Manager::Cmd
     when "file_empty?"  then File.empty?(cmdline[12..-1]).to_s
     when "file_exists?" then File.exists?(cmdline[13..-1]).to_s
     when "file?"        then File.file?(cmdline[6..-1]).to_s
-    when "root_user?"   then ::System::Owner.root?.to_s
+    when "root_user?"   then Process.root?.to_s
       # Single arugment
     when "cd"            then Dir.cd cmdline[3..-1]; "working directory moved"
     when "mkdir"         then FileUtils.mkdir cmd[1..-1]; "directory created"
@@ -187,8 +187,7 @@ struct Manager::Cmd
     when "link"    then File.link cmd[1], cmd[2]; "hard link created"
     when "symlink" then File.symlink cmd[1], cmd[2]; "symbolic link created"
     when "write"   then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' ')); "text written"
-    when "chmod"   then File.chmod cmd[1], cmd[2].to_i(8); "permissions changed"
-    when "chown" then File.chown cmd[1], ::System::Owner.to_uid(cmd[2]), ::System::Owner.to_gid(cmd[3]); "owner changed"
+    when "chmod" then File.chmod cmd[1], cmd[2].to_i(8); "permissions changed"
     # Custom
     when "dir" then Dir.current
     when "ls"
@@ -200,8 +199,7 @@ struct Manager::Cmd
     when .ends_with? ".get" then Config.new(cmd[1], command[0..-5]).get(cmd[2]).to_s
     when .ends_with? ".del" then Config.new(cmd[1], command[0..-5]).del(cmd[2]).to_s
     when .ends_with? ".set" then Config.new(cmd[1], command[0..-5]).set(cmd[2], cmd[3..-1].join(' ')).to_s
-    when "chmod_r"          then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
-    when "chown_r" then Utils.chown_r cmd[3], ::System::Owner.to_uid(cmd[1]), ::System::Owner.to_gid(cmd[2]); "owner changed"
+    when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
     # Download
     when "getstring" then HTTPget.string cmd[1]
     when "getfile"

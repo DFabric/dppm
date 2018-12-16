@@ -19,10 +19,10 @@ struct Manager::Package::Build
     @name = @vars["name"] = @package + '_' + @version
     @pkgdir = @vars["pkgdir"] = path.pkg + @name
 
-    @arch_alias = @vars["arch_alias"] = if (aliases = @pkg_file.aliases) && (version_alias = aliases[::System::Host.arch]?)
+    @arch_alias = @vars["arch_alias"] = if (aliases = @pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                                           version_alias
                                         else
-                                          ::System::Host.arch
+                                          Host.arch
                                         end
 
     if File.exists? @pkgdir
@@ -51,7 +51,7 @@ struct Manager::Package::Build
     end
     if ver
       # Check if the version number is available
-      raise "not available version number: " + ver if !Version.all(::System::Host.kernel, ::System::Host.arch, @pkg_file.version).includes? ver
+      raise "not available version number: " + ver if !Version.all(Host.kernel, Host.arch, @pkg_file.version).includes? ver
       ver
     elsif tag
       Version.from_tag tag, pkg_file
@@ -93,7 +93,7 @@ struct Manager::Package::Build
                               @pkgdir
                             end
         Dir.cd working_directory do
-          package_full_name = "#{@package}-static_#{@version}_#{::System::Host.kernel}_#{::System::Host.arch}"
+          package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
           package_archive = package_full_name + ".tar.xz"
           package_mirror = @vars["mirror"] + '/' + package_archive
           Log.info "downloading", package_mirror

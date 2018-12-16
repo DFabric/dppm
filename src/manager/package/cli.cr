@@ -33,7 +33,7 @@ module Manager::Package::CLI
     Source::Cache.update main_config.source, prefix
 
     # Create task
-    vars.merge! ::System::Host.vars
+    vars.merge! Host.vars
     task = Build.new vars
     Log.info "build", task.simulate
     task.run if no_confirm || Manager.cli_confirm

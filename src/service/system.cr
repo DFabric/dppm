@@ -64,7 +64,7 @@ module Service::System
     # Set service options
     {description:   pkg_file.description,
      directory:     pkgdir,
-     command:       "#{pkgdir}/#{exec["start"]}",
+     command:       pkgdir + '/' + exec["start"],
      user:          user,
      group:         group,
      restart_delay: "9",

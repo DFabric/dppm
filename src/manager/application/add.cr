@@ -6,11 +6,11 @@ struct Manager::Application::Add
     pkg_file : PkgFile,
     version : String,
     vars : Hash(String, String)
-  @add_user = false
-  @add_group = false
   @deps = Hash(String, String).new
   @socket : Bool
   @shared : Bool
+  @uid : UInt32
+  @gid : UInt32
   @service : Service::Systemd | Service::OpenRC | Nil
 
   def initialize(@vars, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
@@ -24,7 +24,7 @@ struct Manager::Application::Add
     Log.info "getting name", @package
     getname
     @name = @vars["name"]
-    if add_service && (service = ::System::Host.service?.try &.new @name)
+    if add_service && (service = Host.service?.try &.new @name)
       service.check_availability @pkg_file.type
       @service = service
     end
@@ -58,39 +58,47 @@ struct Manager::Application::Add
     end
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
-    create_user_group
+    @uid, @gid = initialize_uid_gid
+    @vars["uid"] = @uid.to_s
+    @vars["gid"] = @gid.to_s
     raise "socket not supported by #{@pkg_file.name}" if @socket
 
     if !@socket && (port_string = @vars["port"]?)
-      @vars["port"] = ::System.available_port(port_string.to_i).to_s
+      @vars["port"] = Host.available_port(port_string.to_i).to_s
     end
   end
 
   # An user uid and a group gid is required
-  private def create_user_group
-    if ::System::Owner.root?
-      owner_id = ::System::Owner.available_id.to_s
-      if uid = @vars["uid"]?
-        @vars["user"] = ::System::Owner.to_user uid
+  private def initialize_uid_gid : Tuple(UInt32, UInt32)
+    if Process.root?
+      libcrown = Libcrown.new
+      uid = gid = libcrown.available_id 9000
+      if uid_tring = @vars["uid"]?
+        uid = uid_tring.to_u32
+        @vars["user"] = libcrown.users[uid].name
       elsif user = @vars["user"]?
-        @vars["uid"] = ::System::Owner.to_user user
+        uid = libcrown.to_uid user
       else
         @vars["user"] = '_' + @name
-        @vars["uid"] = owner_id
-        @add_user = true
       end
-      if gid = @vars["gid"]?
-        @vars["group"] = ::System::Owner.to_group gid
+      if gid_string = @vars["gid"]?
+        gid = gid_string.to_u32
+        @vars["user"] = libcrown.groups[gid].name
       elsif group = @vars["group"]?
-        @vars["gid"] = ::System::Owner.to_group group
+        gid = libcrown.to_gid group
       else
         @vars["group"] = '_' + @name
-        @vars["gid"] = owner_id
-        @add_group = true
       end
     else
-      @vars["group"], @vars["gid"] = ::System::Owner.current_uid_gid.map &.to_s
+      libcrown = Libcrown.new nil
+      uid = Process.uid
+      gid = Process.gid
+      @vars["user"] = libcrown.users[uid].name
+      @vars["group"] = libcrown.users[gid].name
     end
+    {uid, gid}
+  rescue ex
+    raise "error while setting user and group: #{ex}"
   end
 
   private def getname
@@ -185,23 +193,43 @@ struct Manager::Application::Add
         Dir.cd @pkgdir { Cmd.new(@vars.dup).run add_task.as_a }
       end
 
-      if ::System::Owner.root?
-        # Set the user and group owner
-        ::System::Owner.add_user(@vars["uid"], @vars["user"], @pkg_file.description, @pkgdir + "/srv") if @add_user
-        ::System::Owner.add_group(@vars["gid"], @vars["group"]) if @add_group
-        Utils.chown_r @pkgdir, @vars["uid"].to_i, @vars["gid"].to_i
+      if (service = @service)
+        # Create system services
+        service.create @pkg_file, @pkgdir, @vars["user"], @vars["group"]
+        service.enable @pkgdir
+        Log.info service.class.type + " system service added", @name
       end
 
-      if (service = @service)
-        begin
-          # Create system services
-          service.create @pkg_file, @pkgdir, @vars["user"], @vars["group"]
-          service.enable @pkgdir
-          Log.info service.class.type + " system service added", @name
-        rescue ex
-          Log.warn "fail to add a system service", ex.to_s
-          service.delete
+      # Create system user and group for the application
+      if Process.root?
+        libcrown = Libcrown.new
+        add_group_member = false
+        # Add a new group
+        if !libcrown.groups.has_key? @gid
+          Log.info "system group created", @vars["group"]
+          libcrown.add_group Libcrown::Group.new(@vars["group"]), @gid
+          add_group_member = true
         end
+
+        if !libcrown.users.has_key? @uid
+          # Add a new user with `new_group` as its main group
+          new_user = Libcrown::User.new(
+            name: @vars["user"],
+            gid: @gid,
+            gecos_comment: @pkg_file.description,
+            home_directory: @pkgdir + "/srv"
+          )
+          libcrown.add_user new_user, @uid
+          Log.info "system user created", @vars["user"]
+        else
+          !libcrown.user_group_member? @uid, @gid
+          add_group_member = true
+        end
+        libcrown.add_group_member(@uid, @gid) if add_group_member
+
+        # Save the modifications to the disk
+        libcrown.write
+        Utils.chown_r @pkgdir, @uid, @gid
       end
 
       Log.info "add completed", @pkgdir
@@ -209,8 +237,9 @@ struct Manager::Application::Add
       self
     rescue ex
       FileUtils.rm_rf @pkgdir
-      ::System::Owner.del_user(@vars["user"]) if @add_user
-      ::System::Owner.del_group(@vars["group"]) if @add_group
+      begin
+        @service.try &.delete
+      end
       raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"
     end
   end

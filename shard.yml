@@ -19,6 +19,8 @@ dependencies:
     github: j8r/dynany
   exec:
     github: j8r/exec.cr
+  libcrown:
+    github: j8r/libcrown
   tail:
     github: j8r/tail
   cossack:

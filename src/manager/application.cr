@@ -1,3 +1,4 @@
+require "libcrown"
 require "./pkg_file"
 require "./application/*"
 

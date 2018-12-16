@@ -1,3 +1,5 @@
+require "libcrown"
+
 struct Manager::Application::Delete
   getter name : String,
     package : String,
@@ -6,6 +8,8 @@ struct Manager::Application::Delete
     pkg_file : PkgFile,
     service : Service::Systemd | Service::OpenRC | Nil
   @keep_user_group : Bool
+  @uid : UInt32
+  @gid : UInt32
   @user : String
   @group : String
 
@@ -14,13 +18,16 @@ struct Manager::Application::Delete
     @pkgdir = @path.app + @name
 
     file = File.info @pkgdir
-    @user = ::System::Owner.to_user file.owner
-    @group = ::System::Owner.to_group file.group
+    @uid = file.owner
+    @gid = file.group
+    libcrown = Libcrown.new nil
+    @user = libcrown.users[@uid].name
+    @group = libcrown.groups[@gid].name
 
     # Checks
     @pkg_file = PkgFile.new @pkgdir
     @package = pkg_file.package
-    if service = ::System::Host.service?.try &.new @name
+    if service = Host.service?.try &.new @name
       if service.exists? && service.is_app?(@pkgdir)
         Log.info "a system service is found", @name
         service.check_delete
@@ -47,9 +54,11 @@ struct Manager::Application::Delete
     Log.info "deleting", @pkgdir
     @service.try &.delete
 
-    if !@keep_user_group && ::System::Owner.root?
-      ::System::Owner.del_user @user if @user.starts_with? '_' + @name
-      ::System::Owner.del_group @group if @group.starts_with? '_' + @name
+    if !@keep_user_group && Process.root?
+      libcrown = Libcrown.new
+      libcrown.del_user @uid if @user.starts_with? '_' + @name
+      libcrown.del_group @gid if @group.starts_with? '_' + @name
+      libcrown.write
     end
 
     FileUtils.rm_rf @pkgdir

@@ -5,7 +5,6 @@ require "./config"
 require "./logs"
 require "./logger"
 require "./service"
-require "./system"
 
 module CLI
   extend self
@@ -206,7 +205,7 @@ module CLI
               info: "Mirror of precompiled applications (default in #{Manager::MainConfig::FILE})",
             },
             source: {
-              info: "Source of the packages and configurations (default in #{Manager::MainConfig::FILE})",
+              info: "Source path/url of the packages and configurations (default in #{Manager::MainConfig::FILE})",
             },
           },
         },
@@ -279,7 +278,7 @@ module CLI
 
   def version(prefix)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify.chomp + " [" + `git describe --tags --long --always`.stringify.chomp + "]\n\n"}}
-    ::System::Host.vars.each do |k, v|
+    Host.vars.each do |k, v|
       puts k + ": " + v
     end
   end
@@ -289,6 +288,6 @@ module CLI
   end
 
   def service(prefix, service)
-    ::System::Host.service.new service
+    Host.service.new service
   end
 end
