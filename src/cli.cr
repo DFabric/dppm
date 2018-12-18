@@ -1,5 +1,4 @@
 require "clicr"
-require "exec"
 require "./manager"
 require "./config"
 require "./logs"

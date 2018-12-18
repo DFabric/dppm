@@ -125,121 +125,121 @@ struct Manager::Application::Add
     Log.info "adding to the system", @name
     raise "application directory already exists: " + @pkgdir if File.exists? @pkgdir
 
-    begin
-      FileUtils.mkdir_p({@path.app, @path.pkg})
-      # Create the new application
-      @build.run if !@build.exists
-      Dir.mkdir @pkgdir
+    FileUtils.mkdir_p({@path.app, @path.pkg})
+    # Create the new application
+    @build.run if !@build.exists
+    Dir.mkdir @pkgdir
 
-      app_shared = @shared
-      if !@pkg_file.shared
-        Log.warn "can't be shared, must be self-contained", @pkg_file.package
-        app_shared = false
-      end
-      if app_shared
-        Log.info "creating symlinks from " + @build.pkgdir, @pkgdir
-        File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
-        File.symlink @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
-      else
-        Log.info "copying from " + @build.pkgdir, @pkgdir
-        FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
-        FileUtils.cp_r @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
-      end
+    app_shared = @shared
+    if !@pkg_file.shared
+      Log.warn "can't be shared, must be self-contained", @pkg_file.package
+      app_shared = false
+    end
 
-      # Build and add missing dependencies
-      Package::Deps.new(@path, @pkgdir).build @vars.dup, @deps, @shared
+    if app_shared
+      Log.info "creating symlinks from " + @build.pkgdir, @pkgdir
+      File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
+      File.symlink @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
+    else
+      Log.info "copying from " + @build.pkgdir, @pkgdir
+      FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
+      FileUtils.cp_r @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
+    end
 
-      # Copy configurations and data
-      Log.info "copying configurations and data", @name
-      {"/etc", "/srv", "/log"}.each do |dir|
-        dest_dir = @pkgdir + dir
-        src_dir = @build.pkgdir + dir
-        if !File.exists? dest_dir
-          if File.exists? src_dir
-            FileUtils.cp_r src_dir, dest_dir
-          else
-            Dir.mkdir dest_dir
-          end
-        end
-      end
-      File.chmod @pkgdir + "/etc", 0o700
-      File.chmod @pkgdir + "/srv", 0o750
-      File.chmod @pkgdir + "/log", 0o700
+    # Build and add missing dependencies
+    Package::Deps.new(@path, @pkgdir).build @vars.dup, @deps, @shared
 
-      # Set configuration variables
-      Log.info "setting configuration variables", @name
-      if pkg_config = @pkg_file.config
-        conf = Config::Pkg.new @pkgdir, pkg_config
-        pkg_config.each_key do |var|
-          if var == "socket"
-            next
-          elsif variable_value = @vars[var]?
-            conf.set var, variable_value
-          end
-        end
-      end
-
-      # PHP-FPM based application
-      if (deps = @pkg_file.deps) && deps.has_key? "php"
-        php_fpm_conf = @pkgdir + "/etc/php-fpm.conf"
-        FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
-        php_fpm = PkgFile.new @pkgdir + "/lib/php"
-        @pkg_file.exec = php_fpm.exec
-      end
-
-      # Running the add task
-      Log.info "running configuration tasks", @package
-      if (tasks = @pkg_file.tasks) && (add_task = tasks["add"]?)
-        Dir.cd @pkgdir { Cmd.new(@vars.dup).run add_task.as_a }
-      end
-
-      if (service = @service)
-        # Create system services
-        service.create @pkg_file, @pkgdir, @vars["user"], @vars["group"]
-        service.enable @pkgdir
-        Log.info service.class.type + " system service added", @name
-      end
-
-      # Create system user and group for the application
-      if Process.root?
-        libcrown = Libcrown.new
-        add_group_member = false
-        # Add a new group
-        if !libcrown.groups.has_key? @gid
-          Log.info "system group created", @vars["group"]
-          libcrown.add_group Libcrown::Group.new(@vars["group"]), @gid
-          add_group_member = true
-        end
-
-        if !libcrown.users.has_key? @uid
-          # Add a new user with `new_group` as its main group
-          new_user = Libcrown::User.new(
-            name: @vars["user"],
-            gid: @gid,
-            gecos_comment: @pkg_file.description,
-            home_directory: @pkgdir + "/srv"
-          )
-          libcrown.add_user new_user, @uid
-          Log.info "system user created", @vars["user"]
+    # Copy configurations and data
+    Log.info "copying configurations and data", @name
+    {"/etc", "/srv", "/log"}.each do |dir|
+      dest_dir = @pkgdir + dir
+      src_dir = @build.pkgdir + dir
+      if !File.exists? dest_dir
+        if File.exists? src_dir
+          FileUtils.cp_r src_dir, dest_dir
         else
-          !libcrown.user_group_member? @uid, @gid
-          add_group_member = true
+          Dir.mkdir dest_dir
         end
-        libcrown.add_group_member(@uid, @gid) if add_group_member
+      end
+    end
+    File.chmod @pkgdir + "/etc", 0o700
+    File.chmod @pkgdir + "/srv", 0o750
+    File.chmod @pkgdir + "/log", 0o700
 
-        # Save the modifications to the disk
-        libcrown.write
-        Utils.chown_r @pkgdir, @uid, @gid
+    # Set configuration variables
+    Log.info "setting configuration variables", @name
+    if pkg_config = @pkg_file.config
+      conf = Config::Pkg.new @pkgdir, pkg_config
+      pkg_config.each_key do |var|
+        if var == "socket"
+          next
+        elsif variable_value = @vars[var]?
+          conf.set var, variable_value
+        end
+      end
+    end
+
+    # PHP-FPM based application
+    if (deps = @pkg_file.deps) && deps.has_key? "php"
+      php_fpm_conf = @pkgdir + "/etc/php-fpm.conf"
+      FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
+      php_fpm = PkgFile.new @pkgdir + "/lib/php"
+      @pkg_file.exec = php_fpm.exec
+    end
+
+    # Running the add task
+    Log.info "running configuration tasks", @package
+    if (tasks = @pkg_file.tasks) && (add_task = tasks["add"]?)
+      Dir.cd @pkgdir { Cmd.new(@vars.dup).run add_task.as_a }
+    end
+
+    @service.try do |service|
+      # Create system services
+      service.create @pkg_file, @pkgdir, @vars["user"], @vars["group"]
+      service.enable @pkgdir
+      Log.info service.class.type + " system service added", service.name
+    end
+
+    # Create system user and group for the application
+    if Process.root?
+      libcrown = Libcrown.new
+      add_group_member = false
+      # Add a new group
+      if !libcrown.groups.has_key? @gid
+        Log.info "system group created", @vars["group"]
+        libcrown.add_group Libcrown::Group.new(@vars["group"]), @gid
+        add_group_member = true
       end
 
-      Log.info "add completed", @pkgdir
-      Log.info "application information", @pkg_file.info
-      self
-    rescue ex
-      FileUtils.rm_rf @pkgdir
-      begin
-        @service.try &.delete
+      if !libcrown.users.has_key? @uid
+        # Add a new user with `new_group` as its main group
+        new_user = Libcrown::User.new(
+          name: @vars["user"],
+          gid: @gid,
+          gecos_comment: @pkg_file.description,
+          home_directory: @pkgdir + "/srv"
+        )
+        libcrown.add_user new_user, @uid
+        Log.info "system user created", @vars["user"]
+      else
+        !libcrown.user_group_member? @uid, @gid
+        add_group_member = true
       end
+      libcrown.add_group_member(@uid, @gid) if add_group_member
+
+      # Save the modifications to the disk
+      libcrown.write
+      Utils.chown_r @pkgdir, @uid, @gid
+    end
+
+    Log.info "add completed", @pkgdir
+    Log.info "application information", @pkg_file.info
+    self
+  rescue ex
+    FileUtils.rm_rf @pkgdir
+    begin
+      @service.try &.delete
+    ensure
       raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"
     end
   end

@@ -1,7 +1,7 @@
 module Service::CLI
   extend self
 
-  def boot(prefix : String, service : String, state : String)
+  def boot(prefix : String, service : String, state : String) : Bool
     Host.service.new(service).boot Utils.to_b(state)
   end
 

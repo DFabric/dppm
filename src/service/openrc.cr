@@ -25,13 +25,11 @@ struct Service::OpenRC
   end
 
   def run?
-    Exec.new("/sbin/rc-service", [@name, "status"]).success?
+    Service.exec? "/sbin/rc-service", {@name, "status"}
   end
 
   def delete
-    stop
-    boot false if boot?
-    File.delete @file
+    delete_internal
   end
 
   def enable(pkgdir)
@@ -41,15 +39,17 @@ struct Service::OpenRC
 
   {% for action in %w(start stop restart reload) %}
   def {{action.id}} : Bool
-    Exec.new("/sbin/rc-service", [@name, {{action}}]).success?
+    Service.exec? "/sbin/rc-service", {@name, {{action}}}
   end
   {% end %}
 
   def self.version : String
-    Exec.new("/sbin/openrc", ["-V"]).out =~ /([0-9]+\.[0-9]+\.[0-9]+)/
-    $1
-  rescue ex
-    raise "can't retrieve the OpenRC version #{ex}"
+    output, error = Exec.new "/sbin/openrc", {"-V"}, &.wait
+    if output.to_s =~ /([0-9]+\.[0-9]+\.[0-9]+)/
+      $1
+    else
+      raise "can't retrieve the OpenRC version: #{output}#{error}"
+    end
   end
 end
 

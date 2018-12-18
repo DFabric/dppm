@@ -1,10 +1,10 @@
 require "colorize"
 
 struct Log
-  class_setter colorize = true
-  class_setter date = false
-  class_setter output : IO::FileDescriptor = STDOUT
-  class_setter error : IO::FileDescriptor = STDERR
+  class_property output : IO::FileDescriptor = STDOUT
+  class_property error : IO::FileDescriptor = STDERR
+  @@colorize = true
+  @@date = false
 
   def self.date
     @@output << Time.now.to_s("%F %T%z ") if @@date

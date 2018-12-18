@@ -52,7 +52,10 @@ struct Manager::Application::Delete
 
   def run
     Log.info "deleting", @pkgdir
-    @service.try &.delete
+    @service.try do |service|
+      Log.info "deleting system service", service.name
+      service.delete
+    end
 
     if !@keep_user_group && Process.root?
       libcrown = Libcrown.new

@@ -37,32 +37,32 @@ struct Service::Systemd
   end
 
   def run?
-    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", "is-active", @name]).success?
+    Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
   end
 
-  def delete
-    stop
-    boot false if boot?
-    File.delete @file
-    Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"]
+  def delete : Bool
+    delete_internal
+    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
-  def enable(pkgdir)
+  def enable(pkgdir) : Bool
     File.symlink pkgdir + @init_path, @file
-    Exec.new "/bin/systemctl", ["--no-ask-password", "daemon-reload"]
+    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
   {% for action in %w(start stop restart reload) %}
   def {{action.id}} : Bool
-    Exec.new("/bin/systemctl", ["-q", "--no-ask-password", {{action}}, @name]).success?
+    Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
   end
   {% end %}
 
   def self.version : Int32
-    Exec.new("/bin/systemctl", ["--version"]).out =~ / ([0-9]+)\n/
-    $1.to_i
-  rescue ex
-    raise "can't retrieve the systemd version: #{ex}"
+    output, error = Exec.new "/bin/systemctl", {"--version"}, &.wait
+    if output.to_s =~ / ([0-9]+)\n/
+      $1.to_i
+    else
+      raise "can't retrieve the systemd version: #{output}#{error}"
+    end
   end
 end
 

@@ -1,17 +1,6 @@
 require "con"
-require "exec"
 
 struct Manager::Cmd
-  def self.find_bin(pkgdir, cmd)
-    path = "#{pkgdir}/bin/#{cmd}"
-    return path if File.executable? path
-
-    Dir.each_child(pkgdir + "/lib") do |library|
-      path = "#{pkgdir}/lib/#{library}/bin/#{cmd}"
-      return path if File.executable? path
-    end
-  end
-
   getter vars : Hash(String, String) = Hash(String, String).new
   @line_number : Int32 = 0
 
@@ -19,6 +8,16 @@ struct Manager::Cmd
     # Create a PATH variable
     vars.each do |k, v|
       @vars[k.upcase] = v
+    end
+  end
+
+  def self.find_bin(pkgdir, cmd)
+    path = "#{pkgdir}/bin/#{cmd}"
+    return path if File.executable? path
+
+    Dir.each_child(pkgdir + "/lib") do |library|
+      path = "#{pkgdir}/lib/#{library}/bin/#{cmd}"
+      return path if File.executable? path
     end
   end
 
@@ -131,7 +130,7 @@ struct Manager::Cmd
   # Methods from
   # https://crystal-lang.org/api/Dir.html
   # https://crystal-lang.org/api/File.html
-  def execute(cmdline : String, last_cond : Bool = false)
+  def execute(cmdline : String, last_cond : Bool = false) : String | Bool
     # Check if it's a variable
     if cmdline.starts_with?('\'') && cmdline.starts_with?('\'')
       return var_reader cmdline[1..-2]
@@ -144,7 +143,7 @@ struct Manager::Cmd
     when "if"                     then ifexpr cmdline[3..-1]
     when "elif"                   then last_cond ? false : ifexpr(cmdline[5..-1])
     when "else"                   then !last_cond
-    when cmdline.starts_with? '/' then Exec.new(command, cmd[1..-1]).out
+    when cmdline.starts_with? '/' then Manager.exec command, cmd[1..-1]
       # use globs while executing a command
     when "glob"
       if dir = cmd[3]?
@@ -209,11 +208,11 @@ struct Manager::Cmd
       "file retrieved"
       # Compression
       # Use the system `tar` and `unzip` for now
-    when "unzip"     then Exec.new("/usr/bin/unzip", ["-oq", cmd[1], "-d", cmd[2]]); "zip archive extracted"
-    when "untar_bz2" then Exec.new("/bin/tar", ["jxf", cmd[1], "-C", cmd[2]]); "bzip2 archive extracted"
-    when "untar_gz"  then Exec.new("/bin/tar", ["zxf", cmd[1], "-C", cmd[2]]); "gzip archive extracted"
-    when "untar_lz"  then Exec.new("/bin/tar", ["axf", cmd[1], "-C", cmd[2]]); "lz archive extracted"
-    when "untar_xz"  then Exec.new("/bin/tar", ["Jxf", cmd[1], "-C", cmd[2]]); "xz archive extracted"
+    when "unzip"     then Manager.exec "/usr/bin/unzip", {"-oq", cmd[1], "-d", cmd[2]}; "zip archive extracted"
+    when "untar_bz2" then Manager.exec "/bin/tar", {"jxf", cmd[1], "-C", cmd[2]}; "bzip2 archive extracted"
+    when "untar_gz"  then Manager.exec "/bin/tar", {"zxf", cmd[1], "-C", cmd[2]}; "gzip archive extracted"
+    when "untar_lz"  then Manager.exec "/bin/tar", {"axf", cmd[1], "-C", cmd[2]}; "lz archive extracted"
+    when "untar_xz"  then Manager.exec "/bin/tar", {"Jxf", cmd[1], "-C", cmd[2]}; "xz archive extracted"
     when "exit"      then Log.info "exit called", "exiting."; exit 1
     when "error"     then raise cmdline[4..-1].lstrip
     when "true"      then "true"
@@ -222,7 +221,8 @@ struct Manager::Cmd
     else
       # check if the command is available in `bin` of the package and dependencies
       if bin = Cmd.find_bin(@vars["PKGDIR"], command) || Process.find_executable(command)
-        Exec.new(bin, cmd[1..-1]).out
+        Manager.exec bin, cmd[1..-1]
+        "success"
       else
         raise "unknown command or variable: #{cmd}"
       end

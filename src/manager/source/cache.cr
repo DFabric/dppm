@@ -24,7 +24,7 @@ module Manager::Source::Cache
       if Utils.is_http? source
         file = path.prefix + '/' + File.basename source
         HTTPget.file source, file
-        Exec.new("/bin/tar", ["zxf", file, "-C", path.prefix]).out
+        Manager.exec "/bin/tar", {"zxf", file, "-C", path.prefix}
         File.delete file
         File.rename Dir[path.prefix + "/*packages-source*"][0], path.src
         Log.info "cache updated", path.src

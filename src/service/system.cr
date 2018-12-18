@@ -29,6 +29,12 @@ module Service::System
     File.real_path file
   end
 
+  private def delete_internal
+    stop if run?
+    boot false if boot?
+    File.delete @file if exists?
+  end
+
   def check_availability(pkgtype)
     if pkgtype != "app"
       raise "only applications can be added to the system"

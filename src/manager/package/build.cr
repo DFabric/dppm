@@ -72,49 +72,47 @@ struct Manager::Package::Build
   def run
     raise "package already present: " + @pkgdir if @exists
 
-    begin
-      # Copy the sources to the @package directory to build
-      FileUtils.cp_r(@path.src + package, @pkgdir)
+    # Copy the sources to the @package directory to build
+    FileUtils.cp_r(@path.src + package, @pkgdir)
 
-      # Build dependencies
-      Deps.new(@path, @pkgdir).build @vars.dup, @deps
+    # Build dependencies
+    Deps.new(@path, @pkgdir).build @vars.dup, @deps
 
-      if (tasks = @pkg_file.tasks) && (build_task = tasks["build"]?)
-        Log.info "building", @package
-        Dir.cd @pkgdir { Cmd.new(@vars.dup).run build_task.as_a }
-        # Standard package build
-      else
-        Log.info "standard building", @package
+    if (tasks = @pkg_file.tasks) && (build_task = tasks["build"]?)
+      Log.info "building", @package
+      Dir.cd @pkgdir { Cmd.new(@vars.dup).run build_task.as_a }
+      # Standard package build
+    else
+      Log.info "standard building", @package
 
-        working_directory = if pkg_file.type == "app"
-                              Dir.mkdir(app = @pkgdir + "/app")
-                              app
-                            else
-                              @pkgdir
-                            end
-        Dir.cd working_directory do
-          package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
-          package_archive = package_full_name + ".tar.xz"
-          package_mirror = @vars["mirror"] + '/' + package_archive
-          Log.info "downloading", package_mirror
-          HTTPget.file package_mirror
-          Log.info "extracting", package_mirror
-          Exec.new "/bin/tar", ["Jxf", package_archive]
+      working_directory = if pkg_file.type == "app"
+                            Dir.mkdir(app = @pkgdir + "/app")
+                            app
+                          else
+                            @pkgdir
+                          end
+      Dir.cd working_directory do
+        package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
+        package_archive = package_full_name + ".tar.xz"
+        package_mirror = @vars["mirror"] + '/' + package_archive
+        Log.info "downloading", package_mirror
+        HTTPget.file package_mirror
+        Log.info "extracting", package_mirror
+        Manager.exec "/bin/tar", {"Jxf", package_archive}
 
-          # Move out files from the archive folder
-          Dir.cd package_full_name do
-            move "./"
-          end
-          FileUtils.rm_r({package_archive, package_full_name})
+        # Move out files from the archive folder
+        Dir.cd package_full_name do
+          move "./"
         end
+        FileUtils.rm_r({package_archive, package_full_name})
       end
-      FileUtils.rm_rf @pkgdir + "/lib" if pkg_file.type == "app"
-      Log.info "build completed", @pkgdir
-      self
-    rescue ex
-      FileUtils.rm_rf @pkgdir
-      raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"
     end
+    FileUtils.rm_rf @pkgdir + "/lib" if pkg_file.type == "app"
+    Log.info "build completed", @pkgdir
+    self
+  rescue ex
+    FileUtils.rm_rf @pkgdir
+    raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"
   end
 
   private def move(path)
