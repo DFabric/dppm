@@ -1,5 +1,5 @@
 struct Config::Pkg
-  getter config : INI | JSON | YAML | CON
+  getter config : INI | JSON | YAML | CON | TOML
   getter pkg_config : Hash(String, String)
 
   def initialize(pkgdir : String, @pkg_config : Hash(String, String))
