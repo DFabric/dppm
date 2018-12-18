@@ -7,6 +7,7 @@ struct Manager::Application::Delete
     prefix : String,
     pkg_file : PkgFile,
     service : Service::Systemd | Service::OpenRC | Nil
+  @path : Path
   @keep_user_group : Bool
   @uid : UInt32
   @gid : UInt32

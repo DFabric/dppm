@@ -53,9 +53,9 @@ module Service::System
 
   def check_delete
     if !writable?
-      Log.error "root execution needed for system service deletion: " + name
+      raise "root execution needed for system service deletion: " + name
     elsif !exists?
-      Log.error "service doesn't exist: " + name
+      raise "service doesn't exist: " + name
     end
   end
 

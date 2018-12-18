@@ -29,7 +29,7 @@ module Utils
     end
   end
 
-  def to_array(string)
+  def to_array(string : String) : Array(String | Int32)
     array = Array(String | Int32).new
     escape = false
     current = IO::Memory.new
@@ -74,10 +74,10 @@ module Utils
     else
       if string.starts_with?('\'') && string.ends_with?('\'')
         string[1..-2]
-      elsif string.to_i64?
-        string.to_i64?
-      elsif string.to_f64?
-        string.to_f64?
+      elsif int = string.to_i64?
+        int
+      elsif float = string.to_f64?
+        float
       elsif strict
         raise "can't convert to a type: " + string
       else
