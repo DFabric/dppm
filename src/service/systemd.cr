@@ -18,18 +18,6 @@ struct Service::Systemd
     Config
   end
 
-  private def finalize_create(pkgdir : String, sysinit_hash)
-    # systemd 236 and more supports file logging
-    if Systemd.version >= 236
-      sysinit_hash.section["Service"]["StandardOutput"] = "file:#{pkgdir}/" + LOG_OUTPUT_PATH
-      sysinit_hash.section["Service"]["StandardError"] = "file:#{pkgdir}/" + LOG_ERROR_PATH
-    else
-      Log.warn "file logging not supported", "systemd version '#{Systemd.version}' too old (>=336 needed)"
-    end
-  rescue ex
-    Log.warn "file logging not supported", ex.to_s
-  end
-
   def self.each
     Dir["/lib/systemd/system/*.service", "/etc/systemd/system/*.service"].each do |service|
       yield File.basename(service)[0..-9]

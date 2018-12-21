@@ -14,10 +14,6 @@ struct Service::OpenRC
     Config
   end
 
-  private def finalize_create(pkgdir : String, sysinit_hash)
-    # Nothing to do
-  end
-
   def self.each
     Dir.new("/etc/init.d").each do |service|
       yield service

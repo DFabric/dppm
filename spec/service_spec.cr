@@ -1,39 +1,34 @@
 require "./spec_helper"
 require "../src/service"
-require "../src/manager/pkg_file"
+require "file_utils"
 
 describe Service do
-  Dir.cd __DIR__
-  path = __DIR__ + "/service_test/"
-  library = path + "lib/library/bin"
-  Dir.mkdir_p library
+  test_prefix = Prefix.new(__DIR__ + "/service_test", create: true)
+  test_app = test_prefix.new_app("test")
+  FileUtils.cp_r __DIR__ + "/samples/test", test_prefix.app + "/test"
 
-  vars = {
-    "directory" => path,
-    "user"      => "test",
-    "group"     => "test",
-  }
+  user = "test"
+  group = "test"
 
   {% for sysinit in %w(OpenRC Systemd) %}
     describe {{sysinit}} do
       service = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.new("test").create(Manager::PkgFile.new("#{__DIR__}/samples/test"), path, "test", "test")
+        Service::{{sysinit.id}}.new("test").create(test_app, user, group)
       end
 
       it "parses the service" do
-        service = Service::{{sysinit.id}}::Config.parse(path + "etc/init/" + {{sysinit.downcase}})
+        service = Service::{{sysinit.id}}::Config.parse(test_app.path + Service::ROOT_PATH + {{sysinit.downcase}})
       end
 
       it "checks values of sections" do
-        vars.each do |key, value|
-          value.should eq(service.get key)
-        end
+        user.should eq service.get("user")
+        group.should eq service.get("group")
       end
 
       it "verifies the builded service" do
-        File.read(path + "etc/init/" + {{sysinit.downcase}}).should eq service.build
+        File.read(test_app.path + Service::ROOT_PATH + {{sysinit.downcase}}).should eq service.build
       end
 
       it "adds environment variables" do
@@ -48,5 +43,5 @@ describe Service do
     end
   {% end %}
 
-  FileUtils.rm_r path
+  FileUtils.rm_r test_prefix.path
 end

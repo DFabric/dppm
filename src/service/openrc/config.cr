@@ -16,8 +16,6 @@ struct Service::OpenRC::Config
   def base
     {"pidfile"    => "/run/${RC_SVCNAME}.pid",
      "supervisor" => "supervise-daemon",
-     "stdout"     => LOG_OUTPUT_PATH,
-     "stderr"     => LOG_ERROR_PATH,
      "depend"     => {
        "after" => ["net"],
      },
@@ -26,22 +24,21 @@ struct Service::OpenRC::Config
 
   def shim(name)
     case name
-    when "directory"     then ["chdir"]
-    when "user"          then ["user"]
-    when "group"         then ["group"]
-    when "after"         then ["depend", "after"]
-    when "want"          then ["depend", "want"]
-    when "environment"   then ["env"]
-    when "description"   then ["description"]
-    when "restart_delay" then ["respawn_delay"]
-    when "network"       then ["net"]
-    when "umask"         then ["umask"]
-    when "reload"        then ["reload"]
-    when "pidfile"       then ["pidfile"]
-    when "log_output"    then ["stdout"]
-    when "log_error"     then ["stderr"]
-    else
-      raise "don't exist in openrc: " + name
+    when "directory"     then {"chdir"}
+    when "user"          then {"user"}
+    when "group"         then {"group"}
+    when "after"         then {"depend", "after"}
+    when "want"          then {"depend", "want"}
+    when "environment"   then {"env"}
+    when "description"   then {"description"}
+    when "restart_delay" then {"respawn_delay"}
+    when "network"       then {"net"}
+    when "umask"         then {"umask"}
+    when "reload"        then {"reload"}
+    when "pidfile"       then {"pidfile"}
+    when "log_output"    then {"stdout"}
+    when "log_error"     then {"stderr"}
+    else                      raise "don't exist in openrc: " + name
     end
   end
 
@@ -50,9 +47,9 @@ struct Service::OpenRC::Config
       return "#{@section["command"]} #{@section["command_args"]}"
     end
     keys = shim name
-    case keys.size
-    when 1 then @section[keys[0]]
-    when 2
+    case keys
+    when Tuple(String) then @section[keys[0]]
+    when Tuple(String, String)
       subdata = @section[keys[0]]
       if subdata.is_a? Hash(String, String)
         subdata[keys[1]]
@@ -64,7 +61,7 @@ struct Service::OpenRC::Config
     end
   end
 
-  def set(name, value)
+  def set(name : String, value)
     case name
     when "command"
       command = value.split ' '
@@ -76,15 +73,15 @@ struct Service::OpenRC::Config
                             "supervise-daemon --signal #{value} --pidfile \"$pidfile\"",
                             "eend $? \"Failed to reload $RC_SVCNAME\""]
     else
-      keys = shim name
-      if keys.size == 1
+      case keys = shim name
+      when Tuple(String)
         @section[keys[0]] = value
-      elsif keys.size == 2
+      when Tuple(String, String)
         subdata = @section[keys[0]]
         case subdata
-        when .is_a? Hash(String, String)
+        when Hash(String, String)
           subdata[keys[1]] = value
-        when .is_a? Hash(String, Array(String))
+        when Hash(String, Array(String))
           subdata[keys[1]] << value
         else
           raise "unknown type: #{subdata}"

@@ -3,7 +3,7 @@ require "./config"
 require "./host"
 require "./httpget"
 require "./manager/*"
-require "./path"
+require "./prefix"
 require "./service"
 
 module Manager

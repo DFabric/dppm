@@ -1,27 +1,22 @@
 struct Manager::Package::Clean
-  getter prefix : String,
-    pkgdir : String,
-    packages = Set(String).new
+  getter prefix : Prefix,
+    packages : Set(String) = Set(String).new
 
-  def initialize(@prefix)
-    list = List.new @prefix
-    @pkgdir = list.path.pkg
-    Log.info "retrieving available packages", @pkgdir
-    list.pkg { |pkg| @packages << pkg }
-    Log.info "excluding used packages by applications", list.path.app
-    list.app do |app|
-      app_path = list.path.app + app
-      @packages.delete File.basename(File.real_path(app_path + "/app").rstrip("app"))
-      lib_path = app_path + "/lib/"
-      Dir.each_child lib_path do |lib_package|
-        @packages.delete File.basename(File.real_path lib_path + lib_package)
+  def initialize(@prefix : Prefix)
+    Log.info "retrieving available packages", @prefix.pkg
+    @prefix.each_pkg { |pkg| @packages << pkg.name }
+    Log.info "excluding used packages by applications", @prefix.pkg
+    @prefix.each_app do |app|
+      @packages.delete File.basename(app.real_app_dir)
+      app.each_lib do |lib_package|
+        @packages.delete File.basename(lib_package)
       end
     end
   end
 
   def simulate
     String.build do |str|
-      str << "\npkgdir: " << @pkgdir
+      str << "\nbasedir: " << @prefix.pkg
       str << "\nunused packages: \n"
       @packages.each do |pkg|
         str << pkg << '\n'
@@ -30,13 +25,13 @@ struct Manager::Package::Clean
   end
 
   def run
-    Log.info "deleting packages", @pkgdir
+    Log.info "deleting packages", @prefix.pkg
     @packages.each do |pkg|
-      path = @pkgdir + '/' + pkg
-      FileUtils.rm_rf path
+      pkg_prefix = prefix.new_pkg pkg
+      FileUtils.rm_rf pkg_prefix.path
       Log.info "package deleted", pkg
     end
-    Log.info "packages cleaned", @pkgdir
+    Log.info "packages cleaned", @prefix.pkg
     self
   end
 end

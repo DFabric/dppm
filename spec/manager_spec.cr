@@ -46,7 +46,7 @@ describe Manager do
       application: app_name,
       custom_vars: Array(String).new,
       keep_user_group: true).not_nil!
-    delete.name.should eq app_name
+    delete.app.name.should eq app_name
   end
 
   it "cleans the unused package" do

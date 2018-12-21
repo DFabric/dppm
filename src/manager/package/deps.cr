@@ -1,20 +1,20 @@
 require "semantic_compare"
 
 struct Manager::Package::Deps
-  @path : Path
-  @pkgdir : String
+  @prefix : Prefix
+  @lib_path : String
 
-  def initialize(@path, @pkgdir)
+  def initialize(@prefix : Prefix, @lib_path : String)
   end
 
-  def resolve(pkg_file : PkgFile, dependencies = Hash(PkgFile, Array(String)).new) : Hash(PkgFile, Array(String))
+  def resolve(pkg_file : Prefix::PkgFile, dependencies = Hash(Prefix::PkgFile, Array(String)).new) : Hash(Prefix::PkgFile, Array(String))
     # No need to parse if the deps list is empty
     (pkgdeps = pkg_file.deps) || return dependencies
 
     pkgdeps.each_key do |dep|
-      if !File.exists? @pkgdir + "/lib/#{dep}"
+      if !File.exists? @lib_path + '/' + dep
         Log.info "calculing dependency", dep
-        dep_pkg_file = PkgFile.new @path.src + dep
+        dep_pkg_file = @prefix.new_src(dep).pkg_file
         newvers = Array(String).new
 
         # If an array of versions is already provided by a dependency
@@ -42,16 +42,16 @@ struct Manager::Package::Deps
 
   def build(vars : Hash(String, String), deps : Hash(String, String), shared : Bool = true)
     Log.info "dependencies", "building"
-    Dir.mkdir_p @pkgdir + "/lib"
+    Dir.mkdir_p @lib_path
 
     # Build each dependency
     deps.each do |dep, ver|
-      dep_prefix_pkg = "#{@path.pkg}/#{dep}_#{ver}"
-      dep_pkgdir_lib = "#{@pkgdir}/lib/#{dep}"
+      dep_prefix_pkg = "#{@prefix.pkg}/#{dep}_#{ver}"
+      dep_pkgdir_lib = @lib_path + '/' + dep
       if !Dir.exists? dep_prefix_pkg
         Log.info "building dependency", dep_prefix_pkg
         Package::Build.new(vars.merge({"package" => dep,
-                                       "version" => ver})).run
+                                       "version" => ver}), @prefix).run
       end
       if !File.exists? dep_pkgdir_lib
         if shared

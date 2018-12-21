@@ -1,28 +1,24 @@
 struct Manager::Package::Delete
-  getter name : String,
-    package : String,
-    pkgdir : String,
-    prefix : String,
+  getter package : String,
+    name : String,
+    pkg : Prefix::Pkg,
     version : String
-  @path : Path
 
-  def initialize(@package, @prefix)
-    @path = Path.new @prefix
-    @pkgdir = @path.pkg + package
-    raise "package directory doesn't exists: " + @pkgdir if !Dir.exists? @pkgdir
+  def initialize(prefix : Prefix, @package : String)
+    @pkg = prefix.new_pkg @package
 
-    Log.info "getting package name", @pkgdir
+    Log.info "getting package name", @pkg.path
     @name, @version = package.split '_'
 
     # Check if the package is still in use by an application
-    Dir.each_child @path.app do |app|
-      app_path = @path.app + app
-      lib_path = app_path + "/lib/" + @name
-      app_path = app_path + "/app"
-      if File.symlink?(lib_path) && File.real_path(lib_path) == @pkgdir
-        raise "library package `#{package}` still in use by an application: " + File.basename app
-      elsif File.symlink?(app_path) && File.real_path(app_path) == @pkgdir + "/app"
-        raise "application package `#{package}` still in use by an application: " + File.basename app
+    prefix.each_app do |app|
+      if app.real_app_dir == @pkg.path
+        raise "library package `#{package}` still in use by an application: " + @pkg.path
+      end
+      app.each_lib do |app_lib|
+        if app_lib == @pkg.path
+          raise "application package `#{package}` still in use by an application: " + @pkg.path
+        end
       end
     end
   end
@@ -31,14 +27,14 @@ struct Manager::Package::Delete
     String.build do |str|
       str << "\nname: " << @name
       str << "\nversion: " << @version
-      str << "\npkgdir: " << @pkgdir
+      str << "\nbasepath: " << @pkg.path
     end
   end
 
   def run
-    Log.info "deleting", @pkgdir
-    FileUtils.rm_rf @pkgdir
-    Log.info "package deleted", @pkgdir
+    Log.info "deleting", @pkg.path
+    FileUtils.rm_rf @pkg.path
+    Log.info "package deleted", @pkg.path
     self
   end
 end

@@ -4,7 +4,7 @@ module Manager::Application::CLI
   def delete(no_confirm, config, mirror, source, prefix, application, custom_vars, keep_user_group)
     Log.info "initializing", "delete"
 
-    task = Delete.new application, prefix, keep_user_group
+    task = Delete.new application, Prefix.new(prefix), keep_user_group
 
     Log.info "delete", task.simulate
     task.run if no_confirm || Manager.cli_confirm
@@ -21,11 +21,12 @@ module Manager::Application::CLI
     vars_parser custom_vars, vars
 
     # Update cache
-    Source::Cache.update main_config.source, prefix
+    root_prefix = Prefix.new prefix, true
+    Source::Cache.update root_prefix, main_config.source
 
     # Create task
     vars.merge! Host.vars
-    task = Add.new vars, shared: !contained, add_service: !noservice, socket: socket
+    task = Add.new vars, root_prefix, shared: !contained, add_service: !noservice, socket: socket
 
     Log.info "add", task.simulate
     task.run if no_confirm || Manager.cli_confirm
@@ -45,21 +46,20 @@ module Manager::Application::CLI
   end
 
   def query(prefix, application, path, **args)
-    Query.new(Path.new(prefix).app + application).pkg path
+    pkg_file = Prefix.new(prefix).new_app(application).pkg_file
+    Query.new(pkg_file).pkg path
   end
 
   def exec(prefix, application, **args)
-    app_path = Path.new(prefix).app + application
-    pkg_file = PkgFile.new app_path
+    app = Prefix.new(prefix).new_app application
 
-    if exec = pkg_file.exec
+    if exec = app.pkg_file.exec
       exec_start = exec["start"].split(' ')
     else
-      raise "exec key not present in #{pkg_file.path}"
+      raise "exec key not present in #{app.pkg_file.path}"
     end
-    if env_vars = pkg_file.env
-      env_vars["PATH"] = Path.env_var app_path
-    end
+    env_vars = app.pkg_file.env || Hash(String, String).new
+    env_vars["PATH"] = app.env_vars
 
     Process.run command: exec_start[0],
       args: (exec_start[1..-1] if exec_start[1]?),
@@ -68,6 +68,6 @@ module Manager::Application::CLI
       shell: false,
       output: STDOUT,
       error: STDERR,
-      chdir: app_path
+      chdir: app.path
   end
 end

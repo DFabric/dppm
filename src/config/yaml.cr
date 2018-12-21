@@ -7,8 +7,11 @@ struct Config::YAML
   getter file : String
 
   def initialize(@file : String)
-    data = File.read @file
-    @data = ::YAML.parse data
+    @data = read
+  end
+
+  def read : ::YAML::Any
+    @data = ::YAML.parse File.read(@file)
   end
 
   def get(path : Array)

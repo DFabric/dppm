@@ -9,7 +9,7 @@ module Service::CLI
     if all
       all_status &block
     else
-      app_status prefix, &block
+      app_status(prefix, &block)
     end
   end
 
@@ -42,9 +42,9 @@ module Service::CLI
     end
   end
 
-  def app_status(prefix : String = PREFIX)
-    Dir.each_child(Path.new(prefix).app) do |app|
-      yield Host.service.new app
+  def app_status(prefix : String = PREFIX, &block)
+    Prefix.new(prefix).each_app do |app|
+      Host.service.new(app.name)
     end
   end
 end

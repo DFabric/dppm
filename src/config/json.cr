@@ -7,8 +7,11 @@ struct Config::JSON
   getter file : String
 
   def initialize(@file : String)
-    data = File.read @file
-    @data = ::JSON.parse data
+    @data = read
+  end
+
+  def read : ::JSON::Any
+    @data = ::JSON.parse File.read(@file)
   end
 
   def get(path : Array)

@@ -6,7 +6,7 @@ module Config
     new file, File.extname(file).lchop
   end
 
-  def self.new(file : String, format : String)
+  def self.new(file : String, format : String) : Format
     case format
     when "con"         then Config::CON.new file
     when "json"        then Config::JSON.new file

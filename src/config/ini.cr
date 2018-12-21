@@ -8,9 +8,12 @@ struct Config::INI
   getter space : Bool
 
   def initialize(@file : String)
-    data = File.read @file
-    @space = data.includes?(" = ") ? true : false
-    @data = ::INI.parse data
+    @data = read
+    @space = @data.includes?(" = ") ? true : false
+  end
+
+  def read : Hash(String, Hash(String, String))
+    @data = ::INI.parse File.read(@file)
   end
 
   def get(path : Array)

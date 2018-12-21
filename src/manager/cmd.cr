@@ -220,7 +220,7 @@ struct Manager::Cmd
     when "puts"      then cmdline[3..-1].lstrip
     else
       # check if the command is available in `bin` of the package and dependencies
-      if bin = Cmd.find_bin(@vars["PKGDIR"], command) || Process.find_executable(command)
+      if bin = Cmd.find_bin(@vars["BASEDIR"], command) || Process.find_executable(command)
         Manager.exec bin, cmd[1..-1]
         "success"
       else

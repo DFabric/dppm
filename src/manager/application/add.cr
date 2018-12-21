@@ -1,9 +1,7 @@
 struct Manager::Application::Add
   getter package : String,
     name : String,
-    pkgdir : String,
-    path : Path,
-    pkg_file : PkgFile,
+    app : Prefix::App,
     version : String,
     vars : Hash(String, String)
   @deps = Hash(String, String).new
@@ -12,41 +10,41 @@ struct Manager::Application::Add
   @uid : UInt32
   @gid : UInt32
   @service : Service::Systemd | Service::OpenRC | Nil
+  @build : Package::Build
 
-  def initialize(@vars, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
+  def initialize(@vars, prefix : Prefix, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
     # Build missing dependencies
-    @build = Package::Build.new vars.dup
-    @path = @build.path
+    @build = Package::Build.new vars.dup, prefix
     @version = @vars["version"] = @build.version
     @package = @vars["package"] = @build.package
-    @pkg_file = @build.pkg_file
+    @deps = @build.deps
 
     Log.info "getting name", @package
     getname
     @name = @vars["name"]
+    @app = @build.pkg.new_app @name
+
     if add_service && (service = Host.service?.try &.new @name)
-      service.check_availability @pkg_file.type
+      service.check_availability @app.pkg_file.type
       @service = service
     end
-    @pkgdir = @vars["pkgdir"] = @path.app + @name
-    raise "application directory already exists: " + @pkgdir if File.exists? @pkgdir
-    @deps = @build.deps
+    @vars["basedir"] = @app.path
+    raise "application directory already exists: " + @app.path if File.exists? @app.path
 
     # Check database type
-    Log.info "calculing informations", path.src + @package
-    if (db_type = @vars["database_type"]?) && (databases = @pkg_file.databases)
+    Log.info "calculing informations", @app.path
+    if (db_type = @vars["database_type"]?) && (databases = @app.pkg_file.databases)
       raise "unsupported database type: " + db_type if !databases[db_type]?
     end
 
     # Default variables
     unset_vars = Array(String).new
-    if pkg_config = @pkg_file.config
-      conf = Config::Pkg.new @pkg_file.dir, pkg_config
+    if pkg_config = @build.src.pkg_file.config
       pkg_config.each_key do |var|
         # Skip if a socket is used
         next if var == "port" && @socket
         if !@vars[var]?
-          key = conf.get(var).to_s
+          key = @build.src.get_config(var).to_s
           if key.empty?
             unset_vars << var
           else
@@ -61,7 +59,7 @@ struct Manager::Application::Add
     @uid, @gid = initialize_uid_gid
     @vars["uid"] = @uid.to_s
     @vars["gid"] = @gid.to_s
-    raise "socket not supported by #{@pkg_file.name}" if @socket
+    raise "socket not supported by #{@app.pkg_file.name}" if @socket
 
     if !@socket && (port_string = @vars["port"]?)
       @vars["port"] = Host.available_port(port_string.to_i).to_s
@@ -103,14 +101,14 @@ struct Manager::Application::Add
 
   private def getname
     # lib and others
-    case @pkg_file.type
+    case @build.pkg.pkg_file.type
     when "lib"
       raise "only applications can be added to the system"
     when "app"
       @vars["name"] ||= Utils.gen_name @package
       Utils.ascii_alphanumeric_dash? @vars["name"]
     else
-      raise "unknow type: #{@pkg_file.type}"
+      raise "unknow type: #{@build.pkg.pkg_file.type}"
     end
   end
 
@@ -123,80 +121,69 @@ struct Manager::Application::Add
 
   def run
     Log.info "adding to the system", @name
-    raise "application directory already exists: " + @pkgdir if File.exists? @pkgdir
+    raise "application directory already exists: " + @app.path if File.exists? @app.path
 
-    FileUtils.mkdir_p({@path.app, @path.pkg})
     # Create the new application
+    Dir.mkdir @app.path
     @build.run if !@build.exists
-    Dir.mkdir @pkgdir
+
+    # Build and add missing dependencies
+    Package::Deps.new(@app.prefix, @app.lib).build @vars.dup, @deps, @shared
 
     app_shared = @shared
-    if !@pkg_file.shared
-      Log.warn "can't be shared, must be self-contained", @pkg_file.package
+    if !@app.pkg_file.shared
+      Log.warn "can't be shared, must be self-contained", @app.pkg_file.package
       app_shared = false
     end
 
     if app_shared
-      Log.info "creating symlinks from " + @build.pkgdir, @pkgdir
-      File.symlink @build.pkgdir + "/app", @pkgdir + "/app"
-      File.symlink @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
+      Log.info "creating symlinks from " + @build.pkg.path, @app.path
+      File.symlink @build.pkg.app_dir, @app.app_dir
+      File.symlink @build.pkg.pkg_file.path, @app.pkg_file.path
     else
-      Log.info "copying from " + @build.pkgdir, @pkgdir
-      FileUtils.cp_r @build.pkgdir + "/app", @pkgdir + "/app"
-      FileUtils.cp_r @build.pkg_file.path, @pkgdir + Manager::PkgFile::NAME
+      Log.info "copying from " + @build.pkg.path, @app.path
+      FileUtils.cp_r @build.pkg.app_dir, @app.app_dir
+      FileUtils.cp_r @build.pkg.pkg_file.path, @app.pkg_file.path
     end
-
-    # Build and add missing dependencies
-    Package::Deps.new(@path, @pkgdir).build @vars.dup, @deps, @shared
 
     # Copy configurations and data
     Log.info "copying configurations and data", @name
-    {"/etc", "/srv", "/log"}.each do |dir|
-      dest_dir = @pkgdir + dir
-      src_dir = @build.pkgdir + dir
-      if !File.exists? dest_dir
-        if File.exists? src_dir
-          FileUtils.cp_r src_dir, dest_dir
-        else
-          Dir.mkdir dest_dir
-        end
-      end
-    end
-    File.chmod @pkgdir + "/etc", 0o700
-    File.chmod @pkgdir + "/srv", 0o750
-    File.chmod @pkgdir + "/log", 0o700
+
+    copy_dir @build.pkg.conf, @app.conf
+    copy_dir @build.pkg.data, @app.data
+    Dir.mkdir @app.log_dir
+    @app.set_permissions
 
     # Set configuration variables
     Log.info "setting configuration variables", @name
-    if pkg_config = @pkg_file.config
-      conf = Config::Pkg.new @pkgdir, pkg_config
+    if pkg_config = @app.pkg_file.config
       pkg_config.each_key do |var|
         if var == "socket"
           next
         elsif variable_value = @vars[var]?
-          conf.set var, variable_value
+          @app.set_config var, variable_value
         end
       end
     end
 
     # PHP-FPM based application
-    if (deps = @pkg_file.deps) && deps.has_key? "php"
-      php_fpm_conf = @pkgdir + "/etc/php-fpm.conf"
-      FileUtils.cp(@pkgdir + "/lib/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
-      php_fpm = PkgFile.new @pkgdir + "/lib/php"
-      @pkg_file.exec = php_fpm.exec
+    if (deps = @app.pkg_file.deps) && deps.has_key? "php"
+      php_fpm_conf = @app.conf + "/php-fpm.conf"
+      FileUtils.cp(@app.lib + "/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
+      php_fpm = Prefix::PkgFile.new @app.lib + "/php"
+      @app.pkg_file.exec = php_fpm.exec
     end
 
     # Running the add task
     Log.info "running configuration tasks", @package
-    if (tasks = @pkg_file.tasks) && (add_task = tasks["add"]?)
-      Dir.cd @pkgdir { Cmd.new(@vars.dup).run add_task.as_a }
+    if (tasks = @app.pkg_file.tasks) && (add_task = tasks["add"]?)
+      Dir.cd(@app.path) { Cmd.new(@vars.dup).run add_task.as_a }
     end
 
     @service.try do |service|
       # Create system services
-      service.create @pkg_file, @pkgdir, @vars["user"], @vars["group"]
-      service.enable @pkgdir
+      service.create @app, @vars["user"], @vars["group"]
+      service.enable @app.path
       Log.info service.class.type + " system service added", service.name
     end
 
@@ -216,8 +203,8 @@ struct Manager::Application::Add
         new_user = Libcrown::User.new(
           name: @vars["user"],
           gid: @gid,
-          gecos_comment: @pkg_file.description,
-          home_directory: @pkgdir + "/srv"
+          gecos_comment: @app.pkg_file.description,
+          home_directory: @app.data
         )
         libcrown.add_user new_user, @uid
         Log.info "system user created", @vars["user"]
@@ -229,18 +216,28 @@ struct Manager::Application::Add
 
       # Save the modifications to the disk
       libcrown.write
-      Utils.chown_r @pkgdir, @uid, @gid
+      Utils.chown_r @app.path, @uid, @gid
     end
 
-    Log.info "add completed", @pkgdir
-    Log.info "application information", @pkg_file.info
+    Log.info "add completed", @app.path
+    Log.info "application information", @app.pkg_file.info
     self
   rescue ex
-    FileUtils.rm_rf @pkgdir
+    FileUtils.rm_rf @app.path
     begin
       @service.try &.delete
     ensure
-      raise "add failed - application deleted: #{@pkgdir}:\n#{ex}"
+      raise "add failed - application deleted: #{@app.path}:\n#{ex}"
+    end
+  end
+
+  private def copy_dir(src : String, dest : String)
+    if !File.exists? dest
+      if File.exists? src
+        FileUtils.cp_r src, dest
+      else
+        Dir.mkdir dest
+      end
     end
   end
 end

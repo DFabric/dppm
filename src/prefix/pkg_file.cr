@@ -1,8 +1,7 @@
 require "con"
 
-struct Manager::PkgFile
-  NAME = "/pkg.con"
-  getter path : String,
+struct Prefix::PkgFile
+  getter package_version : String,
     package : String,
     name : String,
     type : String,
@@ -22,16 +21,26 @@ struct Manager::PkgFile
     shared : Bool?,
     any : CON::Any
   property exec : Hash(String, String)?
-  property dir : String
+
+  @path : String? = nil
+
+  def path : String
+    @path ||= @root_dir + "pkg.con"
+  end
+
+  protected def path=(@path : String?) : String?
+  end
+
+  protected property root_dir : String
 
   macro finished
-  def initialize(@dir : String)
-    raise "package directory doesn't exists: " + @dir if !Dir.exists? @dir
-    @path = @dir + NAME
+  def initialize(@root_dir : String)
+    raise "package directory doesn't exists: " + @root_dir if !Dir.exists? @root_dir
+    @package_version = File.basename(File.dirname(File.real_path(path))).split('_').last
 
-    Log.info "parsing package informations", @path
+    Log.info "parsing package informations", path
     # TODO: Replace CON::Any by CON::Serializable
-    @any = CON.parse File.read(@path)
+    @any = CON.parse File.read(path)
 
     {% for string in %w(name package type license url docs description info) %}\
     @{{string.id}} = @any[{{string}}].as_s

@@ -37,17 +37,17 @@ tasks {
   build [
     "test = ls /tmp"
     "puts '${test}'"
-    "puts glob puts ls '${PKGDIR}*'"
-    "if !PREFIX" [
-      "error 'PREFIX don't exists'"
+    "puts glob puts ls '${BASEDIR}*'"
+    "if !BASEDIR" [
+      "error 'BASEDIR don't exists'"
     ]
-    "if PREFIX" [
+    "if BASEDIR" [
       "if !ok" [
         "ok = '0'"
       ]
     ]
     "else" [
-      "error 'Env vars not taken into account: PRPEFIX = ${PREFIX}'"
+      "error 'Env vars not taken into account: BASEDIR = ${BASEDIR}'"
     ]
     "if ok == '0'"[
       "puts 'good'"

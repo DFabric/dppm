@@ -2,38 +2,35 @@ module Manager::ConfigCLI
   extend self
 
   def get(prefix, nopkg : Bool, application, path, **args)
-    config = config prefix, nopkg, application
-    if config.is_a? Config
-      return config.data if nopkg && path == "."
-      config.get path
-    elsif config.is_a?(Config::Pkg) && path == "."
+    app = Prefix.new(prefix).new_app application
+    if nopkg
+      return app.config.data if nopkg && path == "."
+      app.config.get path
+    elsif path == "."
       String.build do |str|
-        config.pkg_config.each_key do |key|
-          str << key << ": " << config.get(key) << '\n'
+        app.pkg_file_config.each_key do |key|
+          str << key << ": " << app.get_config(key) << '\n'
         end
       end
     end
   end
 
   def set(prefix, nopkg : Bool, application, path, value, **args)
-    config(prefix, nopkg, application).set path, value
+    app = Prefix.new(prefix).new_app application
+    app = Prefix.new(prefix).new_app application
+    if nopkg
+      app.config.set path, value
+    else
+      app.set_config path, value
+    end
   end
 
   def del(prefix, nopkg : Bool, application, path, **args)
-    config(prefix, nopkg, application).del path
-  end
-
-  private def config(prefix, nopkg, application)
-    path = Path.new(prefix).app + application
+    app = Prefix.new(prefix).new_app application
     if nopkg
-      Config.new path
+      app.config.del path
     else
-      pkg_file = PkgFile.new path
-      if pkg_file_config = pkg_file.config
-        Config::Pkg.new path, pkg_file_config
-      else
-        raise "no `config` key in " + pkg_file.path
-      end
+      app.del_config path
     end
   end
 end

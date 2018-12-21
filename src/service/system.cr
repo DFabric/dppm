@@ -47,10 +47,6 @@ module Service::System
     end
   end
 
-  def is_app?(pkgdir : String) : Bool
-    real_file == pkgdir + @init_path
-  end
-
   def check_delete
     if !writable?
       raise "root execution needed for system service deletion: " + name
@@ -59,22 +55,25 @@ module Service::System
     end
   end
 
-  def create(pkg_file, pkgdir : String, user : String, group : String)
-    sysinit_hash = config.parse pkgdir + init_path
-    (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
+  def create(app : Prefix::App, user : String, group : String)
+    sysinit_hash = config.parse app.path + init_path
+    (exec = app.pkg_file.exec) || raise "exec key not present in #{app.pkg_file.path}"
 
-    Dir.mkdir_p pkgdir + Service::ROOT_PATH
+    Dir.mkdir_p app.path + Service::ROOT_PATH
 
     Log.info "creating system service", name
 
     # Set service options
-    {description:   pkg_file.description,
-     directory:     pkgdir,
-     command:       pkgdir + '/' + exec["start"],
+    {description:   app.pkg_file.description,
+     directory:     app.path,
+     command:       app.path + exec["start"],
      user:          user,
      group:         group,
      restart_delay: "9",
-     umask:         "027"}.each do |key, value|
+     umask:         "007",
+     log_output:    app.log_file_output,
+     log_error:     app.log_file_error,
+    }.each do |key, value|
       sysinit_hash.set key.to_s, value
     end
 
@@ -84,15 +83,13 @@ module Service::System
     end
 
     # Add a PATH environment variable if not empty
-    path = Path.env_var pkgdir
+    path = app.env_vars
     sysinit_hash.env_set("PATH", path) if !path.empty?
-    if pkg_env = pkg_file.env
+    if pkg_env = app.pkg_file.env
       pkg_env.each { |var, value| sysinit_hash.env_set var, value }
     end
 
-    finalize_create pkgdir, sysinit_hash
-
     # Convert back hashes to service files
-    File.write pkgdir + @init_path, sysinit_hash.build
+    File.write app.path + @init_path, sysinit_hash.build
   end
 end

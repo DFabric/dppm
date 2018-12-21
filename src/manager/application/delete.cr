@@ -1,24 +1,18 @@
 require "libcrown"
 
 struct Manager::Application::Delete
-  getter name : String,
-    package : String,
-    pkgdir : String,
-    prefix : String,
-    pkg_file : PkgFile,
-    service : Service::Systemd | Service::OpenRC | Nil
-  @path : Path
+  getter app : Prefix::App
+  @service : Service::Systemd | Service::OpenRC | Nil
   @keep_user_group : Bool
   @uid : UInt32
   @gid : UInt32
   @user : String
   @group : String
 
-  def initialize(@name : String, @prefix : String, @keep_user_group : Bool = false)
-    @path = Path.new @prefix
-    @pkgdir = @path.app + @name
+  def initialize(@name : String, prefix : Prefix, @keep_user_group : Bool = false)
+    @app = prefix.new_app @name
 
-    file = File.info @pkgdir
+    file = File.info @app.path
     @uid = file.owner
     @gid = file.group
     libcrown = Libcrown.new nil
@@ -26,10 +20,8 @@ struct Manager::Application::Delete
     @group = libcrown.groups[@gid].name
 
     # Checks
-    @pkg_file = PkgFile.new @pkgdir
-    @package = pkg_file.package
     if service = Host.service?.try &.new @name
-      if service.exists? && service.is_app?(@pkgdir)
+      if service.exists?
         Log.info "a system service is found", @name
         service.check_delete
         @service = service
@@ -43,8 +35,8 @@ struct Manager::Application::Delete
   def simulate
     String.build do |str|
       str << "\nname: " << @name
-      str << "\npackage: " << @package
-      str << "\npkgdir: " << @pkgdir
+      str << "\npackage: " << @app.pkg_file.package
+      str << "\nbasedir: " << @app.path
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
       str << "\nservice: " << @service.try &.file if @service
@@ -52,7 +44,7 @@ struct Manager::Application::Delete
   end
 
   def run
-    Log.info "deleting", @pkgdir
+    Log.info "deleting", @app.path
     @service.try do |service|
       Log.info "deleting system service", service.name
       service.delete
@@ -65,8 +57,8 @@ struct Manager::Application::Delete
       libcrown.write
     end
 
-    FileUtils.rm_rf @pkgdir
-    Log.info "delete completed", @pkgdir
+    FileUtils.rm_rf @app.path
+    Log.info "delete completed", @app.path
     self
   end
 end

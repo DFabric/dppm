@@ -1,37 +1,38 @@
 struct Manager::Package::Build
   getter package : String,
     name : String,
-    pkgdir : String,
-    path : Path,
-    pkg_file : PkgFile,
+    src : Prefix::Src,
+    pkg : Prefix::Pkg,
     version : String,
     exists = false,
     deps = Hash(String, String).new,
     vars : Hash(String, String)
   @arch_alias : String
 
-  def initialize(@vars)
-    @path = Path.new vars["prefix"]
-    @package = @vars["package"].split(':')[0]
-    @pkg_file = PkgFile.new @path.src + @package
-    @version = vars["version"] = getversion
-    @vars["package"] = @package
-    @name = @vars["name"] = @package + '_' + @version
-    @pkgdir = @vars["pkgdir"] = path.pkg + @name
+  def initialize(@vars : Hash(String, String), prefix : Prefix)
+    parsed_package = @vars["package"].split(':')
+    @package = @vars["package"] = parsed_package[0]
 
-    @arch_alias = @vars["arch_alias"] = if (aliases = @pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
+    @src = Prefix::Src.new prefix, @package
+    @version = vars["version"] = getversion parsed_package[1]?
+    @name = @vars["name"] = @package + '_' + @version
+
+    @pkg = @src.new_pkg @name
+    @vars["basedir"] = @pkg.path
+
+    @arch_alias = @vars["arch_alias"] = if (aliases = @src.pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                                           version_alias
                                         else
                                           Host.arch
                                         end
 
-    if File.exists? @pkgdir
-      Log.info "already present", @pkgdir
+    if File.exists? @pkg.path
+      Log.info "already present", @pkg.path
       @exists = true
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Deps.new(@path, @pkgdir).resolve(@pkg_file).each do |dep_pkg_file, versions|
+    Deps.new(prefix, @pkg.lib).resolve(@src.pkg_file).each do |dep_pkg_file, versions|
       @deps[dep_pkg_file.package] = if versions.includes?(latest = Version.from_tag "latest", dep_pkg_file)
                                       latest
                                     else
@@ -40,10 +41,10 @@ struct Manager::Package::Build
     end
   end
 
-  private def getversion
+  private def getversion(package_tag : String? = nil) : String
     if ver = @vars["version"]?
     elsif tag = @vars["tag"]?
-    elsif tag = @vars["package"].split(':')[1]?
+    elsif tag = package_tag
       ver = tag if tag =~ /^([0-9]+\.[0-9]+\.[0-9]+)/
       # Set a default tag if not set
     else
@@ -51,10 +52,10 @@ struct Manager::Package::Build
     end
     if ver
       # Check if the version number is available
-      raise "not available version number: " + ver if !Version.all(Host.kernel, Host.arch, @pkg_file.version).includes? ver
+      raise "not available version number: " + ver if !Version.all(Host.kernel, Host.arch, @src.pkg_file.version).includes? ver
       ver
     elsif tag
-      Version.from_tag tag, pkg_file
+      Version.from_tag tag, @src.pkg_file
     else
       raise "fail to get a version"
     end
@@ -70,26 +71,26 @@ struct Manager::Package::Build
   end
 
   def run
-    raise "package already present: " + @pkgdir if @exists
+    raise "package already present: " + @pkg.path if @exists
 
     # Copy the sources to the @package directory to build
-    FileUtils.cp_r(@path.src + package, @pkgdir)
+    FileUtils.cp_r(@src.path, @pkg.path)
 
     # Build dependencies
-    Deps.new(@path, @pkgdir).build @vars.dup, @deps
+    Deps.new(@pkg.prefix, @pkg.lib).build @vars.dup, @deps
 
-    if (tasks = @pkg_file.tasks) && (build_task = tasks["build"]?)
+    if (tasks = @src.pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @package
-      Dir.cd @pkgdir { Cmd.new(@vars.dup).run build_task.as_a }
+      Dir.cd(@pkg.path) { Cmd.new(@vars.dup).run build_task.as_a }
       # Standard package build
     else
       Log.info "standard building", @package
 
-      working_directory = if pkg_file.type == "app"
-                            Dir.mkdir(app = @pkgdir + "/app")
-                            app
+      working_directory = if @src.pkg_file.type == "app"
+                            Dir.mkdir @pkg.app_dir
+                            @pkg.app_dir
                           else
-                            @pkgdir
+                            @pkg.path
                           end
       Dir.cd working_directory do
         package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
@@ -107,12 +108,12 @@ struct Manager::Package::Build
         FileUtils.rm_r({package_archive, package_full_name})
       end
     end
-    FileUtils.rm_rf @pkgdir + "/lib" if pkg_file.type == "app"
-    Log.info "build completed", @pkgdir
+    FileUtils.rm_rf @pkg.lib if @src.pkg_file.type == "app"
+    Log.info "build completed", @pkg.path
     self
   rescue ex
-    FileUtils.rm_rf @pkgdir
-    raise "build failed - package deleted: #{@pkgdir}:\n#{ex}"
+    FileUtils.rm_rf @pkg.path
+    raise "build failed - package deleted: #{@pkg.path}:\n#{ex}"
   end
 
   private def move(path)

@@ -1,8 +1,9 @@
 require "tail"
+require "./prefix"
 
 module Logs
-  def self.get(prefix, lines, error, follow, application, &block : String -> _)
-    log_file = Path.new(prefix).application_log application, error
+  def self.get(prefix : String, lines : String?, error : Bool, follow : Bool, application : String, &block : String -> _)
+    log_file = Prefix.new(prefix).new_app(application).log_file error
     tail = Tail::File.new log_file
     if follow
       tail.follow(lines: (lines ? lines.to_i : 10), &block)

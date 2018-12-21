@@ -96,7 +96,7 @@ module CLI
                 list: {
                   alias:  'l',
                   info:   "List applications",
-                  action: "Manager::List.cli_app",
+                  action: "Manager::ListCLI.app",
                 },
                 query: {
                   alias:     'q',
@@ -130,7 +130,7 @@ module CLI
                 list: {
                   alias:  'l',
                   info:   "List packages",
-                  action: "Manager::List.cli_pkg",
+                  action: "Manager::ListCLI.pkg",
                 },
                 query: {
                   alias:     'q',
@@ -152,7 +152,7 @@ module CLI
                 list: {
                   alias:  'l',
                   info:   "List source packages",
-                  action: "Manager::List.cli_src",
+                  action: "Manager::ListCLI.src",
                 },
                 query: {
                   alias:     'q',
@@ -192,7 +192,7 @@ module CLI
             list: {
               alias:  'l',
               info:   "List all applications, packages and sources",
-              action: "::Manager::List.cli_all",
+              action: "::Manager::ListCLI.all",
             },
           },
           variables: {
