@@ -10,4 +10,10 @@ module Config::Format
   def del(path : String)
     del Utils.to_array(path)
   end
+
+  def open(update : Bool = false, &block : Config -> _)
+    read if update
+    yield self
+    write
+  end
 end

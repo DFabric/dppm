@@ -83,8 +83,8 @@ tasks {
     "puts 'End of tests'"
   ]
   add [
-    "json.get etc/config.json vars.port"
-    "json.set etc/config.json vars.port 127"
+    "get etc/config.json vars.port"
+    "set etc/config.json vars.port 127"
     "set etc/config.json host 'localhost'"
     "set etc/config.json server {}"
     "read etc/config.json"

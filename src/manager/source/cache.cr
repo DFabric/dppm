@@ -14,9 +14,10 @@ module Manager::Source::Cache
   # Download a cache of package sources
   def update(prefix : Prefix, source : String, force : Bool = false)
     # Update cache if older than 2 days
-    if force || !(File.exists?(prefix.src) || File.symlink?(prefix.src.rchop)) || latest?(source, prefix.src)
-      if File.symlink? prefix.src.rchop
-        File.delete prefix.src.rchop
+    source_dir = prefix.src.rchop
+    if force || !(File.exists?(prefix.src) || File.symlink?(source_dir)) || latest?(source, source_dir)
+      if File.symlink? source_dir
+        File.delete source_dir
       else
         FileUtils.rm_rf prefix.src
       end
@@ -29,8 +30,8 @@ module Manager::Source::Cache
         Log.info "cache updated", prefix.src
       else
         FileUtils.mkdir_p prefix.path
-        File.symlink File.real_path(source), prefix.src.rchop
-        Log.info "symlink added from `#{File.real_path(source)}`", prefix.src.rchop
+        File.symlink File.real_path(source), source_dir
+        Log.info "symlink added from `#{File.real_path(source)}`", source_dir
       end
     else
       Log.info "cache up-to-date", prefix.src

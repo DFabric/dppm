@@ -25,15 +25,13 @@ struct Config::CON
     when Array(String)        then Array(::CON::Any).new
     else                           value
     end
-    write
   end
 
   def del(path : Array)
     @data.delete path
-    write
   end
 
-  private def write
+  def write
     File.write @file, @data.to_pretty_con
   end
 end

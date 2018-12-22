@@ -57,7 +57,7 @@ struct Manager::Application::Delete
       libcrown.write
     end
 
-    FileUtils.rm_rf @app.path
+    FileUtils.rm_r @app.path
     Log.info "delete completed", @app.path
     self
   end

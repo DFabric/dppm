@@ -8,7 +8,7 @@ module Manager::ConfigCLI
       app.config.get path
     elsif path == "."
       String.build do |str|
-        app.pkg_file_config.each_key do |key|
+        app.pkg_file.config.each_key do |key|
           str << key << ": " << app.get_config(key) << '\n'
         end
       end
@@ -16,7 +16,6 @@ module Manager::ConfigCLI
   end
 
   def set(prefix, nopkg : Bool, application, path, value, **args)
-    app = Prefix.new(prefix).new_app application
     app = Prefix.new(prefix).new_app application
     if nopkg
       app.config.set path, value

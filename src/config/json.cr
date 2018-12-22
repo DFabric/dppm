@@ -25,15 +25,13 @@ struct Config::JSON
     when Array(String)        then Array(::JSON::Any).new
     else                           value
     end
-    write
   end
 
   def del(path : Array)
     @data.delete path
-    write
   end
 
-  private def write
+  def write
     File.write @file, @data.to_pretty_json
   end
 end

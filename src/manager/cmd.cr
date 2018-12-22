@@ -192,12 +192,17 @@ struct Manager::Cmd
     when "ls"
       directory = cmd[1]? || Dir.current
       Dir.entries(directory).join '\n'
-    when "get"              then Config.new(cmd[1]).get(cmd[2]).to_s
-    when "del"              then Config.new(cmd[1]).del(cmd[2]).to_s
-    when "set"              then Config.new(cmd[1]).set(cmd[2], cmd[3..-1].join(' ')).to_s
-    when .ends_with? ".get" then Config.new(cmd[1], command[0..-5]).get(cmd[2]).to_s
-    when .ends_with? ".del" then Config.new(cmd[1], command[0..-5]).del(cmd[2]).to_s
-    when .ends_with? ".set" then Config.new(cmd[1], command[0..-5]).set(cmd[2], cmd[3..-1].join(' ')).to_s
+    when "get" then Config.new(cmd[1]).get(cmd[2]).to_s
+    when "del"
+      config = Config.new(cmd[1])
+      result = config.del(cmd[2]).to_s
+      config.write
+      result
+    when "set"
+      config = Config.new(cmd[1])
+      result = config.set(cmd[2], cmd[3..-1].join(' ')).to_s
+      config.write
+      result
     when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
     # Download
     when "getstring" then HTTPget.string cmd[1]

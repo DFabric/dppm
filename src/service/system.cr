@@ -35,10 +35,8 @@ module Service::System
     File.delete @file if exists?
   end
 
-  def check_availability(pkgtype)
-    if pkgtype != "app"
-      raise "only applications can be added to the system"
-    elsif exists?
+  def check_availability
+    if exists?
       raise "system service already exist: " + name
     elsif !File.writable? File.dirname(@file)
       Log.warn "service creation unavailable, root permissions required", name

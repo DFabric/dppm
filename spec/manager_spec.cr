@@ -47,12 +47,13 @@ describe Manager do
       custom_vars: Array(String).new,
       keep_user_group: true).not_nil!
     delete.app.name.should eq app_name
+    Dir.exists?(delete.app.path).should be_false
   end
 
   it "cleans the unused package" do
     set = Set(String).new
     set << package + '_' + version
-    Manager::Package::CLI.clean(
+    clean = Manager::Package::CLI.clean(
       no_confirm: true,
       config: DPPM_CONFIG_FILE,
       mirror: nil,

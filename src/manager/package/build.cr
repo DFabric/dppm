@@ -32,7 +32,7 @@ struct Manager::Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @package
-    Deps.new(prefix, @pkg.lib).resolve(@src.pkg_file).each do |dep_pkg_file, versions|
+    Deps.new(prefix, @pkg.libs_dir).resolve(@src.pkg_file).each do |dep_pkg_file, versions|
       @deps[dep_pkg_file.package] = if versions.includes?(latest = Version.from_tag "latest", dep_pkg_file)
                                       latest
                                     else
@@ -77,7 +77,7 @@ struct Manager::Package::Build
     FileUtils.cp_r(@src.path, @pkg.path)
 
     # Build dependencies
-    Deps.new(@pkg.prefix, @pkg.lib).build @vars.dup, @deps
+    Deps.new(@pkg.prefix, @pkg.libs_dir).build @vars.dup, @deps
 
     if (tasks = @src.pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @package
@@ -87,8 +87,8 @@ struct Manager::Package::Build
       Log.info "standard building", @package
 
       working_directory = if @src.pkg_file.type == "app"
-                            Dir.mkdir @pkg.app_dir
-                            @pkg.app_dir
+                            Dir.mkdir @pkg.app_path
+                            @pkg.app_path
                           else
                             @pkg.path
                           end
@@ -108,7 +108,7 @@ struct Manager::Package::Build
         FileUtils.rm_r({package_archive, package_full_name})
       end
     end
-    FileUtils.rm_rf @pkg.lib if @src.pkg_file.type == "app"
+    FileUtils.rm_rf @pkg.libs_dir if @src.pkg_file.type == "app"
     Log.info "build completed", @pkg.path
     self
   rescue ex

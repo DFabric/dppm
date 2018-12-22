@@ -12,12 +12,12 @@ struct Manager::Package::Delete
 
     # Check if the package is still in use by an application
     prefix.each_app do |app|
-      if app.real_app_dir == @pkg.path
-        raise "library package `#{package}` still in use by an application: " + @pkg.path
+      if app.real_app_path + '/' == @pkg.path
+        raise "application package `#{package}` still in use by an application: " + app.name
       end
       app.each_lib do |app_lib|
         if app_lib == @pkg.path
-          raise "application package `#{package}` still in use by an application: " + @pkg.path
+          raise "library package `#{package}` still in use by an application: " + app.name
         end
       end
     end

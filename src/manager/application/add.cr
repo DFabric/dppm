@@ -25,7 +25,7 @@ struct Manager::Application::Add
     @app = @build.pkg.new_app @name
 
     if add_service && (service = Host.service?.try &.new @name)
-      service.check_availability @app.pkg_file.type
+      service.check_availability
       @service = service
     end
     @vars["basedir"] = @app.path
@@ -38,19 +38,17 @@ struct Manager::Application::Add
     end
 
     # Default variables
-    unset_vars = Array(String).new
-    if pkg_config = @build.src.pkg_file.config
-      pkg_config.each_key do |var|
-        # Skip if a socket is used
-        next if var == "port" && @socket
-        if !@vars[var]?
-          key = @build.src.get_config(var).to_s
-          if key.empty?
-            unset_vars << var
-          else
-            @vars[var] = key
-            Log.info "default value set for unset variable", var + ": " + key
-          end
+    unset_vars = Set(String).new
+    @build.src.pkg_file.config.each_key do |var|
+      # Skip if a socket is used
+      next if var == "port" && @socket
+      if !@vars[var]?
+        key = @build.src.get_config(var).to_s
+        if key.empty?
+          unset_vars << var
+        else
+          @vars[var] = key
+          Log.info "default value set for unset variable", var + ": " + key
         end
       end
     end
@@ -102,13 +100,11 @@ struct Manager::Application::Add
   private def getname
     # lib and others
     case @build.pkg.pkg_file.type
-    when "lib"
-      raise "only applications can be added to the system"
-    when "app"
+    when .app?
       @vars["name"] ||= Utils.gen_name @package
       Utils.ascii_alphanumeric_dash? @vars["name"]
     else
-      raise "unknow type: #{@build.pkg.pkg_file.type}"
+      raise "only applications can be added to the system: #{@build.pkg.pkg_file.type}"
     end
   end
 
@@ -128,7 +124,7 @@ struct Manager::Application::Add
     @build.run if !@build.exists
 
     # Build and add missing dependencies
-    Package::Deps.new(@app.prefix, @app.lib).build @vars.dup, @deps, @shared
+    Package::Deps.new(@app.prefix, @app.libs_dir).build @vars.dup, @deps, @shared
 
     app_shared = @shared
     if !@app.pkg_file.shared
@@ -138,39 +134,38 @@ struct Manager::Application::Add
 
     if app_shared
       Log.info "creating symlinks from " + @build.pkg.path, @app.path
-      File.symlink @build.pkg.app_dir, @app.app_dir
+      File.symlink @build.pkg.app_path, @app.app_path
       File.symlink @build.pkg.pkg_file.path, @app.pkg_file.path
     else
       Log.info "copying from " + @build.pkg.path, @app.path
-      FileUtils.cp_r @build.pkg.app_dir, @app.app_dir
+      FileUtils.cp_r @build.pkg.app_path, @app.app_path
       FileUtils.cp_r @build.pkg.pkg_file.path, @app.pkg_file.path
     end
 
     # Copy configurations and data
     Log.info "copying configurations and data", @name
 
-    copy_dir @build.pkg.conf, @app.conf
-    copy_dir @build.pkg.data, @app.data
-    Dir.mkdir @app.log_dir
+    copy_dir @build.pkg.conf_dir, @app.conf_dir
+    copy_dir @build.pkg.data_dir, @app.data_dir
+    Dir.mkdir @app.logs_dir
     @app.set_permissions
 
     # Set configuration variables
     Log.info "setting configuration variables", @name
-    if pkg_config = @app.pkg_file.config
-      pkg_config.each_key do |var|
-        if var == "socket"
-          next
-        elsif variable_value = @vars[var]?
-          @app.set_config var, variable_value
-        end
+    @app.pkg_file.config.each_key do |var|
+      if var == "socket"
+        next
+      elsif variable_value = @vars[var]?
+        @app.set_config var, variable_value
       end
     end
+    @app.config.write
 
     # PHP-FPM based application
     if (deps = @app.pkg_file.deps) && deps.has_key? "php"
-      php_fpm_conf = @app.conf + "/php-fpm.conf"
-      FileUtils.cp(@app.lib + "/php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
-      php_fpm = Prefix::PkgFile.new @app.lib + "/php"
+      php_fpm_conf = @app.conf_dir + "php-fpm.conf"
+      FileUtils.cp(@app.libs_dir + "php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
+      php_fpm = Prefix::PkgFile.new @app.libs_dir + "php"
       @app.pkg_file.exec = php_fpm.exec
     end
 
@@ -204,7 +199,7 @@ struct Manager::Application::Add
           name: @vars["user"],
           gid: @gid,
           gecos_comment: @app.pkg_file.description,
-          home_directory: @app.data
+          home_directory: @app.data_dir
         )
         libcrown.add_user new_user, @uid
         Log.info "system user created", @vars["user"]
