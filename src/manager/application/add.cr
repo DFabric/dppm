@@ -1,7 +1,5 @@
 struct Manager::Application::Add
-  getter package : String,
-    name : String,
-    app : Prefix::App,
+  getter app : Prefix::App,
     version : String,
     vars : Hash(String, String)
   @deps = Hash(String, String).new
@@ -16,15 +14,15 @@ struct Manager::Application::Add
     # Build missing dependencies
     @build = Package::Build.new vars.dup, prefix
     @version = @vars["version"] = @build.version
-    @package = @vars["package"] = @build.package
+    @vars["package"] = @build.pkg.name
     @deps = @build.deps
 
-    Log.info "getting name", @package
+    Log.info "getting name", @build.pkg.name
     getname
-    @name = @vars["name"]
-    @app = @build.pkg.new_app @name
+    name = @vars["name"]
+    @app = @build.pkg.new_app name
 
-    if add_service && (service = Host.service?.try &.new @name)
+    if add_service && (service = Host.service?.try &.new @app.name)
       service.check_availability
       @service = service
     end
@@ -39,16 +37,19 @@ struct Manager::Application::Add
 
     # Default variables
     unset_vars = Set(String).new
-    @build.src.pkg_file.config.each_key do |var|
-      # Skip if a socket is used
-      next if var == "port" && @socket
-      if !@vars[var]?
-        key = @build.src.get_config(var).to_s
-        if key.empty?
-          unset_vars << var
-        else
-          @vars[var] = key
-          Log.info "default value set for unset variable", var + ": " + key
+
+    if @build.src.pkg_file.config?
+      @build.src.pkg_file.config.each_key do |var|
+        # Skip if a socket is used
+        next if var == "port" && @socket
+        if !@vars[var]?
+          key = @build.src.get_config(var).to_s
+          if key.empty?
+            unset_vars << var
+          else
+            @vars[var] = key
+            Log.info "default value set for unset variable", var + ": " + key
+          end
         end
       end
     end
@@ -75,7 +76,7 @@ struct Manager::Application::Add
       elsif user = @vars["user"]?
         uid = libcrown.to_uid user
       else
-        @vars["user"] = '_' + @name
+        @vars["user"] = '_' + @app.name
       end
       if gid_string = @vars["gid"]?
         gid = gid_string.to_u32
@@ -83,7 +84,7 @@ struct Manager::Application::Add
       elsif group = @vars["group"]?
         gid = libcrown.to_gid group
       else
-        @vars["group"] = '_' + @name
+        @vars["group"] = '_' + @app.name
       end
     else
       libcrown = Libcrown.new nil
@@ -101,7 +102,7 @@ struct Manager::Application::Add
     # lib and others
     case @build.pkg.pkg_file.type
     when .app?
-      @vars["name"] ||= Utils.gen_name @package
+      @vars["name"] ||= Utils.gen_name @build.pkg.name
       Utils.ascii_alphanumeric_dash? @vars["name"]
     else
       raise "only applications can be added to the system: #{@build.pkg.pkg_file.type}"
@@ -116,7 +117,7 @@ struct Manager::Application::Add
   end
 
   def run
-    Log.info "adding to the system", @name
+    Log.info "adding to the system", @app.name
     raise "application directory already exists: " + @app.path if File.exists? @app.path
 
     # Create the new application
@@ -143,7 +144,7 @@ struct Manager::Application::Add
     end
 
     # Copy configurations and data
-    Log.info "copying configurations and data", @name
+    Log.info "copying configurations and data", @app.name
 
     copy_dir @build.pkg.conf_dir, @app.conf_dir
     copy_dir @build.pkg.data_dir, @app.data_dir
@@ -151,15 +152,17 @@ struct Manager::Application::Add
     @app.set_permissions
 
     # Set configuration variables
-    Log.info "setting configuration variables", @name
-    @app.pkg_file.config.each_key do |var|
-      if var == "socket"
-        next
-      elsif variable_value = @vars[var]?
-        @app.set_config var, variable_value
+    Log.info "setting configuration variables", @app.name
+    if @app.pkg_file.config?
+      @app.pkg_file.config.each_key do |var|
+        if var == "socket"
+          next
+        elsif variable_value = @vars[var]?
+          @app.set_config var, variable_value
+        end
       end
+      @app.config.write
     end
-    @app.config.write
 
     # PHP-FPM based application
     if (deps = @app.pkg_file.deps) && deps.has_key? "php"
@@ -170,7 +173,7 @@ struct Manager::Application::Add
     end
 
     # Running the add task
-    Log.info "running configuration tasks", @package
+    Log.info "running configuration tasks", @build.pkg.name
     if (tasks = @app.pkg_file.tasks) && (add_task = tasks["add"]?)
       Dir.cd(@app.path) { Cmd.new(@vars.dup).run add_task.as_a }
     end

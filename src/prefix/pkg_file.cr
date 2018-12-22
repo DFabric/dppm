@@ -49,7 +49,7 @@ struct Prefix::PkgFile
     @config ||= if config = @config
                   config
                 else
-                  raise "not `config` key entry in " + path
+                  raise "no `config` key entry in " + path
                 end
   end
 

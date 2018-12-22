@@ -3,21 +3,19 @@ require "../src/manager"
 
 describe Manager do
   Dir.mkdir TEMP_DPPM_PREFIX
-  package = "test"
-  app_name = ""
-  version = ""
+  custom_vars = ["name=" + TEST_APP_PACKAGE_NAME]
 
   it "builds an application" do
-    add = Manager::Package::CLI.build(
+    build = Manager::Package::CLI.build(
       no_confirm: true,
       config: DPPM_CONFIG_FILE,
       mirror: nil,
       source: __DIR__ + "/samples",
       prefix: TEMP_DPPM_PREFIX,
-      package: package,
+      package: TEST_APP_PACKAGE_NAME,
       custom_vars: Array(String).new).not_nil!
-    version = add.version
-    (app_name = add.name).starts_with?(package).should be_true
+    build.pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
+    Dir.exists?(build.pkg.path).should be_true
   end
 
   it "adds an application" do
@@ -27,13 +25,14 @@ describe Manager do
       mirror: nil,
       source: __DIR__ + "/samples",
       prefix: TEMP_DPPM_PREFIX,
-      application: package,
-      custom_vars: Array(String).new,
+      application: TEST_APP_PACKAGE_NAME,
+      custom_vars: custom_vars,
       contained: false,
       noservice: true,
       socket: false).not_nil!
-    version = add.version
-    (app_name = add.name).starts_with?(package).should be_true
+    add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
+    Dir.exists?(add.app.path).should be_true
+    add.app.each_lib &.starts_with?(TEST_LIB_PACKAGE_NAME).should be_true
   end
 
   it "deletes an application" do
@@ -43,22 +42,21 @@ describe Manager do
       mirror: nil,
       source: __DIR__ + "/samples",
       prefix: TEMP_DPPM_PREFIX,
-      application: app_name,
-      custom_vars: Array(String).new,
+      application: TEST_APP_PACKAGE_NAME,
+      custom_vars: custom_vars,
       keep_user_group: true).not_nil!
-    delete.app.name.should eq app_name
+    delete.app.name.should eq TEST_APP_PACKAGE_NAME
     Dir.exists?(delete.app.path).should be_false
   end
 
   it "cleans the unused package" do
-    set = Set(String).new
-    set << package + '_' + version
     clean = Manager::Package::CLI.clean(
       no_confirm: true,
       config: DPPM_CONFIG_FILE,
       mirror: nil,
       source: nil,
-      prefix: TEMP_DPPM_PREFIX).not_nil!.packages.should eq set
+      prefix: TEMP_DPPM_PREFIX).not_nil!
+    Dir.children(clean.prefix.pkg).should be_empty
   end
 
   FileUtils.rm_rf TEMP_DPPM_PREFIX

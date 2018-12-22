@@ -1,0 +1,25 @@
+package     "libfake"
+name        "Fake library"
+type        "lib"
+license     "ISC"
+docs        "http://localhost/docs"
+url         "http://localhost"
+description "Test Package"
+info        "This is a test package that can be used in Tests"
+
+
+version {
+  self {
+    src [ "0.0.1" ]
+  }
+}
+tags {
+  latest { src "0.0.1" }
+}
+
+tasks {
+  build [
+    "mkdir bin"
+    "touch bin/libfake"
+  ]
+}

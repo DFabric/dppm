@@ -1,40 +1,36 @@
-package     "test"
-name        "Test"
+package     "testapp"
+name        "Test App"
 type        "app"
 license     "ISC"
 docs        "http://localhost/docs"
 url         "http://localhost"
 description "Test Package"
-info        "This is a test package that can be used in UT"
+info        "This is a test package that can be used in Tests"
 shared       true
 
-# Fake dependencies
-# deps {
-#   nodejs "6.0.0 || >=6.7.1 <7.0.0"
-#   busybox "^1.26.1"
-# }
-
-config {
-  host "host"
-  port "vars.port"
+deps {
+  libfake ">=0.0.1"
 }
 version {
   self {
     src [ "0.0.1" "0.1.2-beta" ]
   }
 }
+config {
+  host "host"
+  port "vars.port"
+}
 tags {
   stable { src "0.0.1" }
   latest { src "0.1.2-beta" }
 }
-
 exec {
   start "test start"
   stop  "test stop"
 }
-
 tasks {
   build [
+    "mkdir app"
     "test = ls /tmp"
     "puts '${test}'"
     "puts glob puts ls '${BASEDIR}*'"

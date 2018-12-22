@@ -2,9 +2,9 @@ require "semantic_compare"
 
 struct Manager::Package::Deps
   @prefix : Prefix
-  @lib_path : String
+  @libs_dir : String
 
-  def initialize(@prefix : Prefix, @lib_path : String)
+  def initialize(@prefix : Prefix, @libs_dir : String)
   end
 
   def resolve(pkg_file : Prefix::PkgFile, dependencies = Hash(Prefix::PkgFile, Array(String)).new) : Hash(Prefix::PkgFile, Array(String))
@@ -12,7 +12,7 @@ struct Manager::Package::Deps
     (pkgdeps = pkg_file.deps) || return dependencies
 
     pkgdeps.each_key do |dep|
-      if !File.exists? @lib_path + '/' + dep
+      if !File.exists? @libs_dir + dep
         Log.info "calculing dependency", dep
         dep_pkg_file = @prefix.new_src(dep).pkg_file
         newvers = Array(String).new
@@ -42,12 +42,12 @@ struct Manager::Package::Deps
 
   def build(vars : Hash(String, String), deps : Hash(String, String), shared : Bool = true)
     Log.info "dependencies", "building"
-    Dir.mkdir_p @lib_path
+    Dir.mkdir_p @libs_dir
 
     # Build each dependency
     deps.each do |dep, ver|
       dep_prefix_pkg = "#{@prefix.pkg}/#{dep}_#{ver}"
-      dep_pkgdir_lib = @lib_path + '/' + dep
+      dep_pkgdir_lib = @libs_dir + dep
       if !Dir.exists? dep_prefix_pkg
         Log.info "building dependency", dep_prefix_pkg
         Package::Build.new(vars.merge({"package" => dep,

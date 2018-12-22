@@ -22,6 +22,7 @@ module Manager::Source::Cache
         FileUtils.rm_rf prefix.src
       end
       if Utils.is_http? source
+        Log.info "downloading packages source", source
         file = prefix.path + '/' + File.basename source
         HTTPget.file source, file
         Manager.exec "/bin/tar", {"zxf", file, "-C", prefix.path}

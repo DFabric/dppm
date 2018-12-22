@@ -1,16 +1,11 @@
 struct Manager::Package::Delete
-  getter package : String,
-    name : String,
-    pkg : Prefix::Pkg,
-    version : String
+  getter pkg : Prefix::Pkg
 
-  def initialize(prefix : Prefix, @package : String)
-    @pkg = prefix.new_pkg @package
-
-    Log.info "getting package name", @pkg.path
-    @name, @version = package.split '_'
+  def initialize(prefix : Prefix, package : String)
+    @pkg = prefix.new_pkg package
 
     # Check if the package is still in use by an application
+    Log.info "check packages in use", @pkg.path
     prefix.each_app do |app|
       if app.real_app_path + '/' == @pkg.path
         raise "application package `#{package}` still in use by an application: " + app.name
@@ -25,8 +20,7 @@ struct Manager::Package::Delete
 
   def simulate
     String.build do |str|
-      str << "\nname: " << @name
-      str << "\nversion: " << @version
+      str << "\npackage: " << @pkg.name
       str << "\nbasepath: " << @pkg.path
     end
   end

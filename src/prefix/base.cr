@@ -18,7 +18,7 @@ module Prefix::Base
   end
 
   def config : Config::CON | Config::INI | Config::JSON | Config::TOML | Config::YAML
-    @config ||= if config_file = Dir[conf_dir + "/config.*"][0]?
+    @config ||= if config_file = Dir[conf_dir + "config.*"][0]?
                   Config.new config_file
                 else
                   raise "File not found: #{conf_dir}/config.*"

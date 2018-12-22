@@ -1,7 +1,5 @@
 struct Manager::Package::Build
-  getter package : String,
-    name : String,
-    src : Prefix::Src,
+  getter src : Prefix::Src,
     pkg : Prefix::Pkg,
     version : String,
     exists = false,
@@ -11,15 +9,14 @@ struct Manager::Package::Build
 
   def initialize(@vars : Hash(String, String), prefix : Prefix)
     parsed_package = @vars["package"].split(':')
-    @package = @vars["package"] = parsed_package[0]
 
-    @src = Prefix::Src.new prefix, @package
+    @src = Prefix::Src.new prefix, parsed_package[0]
     @version = vars["version"] = getversion parsed_package[1]?
-    @name = @vars["name"] = @package + '_' + @version
+    @pkg = @src.new_pkg(@src.name + '_' + @version)
 
-    @pkg = @src.new_pkg @name
+    @vars["package"] = @src.name
+    @vars["name"] = @pkg.name
     @vars["basedir"] = @pkg.path
-
     @arch_alias = @vars["arch_alias"] = if (aliases = @src.pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                                           version_alias
                                         else
@@ -31,7 +28,7 @@ struct Manager::Package::Build
       @exists = true
     end
     # keep the latest ones for each dependency
-    Log.info "calculing package dependencies", @package
+    Log.info "calculing package dependencies", @pkg.name
     Deps.new(prefix, @pkg.libs_dir).resolve(@src.pkg_file).each do |dep_pkg_file, versions|
       @deps[dep_pkg_file.package] = if versions.includes?(latest = Version.from_tag "latest", dep_pkg_file)
                                       latest
@@ -73,18 +70,18 @@ struct Manager::Package::Build
   def run
     raise "package already present: " + @pkg.path if @exists
 
-    # Copy the sources to the @package directory to build
+    # Copy the sources to the @pkg.name directory to build
     FileUtils.cp_r(@src.path, @pkg.path)
 
     # Build dependencies
     Deps.new(@pkg.prefix, @pkg.libs_dir).build @vars.dup, @deps
 
     if (tasks = @src.pkg_file.tasks) && (build_task = tasks["build"]?)
-      Log.info "building", @package
+      Log.info "building", @pkg.name
       Dir.cd(@pkg.path) { Cmd.new(@vars.dup).run build_task.as_a }
       # Standard package build
     else
-      Log.info "standard building", @package
+      Log.info "standard building", @pkg.name
 
       working_directory = if @src.pkg_file.type == "app"
                             Dir.mkdir @pkg.app_path
@@ -93,7 +90,7 @@ struct Manager::Package::Build
                             @pkg.path
                           end
       Dir.cd working_directory do
-        package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
+        package_full_name = "#{@pkg.name}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
         package_archive = package_full_name + ".tar.xz"
         package_mirror = @vars["mirror"] + '/' + package_archive
         Log.info "downloading", package_mirror

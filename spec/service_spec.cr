@@ -4,18 +4,17 @@ require "file_utils"
 
 describe Service do
   test_prefix = Prefix.new(__DIR__ + "/service_test", create: true)
-  test_app = test_prefix.new_app("test")
-  FileUtils.cp_r __DIR__ + "/samples/test", test_prefix.app + "/test"
+  test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
+  FileUtils.cp_r __DIR__ + "/samples/" + TEST_APP_PACKAGE_NAME, test_app.path
 
-  user = "test"
-  group = "test"
+  user = group = TEST_APP_PACKAGE_NAME
 
   {% for sysinit in %w(OpenRC Systemd) %}
     describe {{sysinit}} do
       service = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.new("test").create(test_app, user, group)
+        Service::{{sysinit.id}}.new(TEST_APP_PACKAGE_NAME).create(test_app, user, group)
       end
 
       it "parses the service" do
