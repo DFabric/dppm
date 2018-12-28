@@ -41,7 +41,7 @@ struct Prefix::App
     File.chmod logs_dir, 0o700
   end
 
-  def each_lib(&block : String -> _)
+  def each_lib(&block : String ->)
     if Dir.exists? libs_dir
       Dir.each_child(libs_dir) do |lib_package|
         yield File.real_path(libs_dir + lib_package) + '/'

@@ -38,31 +38,37 @@ struct Manager::Application::Add
     # Default variables
     unset_vars = Set(String).new
 
+    if !@socket && (port = @vars["port"]?)
+      Log.info "checking port availability", port
+      Host.tcp_port_available port.to_u16
+    end
+
     if @build.src.pkg_file.config?
       @build.src.pkg_file.config.each_key do |var|
-        # Skip if a socket is used
-        next if var == "port" && @socket
-        if !@vars[var]?
+        if !@vars.has_key? var
+          # Skip if a socket is used
+          next if var == "port" && @socket
+
           key = @build.src.get_config(var).to_s
           if key.empty?
             unset_vars << var
           else
-            @vars[var] = key
+            if var == "port"
+              @vars["port"] = Host.available_port(key.to_u16).to_s
+            else
+              @vars[var] = key
+            end
             Log.info "default value set for unset variable", var + ": " + key
           end
         end
       end
     end
+    raise "socket not supported by #{@app.pkg_file.name}" if @socket && !@vars.has_key? "socket"
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
     @uid, @gid = initialize_uid_gid
     @vars["uid"] = @uid.to_s
     @vars["gid"] = @gid.to_s
-    raise "socket not supported by #{@app.pkg_file.name}" if @socket
-
-    if !@socket && (port_string = @vars["port"]?)
-      @vars["port"] = Host.available_port(port_string.to_i).to_s
-    end
   end
 
   # An user uid and a group gid is required
@@ -102,7 +108,7 @@ struct Manager::Application::Add
     # lib and others
     case @build.pkg.pkg_file.type
     when .app?
-      @vars["name"] ||= Utils.gen_name @build.pkg.name
+      @vars["name"] ||= Utils.gen_name @build.pkg.name.split('_')[0]
       Utils.ascii_alphanumeric_dash? @vars["name"]
     else
       raise "only applications can be added to the system: #{@build.pkg.pkg_file.type}"

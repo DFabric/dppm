@@ -13,19 +13,19 @@ struct Prefix
     FileUtils.mkdir_p({@app, @pkg}) if create
   end
 
-  def each_app(&block : App -> _)
+  def each_app(&block : App ->)
     Dir.each_child(@app) do |dir|
       yield App.new self, dir
     end
   end
 
-  def each_pkg(&block : Pkg -> _)
+  def each_pkg(&block : Pkg ->)
     Dir.each_child(@pkg) do |dir|
       yield Pkg.new self, dir
     end
   end
 
-  def each_src(&block : Src -> _)
+  def each_src(&block : Src ->)
     Dir.each_child(@src) do |dir|
       yield Src.new(self, dir) if dir[0].ascii_lowercase?
     end

@@ -19,12 +19,12 @@ class Process
   end
 
   # Returns the effective user ID of the current process.
-  def self.euid : LibC::GidT
+  def self.euid : LibC::UidT
     LibC.geteuid
   end
 
   # Returns the real user ID of the current process.
-  def self.uid : LibC::GidT
+  def self.uid : LibC::UidT
     LibC.getuid
   end
 
@@ -100,43 +100,40 @@ struct Host
     }
   end
 
-  def self.tcp_port_available?(port_num : Int32) : Int32?
+  def self.tcp_port_available(port_num : UInt16) : UInt16?
     TCPServer.new(port_num).close
     port_num
-  rescue ex : Errno
   end
 
-  def self.udp_port_available?(port_num : Int32) : Int32?
+  def self.udp_port_available(port_num : UInt16) : UInt16?
     udp_ipv4_port_available(port_num) || udp_ipv6_port_available(port_num)
   end
 
-  def self.udp_ipv4_port_available?(port_num : Int32) : Int32?
+  def self.udp_ipv4_port_available(port_num : UInt16) : UInt16?
     sock = UDPSocket.new Socket::Family::INET
     sock.bind "127.0.0.1", port_num
     sock.close
     port_num
-  rescue ex : Errno
   end
 
-  def self.udp_ipv6_port_available?(port_num : Int32) : Int32?
+  def self.udp_ipv6_port_available(port_num : UInt16) : UInt16?
     sock = UDPSocket.new Socket::Family::INET6
     sock.bind "::1", port_num
     sock.close
     port_num
-  rescue ex : Errno
   end
 
   # Returns an available port
-  def self.available_port(port = 0) : Int32
-    Log.info "checking ports availability", port.to_s
-    ports_used = Array(Int32).new
+  def self.available_port(port : UInt16 = 0_u16) : UInt16
+    ports_used = Set(UInt16).new
     (port..UInt16::MAX).each do |port|
-      if tcp_port_available? port
-        Log.warn "ports unavailable", ports_used.join ", " if !ports_used.empty?
+      begin
+        tcp_port_available port
         return port
+      rescue ex : Errno
+        ports_used << port
       end
-      ports_used << port
     end
-    raise "the limit of #{Int16::MAX} for port numbers is reached, no ports available"
+    raise "the limit of #{UInt16::MAX} for port numbers is reached, no ports available"
   end
 end

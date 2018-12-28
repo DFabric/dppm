@@ -11,7 +11,7 @@ module Config::Format
     del Utils.to_array(path)
   end
 
-  def open(update : Bool = false, &block : Config -> _)
+  def open(update : Bool = false, &block : Config ->)
     read if update
     yield self
     write
