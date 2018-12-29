@@ -33,7 +33,7 @@ struct Manager::Package::Build
       @deps[dep_pkg_file.package] = if versions.includes?(latest = Version.from_tag "latest", dep_pkg_file)
                                       latest
                                     else
-                                      versions[0]
+                                      versions[0].to_s
                                     end
     end
   end
@@ -49,8 +49,10 @@ struct Manager::Package::Build
     end
     if ver
       # Check if the version number is available
-      raise "not available version number: " + ver if !Version.all(Host.kernel, Host.arch, @src.pkg_file.version).includes? ver
-      ver
+      Version.all(Host.kernel, Host.arch, @src.pkg_file.version) do |version|
+        return ver if version == ver
+      end
+      raise "not available version number: " + ver
     elsif tag
       Version.from_tag tag, @src.pkg_file
     else

@@ -7,7 +7,7 @@ module Manager::Source::Cache
     if Utils.is_http? source
       # != File.info(src_prefix).modification_time.to_s("%Y%m%d").to_i
       HTTPget.string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
-      File.info(src_path).modification_time.to_s("%Y-%m-%dT%H:%M:") == $0
+      $0.starts_with? File.info(src_path).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
     end
   end
 
@@ -15,7 +15,7 @@ module Manager::Source::Cache
   def update(prefix : Prefix, source : String, force : Bool = false)
     # Update cache if older than 2 days
     source_dir = prefix.src.rchop
-    if force || !(File.exists?(prefix.src) || File.symlink?(source_dir)) || latest?(source, source_dir)
+    if force || !(File.exists?(prefix.src) || File.symlink?(source_dir)) || !latest?(source, source_dir)
       if File.symlink? source_dir
         File.delete source_dir
       else

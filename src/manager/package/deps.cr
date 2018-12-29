@@ -7,7 +7,7 @@ struct Manager::Package::Deps
   def initialize(@prefix : Prefix, @libs_dir : String)
   end
 
-  def resolve(pkg_file : Prefix::PkgFile, dependencies = Hash(Prefix::PkgFile, Array(String)).new) : Hash(Prefix::PkgFile, Array(String))
+  def resolve(pkg_file : Prefix::PkgFile, dependencies = Hash(Prefix::PkgFile, Array(SemanticVersion)).new) : Hash(Prefix::PkgFile, Array(SemanticVersion))
     # No need to parse if the deps list is empty
     (pkgdeps = pkg_file.deps) || return dependencies
 
@@ -15,18 +15,19 @@ struct Manager::Package::Deps
       if !File.exists? @libs_dir + dep
         Log.info "calculing dependency", dep
         dep_pkg_file = @prefix.new_src(dep).pkg_file
-        newvers = Array(String).new
+        newvers = Array(SemanticVersion).new
 
         # If an array of versions is already provided by a dependency
         if dep_vers = dependencies[dep_pkg_file]?
-          dep_vers.each do |ver|
-            newvers << ver if SemanticCompare.expression ver, pkgdeps[dep]
+          dep_vers.each do |semantic_version|
+            newvers << semantic_version if SemanticCompare.expression semantic_version, pkgdeps[dep]
           end
         else
           # HTTPget all versions, parse and test if the versions available match
-          dependencies[dep_pkg_file] = Array(String).new
-          Version.all(Host.kernel, Host.arch, dep_pkg_file.version).each do |ver|
-            newvers << ver if ver && SemanticCompare.expression ver, pkgdeps[dep]
+          dependencies[dep_pkg_file] = Array(SemanticVersion).new
+          Version.all(Host.kernel, Host.arch, dep_pkg_file.version) do |ver|
+            semantic_version = SemanticVersion.parse ver
+            newvers << semantic_version if SemanticCompare.expression semantic_version, pkgdeps[dep]
           end
         end
         # Raise an error if two packages require different versions of a same dependency

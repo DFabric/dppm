@@ -1,7 +1,7 @@
 module Manager::Package::Version
   extend self
 
-  def all(kernel : String, arch : String, pkg) : Array(String)
+  def all(kernel : String, arch : String, pkg, &block : String ->)
     # Set src and regex
     if hash = pkg["self"]?
       src = hash["src"]?
@@ -19,13 +19,13 @@ module Manager::Package::Version
 
     if src
       if (src_array = src.as_a?)
-        src_array.map &.as_s
-      else
-        versions = Array(String).new
-        HTTPget.string(src.to_s).each_line do |line|
-          versions << $0 if line =~ /#{regex}/
+        src_array.each do |version|
+          yield version.as_s
         end
-        versions
+      else
+        HTTPget.string(src.to_s).each_line do |line|
+          yield $0 if line =~ /#{regex}/
+        end
       end
     else
       raise "no source url"
