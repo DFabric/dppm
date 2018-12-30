@@ -25,7 +25,7 @@ struct Manager::Package::Deps
         else
           # HTTPget all versions, parse and test if the versions available match
           dependencies[dep_pkg_file] = Array(SemanticVersion).new
-          Version.all(Host.kernel, Host.arch, dep_pkg_file.version) do |ver|
+          dep_pkg_file.each_version do |ver|
             semantic_version = SemanticVersion.parse ver
             newvers << semantic_version if SemanticCompare.expression semantic_version, pkgdeps[dep]
           end

@@ -30,7 +30,7 @@ struct Manager::Package::Build
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @pkg.name
     Deps.new(prefix, @pkg.libs_dir).resolve(@src.pkg_file).each do |dep_pkg_file, versions|
-      @deps[dep_pkg_file.package] = if versions.includes?(latest = Version.from_tag "latest", dep_pkg_file)
+      @deps[dep_pkg_file.package] = if versions.includes?(latest = dep_pkg_file.version_from_tag "latest")
                                       latest
                                     else
                                       versions[0].to_s
@@ -49,12 +49,12 @@ struct Manager::Package::Build
     end
     if ver
       # Check if the version number is available
-      Version.all(Host.kernel, Host.arch, @src.pkg_file.version) do |version|
+      @src.pkg_file.each_version do |version|
         return ver if version == ver
       end
       raise "not available version number: " + ver
     elsif tag
-      Version.from_tag tag, @src.pkg_file
+      @src.pkg_file.version_from_tag tag
     else
       raise "fail to get a version"
     end

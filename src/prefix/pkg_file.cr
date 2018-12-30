@@ -9,7 +9,7 @@ struct Prefix::PkgFile
       case type
       when "app" then App
       when "lib" then Lib
-      else            raise "unknow type: " + type
+      else            raise "unknow package type: " + type
       end
     end
   end
@@ -84,5 +84,52 @@ struct Prefix::PkgFile
     @{{any.id}} = @any[{{any}}]?
     {% end %}
   end
+  end
+
+  def each_version(arch : String = Host.arch, kernel : String = Host.kernel, &block : String ->)
+    # Set src and regex
+    if hash = @version["self"]?
+      src = hash["src"]?
+      regex = hash["regex"]?
+    end
+
+    if version_kernel = @version[kernel]?
+      if !regex
+        raise "unsupported architecure: " + arch if !src
+        regex = version_kernel[arch]
+      end
+    elsif !src && !regex
+      raise "unsupported kernel: " + kernel
+    end
+
+    if src
+      if (src_array = src.as_a?)
+        src_array.each do |version|
+          yield version.as_s
+        end
+      else
+        HTTPget.string(src.to_s).each_line do |line|
+          yield $0 if line =~ /#{regex}/
+        end
+      end
+    else
+      raise "no source url"
+    end
+  end
+
+  def version_from_tag(tag : String) : String
+    src = @tags[tag]["src"].as_s
+    # Test if the src is an URL or a version number
+    if Utils.is_http? src
+      regex = if regex_tag = @tags[tag]["regex"]?
+                regex_tag
+              else
+                @tags["self"]["regex"]
+              end.as_s
+      /(#{regex})/ =~ HTTPget.string(src)
+      $1
+    else
+      src
+    end
   end
 end
