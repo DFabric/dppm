@@ -89,4 +89,4 @@ For more informations, see the [official docs](https://crystal-lang.org/docs/usi
 
 ## License                                                                                                 
 
-Copyright (c) 2018 Julien Reichardt - ISC License
+Copyright (c) 2018-2019 Julien Reichardt - ISC License
