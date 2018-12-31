@@ -15,7 +15,7 @@ module Manager::Source::Cache
   def update(prefix : Prefix, source : String, force : Bool = false)
     # Update cache if older than 2 days
     source_dir = prefix.src.rchop
-    if force || !(File.exists?(prefix.src) || File.symlink?(source_dir)) || !latest?(source, source_dir)
+    if force || !(File.symlink?(source_dir) || latest?(source, source_dir))
       if File.symlink? source_dir
         File.delete source_dir
       else

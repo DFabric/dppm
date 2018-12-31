@@ -13,7 +13,7 @@ struct Manager::Package::Build
     version = @vars["version"] = getversion parsed_package[1]?
     @pkg = @src.new_pkg(@src.name + '_' + version)
 
-    @vars["package"] = @src.name
+    @vars["package"] = @pkg.package
     @vars["name"] = @pkg.name
     @vars["basedir"] = @pkg.path
     @arch_alias = @vars["arch_alias"] = if (aliases = @src.pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
@@ -64,7 +64,10 @@ struct Manager::Package::Build
   def simulate
     String.build do |str|
       @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      str << "\ndeps: " << @deps.map { |k, v| k + ':' + v }.join(", ") if !@deps.empty?
+      if !@deps.empty?
+        str << "\ndeps: "
+        @deps.map { |k, v| k + ':' + v }.join(", ", str)
+      end
     end
   end
 
@@ -84,14 +87,14 @@ struct Manager::Package::Build
     else
       Log.info "standard building", @pkg.name
 
-      working_directory = if @src.pkg_file.type == "app"
+      working_directory = if @src.pkg_file.type.app?
                             Dir.mkdir @pkg.app_path
                             @pkg.app_path
                           else
                             @pkg.path
                           end
       Dir.cd working_directory do
-        package_full_name = "#{@pkg.name}-static_#{@pkg.version}_#{Host.kernel}_#{Host.arch}"
+        package_full_name = "#{@pkg.package}-static_#{@pkg.version}_#{Host.kernel}_#{Host.arch}"
         package_archive = package_full_name + ".tar.xz"
         package_mirror = @vars["mirror"] + '/' + package_archive
         Log.info "downloading", package_mirror
@@ -106,7 +109,7 @@ struct Manager::Package::Build
         FileUtils.rm_r({package_archive, package_full_name})
       end
     end
-    FileUtils.rm_rf @pkg.libs_dir if @src.pkg_file.type == "app"
+    FileUtils.rm_rf @pkg.libs_dir
     Log.info "build completed", @pkg.path
     self
   rescue ex

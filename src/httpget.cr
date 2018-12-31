@@ -9,7 +9,7 @@ module HTTPget
     case response.status
     when 200, 301, 302 then response.body
     else
-      raise "status code #{response.status}: " + response.body
+      raise "status code #{response.status}: " + url
     end
   rescue ex
     raise "failed to get #{url.colorize.underline}: #{ex}"

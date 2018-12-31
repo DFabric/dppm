@@ -12,8 +12,8 @@ struct Manager::Application::Add
   def initialize(@vars, prefix : Prefix, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
     # Build missing dependencies
     @build = Package::Build.new vars.dup, prefix
+    @vars["package"] = @build.pkg.package
     @vars["version"] = @build.pkg.version
-    @vars["package"] = @build.pkg.name
     @deps = @build.deps
 
     Log.info "getting name", @build.pkg.name
@@ -116,7 +116,10 @@ struct Manager::Application::Add
   def simulate
     String.build do |str|
       @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      str << "\ndeps: " << @deps.map { |k, v| k + ':' + v }.join(", ") if !@deps.empty?
+      if !@deps.empty?
+        str << "\ndeps: "
+        @deps.map { |k, v| k + ':' + v }.join(", ", str)
+      end
     end
   end
 

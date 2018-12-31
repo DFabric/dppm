@@ -32,7 +32,7 @@ describe Manager do
       socket: false).not_nil!
     add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     Dir.exists?(add.app.path).should be_true
-    add.app.each_lib &.starts_with?(TEST_LIB_PACKAGE_NAME).should be_true
+    add.app.each_lib &.includes?(TEST_LIB_PACKAGE_NAME).should be_true
   end
 
   it "deletes an application" do

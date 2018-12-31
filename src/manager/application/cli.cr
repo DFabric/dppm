@@ -58,20 +58,21 @@ module Manager::Application::CLI
     app = Prefix.new(prefix).new_app application
 
     if exec = app.pkg_file.exec
-      exec_start = exec["start"].split(' ')
+      exec_start = exec["start"]
     else
       raise "exec key not present in #{app.pkg_file.path}"
     end
     env_vars = app.pkg_file.env || Hash(String, String).new
     env_vars["PATH"] = app.env_vars
+    Log.info "executing command", exec_start
 
-    Process.run command: exec_start[0],
-      args: (exec_start[1..-1] if exec_start[1]?),
+    if port = app.get_config("port")
+      Log.info "listening on port", port.to_s
+    end
+    Exec.run cmd: exec_start,
       env: env_vars,
-      clear_env: true,
-      shell: false,
       output: STDOUT,
       error: STDERR,
-      chdir: app.path
+      chdir: app.path, &.wait
   end
 end

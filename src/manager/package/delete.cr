@@ -20,7 +20,8 @@ struct Manager::Package::Delete
 
   def simulate
     String.build do |str|
-      str << "\npackage: " << @pkg.name
+      str << "\npackage: " << @pkg.package
+      str << "\nversion: " << @pkg.version
       str << "\nbasepath: " << @pkg.path
     end
   end
