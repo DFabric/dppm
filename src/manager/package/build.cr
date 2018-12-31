@@ -1,7 +1,6 @@
 struct Manager::Package::Build
   getter src : Prefix::Src,
     pkg : Prefix::Pkg,
-    version : String,
     exists = false,
     deps = Hash(String, String).new,
     vars : Hash(String, String)
@@ -11,8 +10,8 @@ struct Manager::Package::Build
     parsed_package = @vars["package"].split(':')
 
     @src = Prefix::Src.new prefix, parsed_package[0]
-    @version = vars["version"] = getversion parsed_package[1]?
-    @pkg = @src.new_pkg(@src.name + '_' + @version)
+    version = @vars["version"] = getversion parsed_package[1]?
+    @pkg = @src.new_pkg(@src.name + '_' + version)
 
     @vars["package"] = @src.name
     @vars["name"] = @pkg.name
@@ -92,7 +91,7 @@ struct Manager::Package::Build
                             @pkg.path
                           end
       Dir.cd working_directory do
-        package_full_name = "#{@pkg.name}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
+        package_full_name = "#{@pkg.name}-static_#{@pkg.version}_#{Host.kernel}_#{Host.arch}"
         package_archive = package_full_name + ".tar.xz"
         package_mirror = @vars["mirror"] + '/' + package_archive
         Log.info "downloading", package_mirror

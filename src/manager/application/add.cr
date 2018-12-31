@@ -1,6 +1,5 @@
 struct Manager::Application::Add
   getter app : Prefix::App,
-    version : String,
     vars : Hash(String, String)
   @deps = Hash(String, String).new
   @socket : Bool
@@ -13,7 +12,7 @@ struct Manager::Application::Add
   def initialize(@vars, prefix : Prefix, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
     # Build missing dependencies
     @build = Package::Build.new vars.dup, prefix
-    @version = @vars["version"] = @build.version
+    @vars["version"] = @build.pkg.version
     @vars["package"] = @build.pkg.name
     @deps = @build.deps
 

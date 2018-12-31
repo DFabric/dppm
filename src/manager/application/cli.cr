@@ -51,7 +51,7 @@ module Manager::Application::CLI
   end
 
   def version(prefix, application, **args) : String
-    Prefix.new(prefix).new_app(application).version
+    Prefix.new(prefix).new_app(application).pkg.version
   end
 
   def exec(prefix, application, **args)

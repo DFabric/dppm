@@ -7,6 +7,8 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
+  @pkg : Pkg?
+
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
     @path = @prefix.app + @name + '/'
     if pkg_file
@@ -17,6 +19,10 @@ struct Prefix::App
     @logs_dir = @path + "log/"
     @log_file_output = @logs_dir + "output.log"
     @log_file_error = @logs_dir + "error.log"
+  end
+
+  def pkg : Pkg
+    @pkg ||= Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), @pkg_file
   end
 
   def set_config(key : String, value)
