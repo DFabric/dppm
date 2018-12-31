@@ -28,7 +28,7 @@ describe Manager do
       application: TEST_APP_PACKAGE_NAME,
       custom_vars: custom_vars,
       contained: false,
-      noservice: true,
+      noservice: false,
       socket: false).not_nil!
     add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     Dir.exists?(add.app.path).should be_true

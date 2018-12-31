@@ -100,9 +100,15 @@ module CLI
                 },
                 query: {
                   alias:     'q',
-                  info:      "Query informations from an application. `.` for the whole document, `version` for the package's version",
+                  info:      "Query informations from an application - `.` for the whole document",
                   arguments: %w(application path),
                   action:    "puts Manager::Application::CLI.query",
+                },
+                version: {
+                  alias:     'v',
+                  info:      "Returns application's version",
+                  arguments: %w(application),
+                  action:    "puts Manager::Application::CLI.version",
                 },
               },
             },
@@ -134,9 +140,9 @@ module CLI
                 },
                 query: {
                   alias:     'q',
-                  info:      "Query informations from a package. `.` for the whole document, `version` for the package's version",
+                  info:      "Query informations from a package - `.` for the whole document.",
                   arguments: %w(package path),
-                  action:    "puts Manager::Source::CLI.query",
+                  action:    "puts Manager::Package::CLI.query",
                 },
               },
             },
@@ -156,7 +162,7 @@ module CLI
                 },
                 query: {
                   alias:     'q',
-                  info:      "Query informations from a source package. `.` for the whole document, `version` for the package's version",
+                  info:      "Query informations from a source package - `.` for the whole document",
                   arguments: %w(package path),
                   action:    "puts Manager::Source::CLI.query",
                 },

@@ -59,4 +59,8 @@ struct Prefix::App
       end
     end
   end
+
+  def version : String
+    File.basename(File.dirname(File.real_path(PkgFile.path(@path)))).split('_').last
+  end
 end

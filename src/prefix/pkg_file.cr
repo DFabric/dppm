@@ -13,8 +13,7 @@ struct Prefix::PkgFile
       end
     end
   end
-  getter package_version : String,
-    package : String,
+  getter package : String,
     name : String,
     type : Type,
     license : String,
@@ -35,7 +34,11 @@ struct Prefix::PkgFile
   @path : String? = nil
 
   def path : String
-    @path ||= @root_dir + "pkg.con"
+    @path ||= self.class.path @root_dir
+  end
+
+  def self.path(root_dir) : String
+    root_dir + "pkg.con"
   end
 
   protected def path=(@path : String?) : String?
@@ -56,7 +59,6 @@ struct Prefix::PkgFile
   macro finished
   def initialize(@root_dir : String)
     raise "package directory doesn't exists: " + @root_dir if !Dir.exists? @root_dir
-    @package_version = File.basename(File.dirname(File.real_path(path))).split('_').last
 
     Log.info "parsing package informations", path
     # TODO: Replace CON::Any by CON::Serializable

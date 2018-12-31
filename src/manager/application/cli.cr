@@ -45,9 +45,13 @@ module Manager::Application::CLI
     end
   end
 
-  def query(prefix, application, path, **args)
+  def query(prefix, application, path, **args) : String
     pkg_file = Prefix.new(prefix).new_app(application).pkg_file
-    Query.new(pkg_file).pkg path
+    Query.new(pkg_file.any).pkg(path).to_pretty_con
+  end
+
+  def version(prefix, application, **args) : String
+    Prefix.new(prefix).new_app(application).version
   end
 
   def exec(prefix, application, **args)

@@ -40,6 +40,7 @@ module Manager::Package::CLI
   end
 
   def self.query(prefix, config, mirror, source, no_confirm, package, path)
-    Query.new(Prefix.new(prefix).new_pkg package).pkg path
+    pkg_file = Prefix.new(prefix).new_pkg(package).pkg_file
+    Query.new(pkg_file.any).pkg(path).to_pretty_con
   end
 end

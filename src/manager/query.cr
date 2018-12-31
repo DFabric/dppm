@@ -1,17 +1,15 @@
 struct Manager::Query
-  @pkg_file : Prefix::PkgFile
+  @any : CON::Any
 
-  def initialize(@pkg_file : Prefix::PkgFile)
+  def initialize(@any : CON::Any)
   end
 
-  def pkg(path : String)
+  def pkg(path : String) : CON::Any
     case path
     when "."
-      @pkg_file.any.to_pretty_con
-    when "version"
-      @pkg_file.package_version
+      @any
     else
-      @pkg_file.any[Utils.to_array path].to_pretty_con
+      @any[Utils.to_array path]
     end
   end
 end
