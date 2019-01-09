@@ -22,7 +22,8 @@ struct Manager::Application::Add
     @app = @build.pkg.new_app name
 
     if add_service && (service = Host.service?.try &.new @app.name)
-      @service = service if service.check_availability
+      service.check_availability
+      @service = service
     end
     @vars["basedir"] = @app.path
     raise "application directory already exists: " + @app.path if File.exists? @app.path
