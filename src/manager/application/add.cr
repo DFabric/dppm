@@ -107,7 +107,7 @@ struct Manager::Application::Add
     # lib and others
     case @build.pkg.pkg_file.type
     when .app?
-      @vars["name"] ||= Utils.gen_name @build.pkg.name.split('_')[0]
+      @vars["name"] ||= @build.pkg.gen_name
       Utils.ascii_alphanumeric_dash? @vars["name"]
     else
       raise "only applications can be added to the system: #{@build.pkg.pkg_file.type}"

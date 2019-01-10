@@ -1,4 +1,4 @@
-require "uuid"
+require "random"
 
 module Utils
   extend self
@@ -108,7 +108,7 @@ module Utils
     end
   end
 
-  def gen_name(package)
-    package + '-' + UUID.random.to_s.split('-').last
+  def gen_password : String
+    Random::Secure.urlsafe_base64
   end
 end

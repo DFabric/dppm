@@ -14,6 +14,10 @@ struct Prefix::Pkg
     end
   end
 
+  def gen_name : String
+    package + '-' + Random::Secure.hex(8)
+  end
+
   def new_app(app_name : String) : App
     App.new @prefix, app_name, pkg_file
   end
