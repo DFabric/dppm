@@ -12,6 +12,8 @@ module Manager::ConfigCLI
           str << key << ": " << app.get_config(key) << '\n'
         end
       end
+    else
+      app.get_config path
     end
   end
 

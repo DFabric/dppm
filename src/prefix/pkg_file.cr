@@ -61,7 +61,6 @@ struct Prefix::PkgFile
   def initialize(@root_dir : String)
     raise "package directory doesn't exists: " + @root_dir if !Dir.exists? @root_dir
 
-    Log.info "parsing package informations", path
     # TODO: Replace CON::Any by CON::Serializable
     @any = CON.parse File.read(path)
 
