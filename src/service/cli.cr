@@ -44,7 +44,7 @@ module Service::CLI
 
   def app_status(prefix : String = PREFIX, &block)
     Prefix.new(prefix).each_app do |app|
-      Host.service.new(app.name)
+      yield Host.service.new(app.name)
     end
   end
 end

@@ -183,7 +183,7 @@ struct Manager::Application::Add
     # Running the add task
     Log.info "running configuration tasks", @build.pkg.name
     if (tasks = @app.pkg_file.tasks) && (add_task = tasks["add"]?)
-      Dir.cd(@app.path) { Cmd.new(@vars.dup).run add_task.as_a }
+      Dir.cd(@app.path) { Cmd.new(@vars.dup).run add_task }
     end
 
     @service.try do |service|

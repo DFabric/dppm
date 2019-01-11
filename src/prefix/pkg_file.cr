@@ -21,14 +21,15 @@ struct Prefix::PkgFile
     docs : String,
     description : String,
     info : String,
+    provides : String?,
     deps : Hash(String, String)?,
     aliases : Hash(String, String)?,
     env : Hash(String, String)?,
+    databases : Hash(String, String?)?,
+    tasks : Hash(String, Array(CON::Any))?,
+    shared : Bool?,
     version : CON::Any,
     tags : CON::Any,
-    databases : CON::Any?,
-    tasks : CON::Any?,
-    shared : Bool?,
     any : CON::Any
   property exec : Hash(String, String)?
   @path : String? = nil
@@ -70,6 +71,9 @@ struct Prefix::PkgFile
     @type = Type.new @any["type"].as_s
     @version = @any["version"]
     @tags = @any["tags"]
+    if provides = @any["provides"]?
+      @provides = provides.as_s
+    end
     @shared = if shared = @any["shared"]?
                 shared.as_bool?
               end
@@ -82,9 +86,20 @@ struct Prefix::PkgFile
       @{{hash.id}} = {{hash.id}}
     end
     {% end %}
-    {% for any in %w(databases tasks) %}\
-    @{{any.id}} = @any[{{any}}]?
-    {% end %}
+    if tasks_any = @any["tasks"]?
+      tasks = Hash(String, Array(CON::Any)).new
+      tasks_any.as_h.each do |task, value|
+        tasks[task] = value.as_a
+      end
+      @tasks = tasks
+    end
+    if databases_any = @any["databases"]?
+      databases = Hash(String, String?).new
+      databases_any.as_h.each do |database, value|
+        databases[database] = value.as_s?
+      end
+      @databases = databases
+    end
   end
   end
 
