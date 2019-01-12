@@ -6,7 +6,11 @@ describe Manager::Source::Cache do
     Dir.mkdir TEMP_DPPM_PREFIX
     begin
       Manager::Source::Cache.cli DPPM_CONFIG_FILE, nil, nil, TEMP_DPPM_PREFIX, true
-      Dir.new(TEMP_DPPM_PREFIX).children.should eq ["app", "pkg", "src"]
+      children = Dir.new(TEMP_DPPM_PREFIX).children
+      children.includes?("app").should be_true
+      children.includes?("pkg").should be_true
+      children.includes?("src").should be_true
+      
       Dir[Prefix.new(TEMP_DPPM_PREFIX).src + "/*/*"].should_not be_empty
     ensure
       FileUtils.rm_r TEMP_DPPM_PREFIX

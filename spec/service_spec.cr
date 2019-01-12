@@ -3,6 +3,10 @@ require "../src/service"
 require "file_utils"
 
 describe Service do
+  if !File.exists? "/bin/systemctl"
+    File.write "/bin/systemctl", "#!/bin/sh\necho systemd 240"
+    File.chmod "/bin/systemctl", 0o755
+  end
   test_prefix = Prefix.new(__DIR__ + "/service_test", create: true)
   test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
   FileUtils.cp_r __DIR__ + "/samples/" + TEST_APP_PACKAGE_NAME, test_app.path

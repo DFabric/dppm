@@ -22,7 +22,7 @@ struct Service::OpenRC::Config
      "reload" => ["eerror \"Reloading not available for $RC_SVCNAME\""]}
   end
 
-  def shim(name)
+  def compat_layer(name : String)
     case name
     when "directory"     then {"chdir"}
     when "user"          then {"user"}
@@ -46,8 +46,7 @@ struct Service::OpenRC::Config
     if name == "command"
       return "#{@section["command"]} #{@section["command_args"]}"
     end
-    keys = shim name
-    case keys
+    case keys = compat_layer name
     when Tuple(String) then @section[keys[0]]
     when Tuple(String, String)
       subdata = @section[keys[0]]
@@ -64,16 +63,14 @@ struct Service::OpenRC::Config
   def set(name : String, value)
     case name
     when "command"
-      command = value.split ' '
-      @section["command"] = command[0]
-      @section["command_args"] = command[1..-1].join ' '
+      @section["command"], @section["command_args"] = value.split ' ', limit: 2
     when "reload"
       @section["extra_started_commands"] = ["reload"]
       @section["reload"] = ["ebegin \"Reloading $RC_SVCNAME\"",
                             "supervise-daemon --signal #{value} --pidfile \"$pidfile\"",
                             "eend $? \"Failed to reload $RC_SVCNAME\""]
     else
-      case keys = shim name
+      case keys = compat_layer name
       when Tuple(String)
         @section[keys[0]] = value
       when Tuple(String, String)

@@ -26,7 +26,7 @@ struct Service::Systemd::Config
      }}
   end
 
-  def shim(name)
+  def compat_layer(name : String)
     case name
     when "directory"     then {"Service", "WorkingDirectory"}
     when "command"       then {"Service", "ExecStart"}
@@ -48,7 +48,7 @@ struct Service::Systemd::Config
   end
 
   def get(name : String)
-    keys = shim name
+    keys = compat_layer name
     case name
     when "log_output", "log_error" then @section[keys[0]][keys[1]].lstrip "file:"
     else                                @section[keys[0]][keys[1]]
@@ -56,7 +56,7 @@ struct Service::Systemd::Config
   end
 
   def set(name : String, value)
-    keys = shim name
+    keys = compat_layer name
     case name
     when "log_output", "log_error"
       # systemd 236 and more supports file logging

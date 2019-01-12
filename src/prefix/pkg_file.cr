@@ -28,6 +28,7 @@ struct Prefix::PkgFile
     databases : Hash(String, String?)?,
     tasks : Hash(String, Array(CON::Any))?,
     shared : Bool?,
+    ipv6_braces : Bool?,
     version : CON::Any,
     tags : CON::Any,
     any : CON::Any
@@ -76,6 +77,9 @@ struct Prefix::PkgFile
     @shared = if shared = @any["shared"]?
                 shared.as_bool?
               end
+    @ipv6_braces = if ipv6_braces = @any["ipv6_braces"]?
+                     ipv6_braces.as_bool?
+                   end
     {% for hash in %w(deps aliases env exec config) %}\
     if {{hash.id}}_any = @any[{{hash}}]?
       {{hash.id}} = Hash(String, String).new

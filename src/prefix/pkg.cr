@@ -14,11 +14,16 @@ struct Prefix::Pkg
     end
   end
 
-  def gen_name : String
-    package + '-' + Random::Secure.hex(8)
-  end
-
-  def new_app(app_name : String) : App
+  def new_app(app_name : String? = nil) : App
+    case pkg_file.type
+    when .app?
+      # Generate a name if none is set
+      app_name ||= package + '-' + Random::Secure.hex(8)
+      Utils.ascii_alphanumeric_dash? app_name
+    else
+      # lib and others
+      raise "only applications can be added to the system: #{pkg_file.type}"
+    end
     App.new @prefix, app_name, pkg_file
   end
 

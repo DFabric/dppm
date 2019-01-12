@@ -6,33 +6,24 @@ struct Manager::Application::Add
   @shared : Bool
   @uid : UInt32
   @gid : UInt32
+  @user : String
+  @group : String
   @service : Service::Systemd | Service::OpenRC | Nil
   @build : Package::Build
 
   def initialize(@vars, prefix : Prefix, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
     # Build missing dependencies
     @build = Package::Build.new vars.dup, prefix
-    @vars["package"] = @build.pkg.package
-    @vars["version"] = @build.pkg.version
     @deps = @build.deps
 
     Log.info "getting name", @build.pkg.name
-    getname
-    name = @vars["name"]
-    @app = @build.pkg.new_app name
+    @app = @build.pkg.new_app @vars["name"]?
 
     if add_service && (service = Host.service?.try &.new @app.name)
       service.check_availability
       @service = service
     end
-    @vars["basedir"] = @app.path
     raise "application directory already exists: " + @app.path if File.exists? @app.path
-
-    # Check database type
-    Log.info "calculing informations", @app.path
-    if (db_type = @vars["database_type"]?) && (databases = @app.pkg_file.databases)
-      raise "unsupported database type: " + db_type if !databases[db_type]?
-    end
 
     # Default variables
     unset_vars = Set(String).new
@@ -65,53 +56,49 @@ struct Manager::Application::Add
     raise "socket not supported by #{@app.pkg_file.name}" if @socket && !@vars.has_key? "socket"
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
-    @uid, @gid = initialize_uid_gid
+    @uid, @gid, @user, @group = initialize_owner
+
+    @vars["package"] = @build.pkg.package
+    @vars["version"] = @build.pkg.version
+    @vars["basedir"] = @app.path
+    @vars["name"] = @app.name
     @vars["uid"] = @uid.to_s
     @vars["gid"] = @gid.to_s
+    @vars["user"] = @user
+    @vars["group"] = @group
   end
 
   # An user uid and a group gid is required
-  private def initialize_uid_gid : Tuple(UInt32, UInt32)
+  private def initialize_owner : Tuple(UInt32, UInt32, String, String)
     if Process.root?
       libcrown = Libcrown.new
       uid = gid = libcrown.available_id 9000
-      if uid_tring = @vars["uid"]?
-        uid = uid_tring.to_u32
-        @vars["user"] = libcrown.users[uid].name
+      if uid_string = @vars["uid"]?
+        uid = uid_string.to_u32
+        user = libcrown.users[uid].name
       elsif user = @vars["user"]?
         uid = libcrown.to_uid user
       else
-        @vars["user"] = '_' + @app.name
+        user = '_' + @app.name
       end
       if gid_string = @vars["gid"]?
         gid = gid_string.to_u32
-        @vars["user"] = libcrown.groups[gid].name
+        group = libcrown.groups[gid].name
       elsif group = @vars["group"]?
         gid = libcrown.to_gid group
       else
-        @vars["group"] = '_' + @app.name
+        group = '_' + @app.name
       end
     else
       libcrown = Libcrown.new nil
       uid = Process.uid
       gid = Process.gid
-      @vars["user"] = libcrown.users[uid].name
-      @vars["group"] = libcrown.users[gid].name
+      user = libcrown.users[uid].name
+      group = libcrown.users[gid].name
     end
-    {uid, gid}
+    {uid, gid, user, group}
   rescue ex
     raise "error while setting user and group: #{ex}"
-  end
-
-  private def getname
-    # lib and others
-    case @build.pkg.pkg_file.type
-    when .app?
-      @vars["name"] ||= @build.pkg.gen_name
-      Utils.ascii_alphanumeric_dash? @vars["name"]
-    else
-      raise "only applications can be added to the system: #{@build.pkg.pkg_file.type}"
-    end
   end
 
   def simulate
@@ -188,7 +175,7 @@ struct Manager::Application::Add
 
     @service.try do |service|
       # Create system services
-      service.create @app, @vars["user"], @vars["group"]
+      service.create @app, @user, @group
       service.enable @app.path
       Log.info service.class.type + " system service added", service.name
     end
@@ -199,21 +186,21 @@ struct Manager::Application::Add
       add_group_member = false
       # Add a new group
       if !libcrown.groups.has_key? @gid
-        Log.info "system group created", @vars["group"]
-        libcrown.add_group Libcrown::Group.new(@vars["group"]), @gid
+        Log.info "system group created", @group
+        libcrown.add_group Libcrown::Group.new(@group), @gid
         add_group_member = true
       end
 
       if !libcrown.users.has_key? @uid
         # Add a new user with `new_group` as its main group
         new_user = Libcrown::User.new(
-          name: @vars["user"],
+          name: @user,
           gid: @gid,
           gecos_comment: @app.pkg_file.description,
           home_directory: @app.data_dir
         )
         libcrown.add_user new_user, @uid
-        Log.info "system user created", @vars["user"]
+        Log.info "system user created", @user
       else
         !libcrown.user_group_member? @uid, @gid
         add_group_member = true
