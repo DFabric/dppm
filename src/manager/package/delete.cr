@@ -1,8 +1,8 @@
 struct Manager::Package::Delete
   getter pkg : Prefix::Pkg
 
-  def initialize(prefix : Prefix, package : String)
-    @pkg = prefix.new_pkg package
+  def initialize(prefix : Prefix, package : String, version : String?)
+    @pkg = prefix.new_pkg package, version
 
     # Check if the package is still in use by an application
     Log.info "check packages in use", @pkg.path

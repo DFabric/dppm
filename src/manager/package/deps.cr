@@ -47,20 +47,23 @@ struct Manager::Package::Deps
 
     # Build each dependency
     deps.each do |dep, ver|
-      dep_prefix_pkg = "#{@prefix.pkg}/#{dep}_#{ver}"
+      dep_pkg = @prefix.new_pkg dep, ver
       dep_pkgdir_lib = @libs_dir + dep
-      if !Dir.exists? dep_prefix_pkg
-        Log.info "building dependency", dep_prefix_pkg
-        Package::Build.new(vars.merge({"package" => dep,
-                                       "version" => ver}), @prefix).run
+      if !Dir.exists? dep_pkg.path
+        Log.info "building dependency", dep_pkg.path
+        Package::Build.new(
+          vars: vars,
+          prefix: @prefix,
+          package: dep,
+          version: ver).run
       end
       if !File.exists? dep_pkgdir_lib
         if shared
           Log.info "adding symlink to dependency", "#{dep}:#{ver}"
-          File.symlink dep_prefix_pkg, dep_pkgdir_lib
+          File.symlink dep_pkg.path, dep_pkgdir_lib
         else
           Log.info "copying dependency", "#{dep}:#{ver}"
-          FileUtils.cp_r dep_prefix_pkg, dep_pkgdir_lib
+          FileUtils.cp_r dep_pkg.path, dep_pkgdir_lib
         end
       end
       Log.info "dependency added", "#{dep}:#{ver}"

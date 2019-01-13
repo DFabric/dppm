@@ -35,8 +35,8 @@ struct Prefix
     App.new self, name
   end
 
-  def new_pkg(name : String) : Pkg
-    Pkg.new self, name
+  def new_pkg(name : String, version : String? = nil) : Pkg
+    Pkg.new self, name, version
   end
 
   def new_src(name : String) : Src

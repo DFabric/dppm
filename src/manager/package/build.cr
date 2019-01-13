@@ -1,26 +1,18 @@
 struct Manager::Package::Build
-  getter src : Prefix::Src,
-    pkg : Prefix::Pkg,
-    exists = false,
-    deps = Hash(String, String).new,
+  getter pkg : Prefix::Pkg,
+    exists : Bool = false,
+    deps : Hash(String, String) = Hash(String, String).new,
     vars : Hash(String, String)
   @arch_alias : String
 
-  def initialize(@vars : Hash(String, String), prefix : Prefix)
-    parsed_package = @vars["package"].split(':')
+  def initialize(@vars : Hash(String, String), prefix : Prefix, package : String, version : String?)
+    @pkg = Prefix::Pkg.create prefix, package, version, @vars["tag"]?
 
-    @src = Prefix::Src.new prefix, parsed_package[0]
-    version = @vars["version"] = getversion parsed_package[1]?
-    @pkg = @src.new_pkg(@src.name + '_' + version)
-
-    @vars["package"] = @pkg.package
-    @vars["name"] = @pkg.name
-    @vars["basedir"] = @pkg.path
-    @arch_alias = @vars["arch_alias"] = if (aliases = @src.pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
-                                          version_alias
-                                        else
-                                          Host.arch
-                                        end
+    @arch_alias = if (aliases = @pkg.pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
+                    version_alias
+                  else
+                    Host.arch
+                  end
 
     if File.exists? @pkg.path
       Log.info "already present", @pkg.path
@@ -28,46 +20,31 @@ struct Manager::Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @pkg.name
-    Deps.new(prefix, @pkg.libs_dir).resolve(@src.pkg_file).each do |dep_pkg_file, versions|
+    Deps.new(prefix, @pkg.libs_dir).resolve(@pkg.pkg_file).each do |dep_pkg_file, versions|
       @deps[dep_pkg_file.package] = if versions.includes?(latest = dep_pkg_file.version_from_tag "latest")
                                       latest
                                     else
                                       versions[0].to_s
                                     end
     end
-  end
-
-  private def getversion(package_tag : String? = nil) : String
-    if ver = @vars["version"]?
-    elsif tag = @vars["tag"]?
-    elsif tag = package_tag
-      ver = tag if tag =~ /^([0-9]+\.[0-9]+\.[0-9]+)/
-      # Set a default tag if not set
-    else
-      tag = "latest"
-    end
-    if ver
-      # Check if the version number is available
-      @src.pkg_file.each_version do |version|
-        return ver if version == ver
-      end
-      raise "not available version number: " + ver
-    elsif tag
-      @src.pkg_file.version_from_tag tag
-    else
-      raise "fail to get a version"
-    end
-  rescue ex
-    raise "can't obtain a version: #{ex}"
+    @vars["prefix"] = prefix.path
+    @vars["version"] = @pkg.version
+    @vars["package"] = @pkg.package
+    @vars["basedir"] = @pkg.path
+    @vars["arch_alias"] = @arch_alias
   end
 
   def simulate
     String.build do |str|
       @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      if !@deps.empty?
-        str << "\ndeps: "
-        @deps.map { |k, v| k + ':' + v }.join(", ", str)
-      end
+      simulate_deps str
+    end
+  end
+
+  def simulate_deps(io)
+    if !@deps.empty?
+      io << "\ndeps: "
+      @deps.map { |k, v| k + ':' + v }.join(", ", io)
     end
   end
 
@@ -75,19 +52,19 @@ struct Manager::Package::Build
     raise "package already present: " + @pkg.path if @exists
 
     # Copy the sources to the @pkg.name directory to build
-    FileUtils.cp_r(@src.path, @pkg.path)
+    FileUtils.cp_r(@pkg.src.path, @pkg.path)
 
     # Build dependencies
     Deps.new(@pkg.prefix, @pkg.libs_dir).build @vars.dup, @deps
 
-    if (tasks = @src.pkg_file.tasks) && (build_task = tasks["build"]?)
+    if (tasks = @pkg.pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @pkg.name
       Dir.cd(@pkg.path) { Cmd.new(@vars.dup).run build_task }
       # Standard package build
     else
       Log.info "standard building", @pkg.name
 
-      working_directory = if @src.pkg_file.type.app?
+      working_directory = if @pkg.pkg_file.type.app?
                             Dir.mkdir @pkg.app_path
                             @pkg.app_path
                           else

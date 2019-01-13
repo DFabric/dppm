@@ -22,7 +22,7 @@ struct Prefix::App
   end
 
   def pkg : Pkg
-    @pkg ||= Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), @pkg_file
+    @pkg ||= Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
   end
 
   def set_config(key : String, value)
@@ -64,9 +64,5 @@ struct Prefix::App
         end
       end
     end
-  end
-
-  def version : String
-    File.basename(File.dirname(File.real_path(PkgFile.path(@path)))).split('_').last
   end
 end

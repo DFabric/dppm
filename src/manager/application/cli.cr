@@ -10,11 +10,9 @@ module Manager::Application::CLI
     task.run if no_confirm || Manager.cli_confirm
   end
 
-  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket)
+  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
-    vars["package"] = application
-    vars["prefix"] = prefix
 
     main_config = MainConfig.new config, mirror, source
     vars["mirror"] = main_config.mirror
@@ -26,7 +24,8 @@ module Manager::Application::CLI
 
     # Create task
     vars.merge! Host.vars
-    task = Add.new vars, root_prefix, shared: !contained, add_service: !noservice, socket: socket
+    build = Package::Build.new vars, root_prefix, application, vars["version"]?
+    task = Add.new build: build, shared: !contained, add_service: !noservice, socket: socket # , database: database
 
     Log.info "add", task.simulate
     task.run if no_confirm || Manager.cli_confirm

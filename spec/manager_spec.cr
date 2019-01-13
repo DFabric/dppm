@@ -13,7 +13,8 @@ describe Manager do
       source: __DIR__ + "/samples",
       prefix: TEMP_DPPM_PREFIX,
       package: TEST_APP_PACKAGE_NAME,
-      custom_vars: Array(String).new).not_nil!
+      custom_vars: Array(String).new,
+      version: nil).not_nil!
     build.pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     Dir.exists?(build.pkg.path).should be_true
   end
@@ -29,7 +30,8 @@ describe Manager do
       custom_vars: custom_vars,
       contained: false,
       noservice: true,
-      socket: false).not_nil!
+      socket: false,
+      database: nil).not_nil!
     add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     Dir.exists?(add.app.path).should be_true
     add.app.each_lib &.includes?(TEST_LIB_PACKAGE_NAME).should be_true

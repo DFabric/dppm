@@ -1,7 +1,6 @@
 struct Manager::Application::Add
   getter app : Prefix::App,
     vars : Hash(String, String)
-  @deps = Hash(String, String).new
   @socket : Bool
   @shared : Bool
   @uid : UInt32
@@ -11,10 +10,8 @@ struct Manager::Application::Add
   @service : Service::Systemd | Service::OpenRC | Nil
   @build : Package::Build
 
-  def initialize(@vars, prefix : Prefix, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
-    # Build missing dependencies
-    @build = Package::Build.new vars.dup, prefix
-    @deps = @build.deps
+  def initialize(@build : Package::Build, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
+    @vars = @build.vars.dup
 
     Log.info "getting name", @build.pkg.name
     @app = @build.pkg.new_app @vars["name"]?
@@ -33,13 +30,13 @@ struct Manager::Application::Add
       Host.tcp_port_available port.to_u16
     end
 
-    if @build.src.pkg_file.config?
-      @build.src.pkg_file.config.each_key do |var|
+    if @build.pkg.pkg_file.config?
+      @build.pkg.pkg_file.config.each_key do |var|
         if !@vars.has_key? var
           # Skip if a socket is used
           next if var == "port" && @socket
 
-          key = @build.src.get_config(var).to_s
+          key = @build.pkg.get_config(var).to_s
           if key.empty?
             unset_vars << var
           else
@@ -104,10 +101,7 @@ struct Manager::Application::Add
   def simulate
     String.build do |str|
       @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      if !@deps.empty?
-        str << "\ndeps: "
-        @deps.map { |k, v| k + ':' + v }.join(", ", str)
-      end
+      @build.simulate_deps str
     end
   end
 
@@ -120,7 +114,7 @@ struct Manager::Application::Add
     @build.run if !@build.exists
 
     # Build and add missing dependencies
-    Package::Deps.new(@app.prefix, @app.libs_dir).build @vars.dup, @deps, @shared
+    Package::Deps.new(@app.prefix, @app.libs_dir).build @vars.dup, @build.deps, @shared
 
     app_shared = @shared
     if !@app.pkg_file.shared

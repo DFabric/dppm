@@ -74,6 +74,38 @@ module CLI
                       info:  "Use of an UNIX socket instead of a port",
                     },
                   },
+                  variables: {
+                    database: {
+                      info: "Database application to use",
+                    },
+                  },
+                },
+                config: {
+                  alias:   'c',
+                  info:    "Manage application's configuration",
+                  options: {
+                    nopkg: {
+                      short: 'n',
+                      info:  "Don't use pkg file, directly use the application's configuration file",
+                    },
+                  },
+                  commands: {
+                    get: {
+                      info:      "Get a value. Single dot path `.` for all keys",
+                      arguments: %w(application path),
+                      action:    "puts Manager::Application::ConfigCLI.get",
+                    },
+                    set: {
+                      info:      "Set a value",
+                      arguments: %w(application path value),
+                      action:    "Manager::Application::ConfigCLI.set() && puts %(done)",
+                    },
+                    del: {
+                      info:      "Delete a path",
+                      arguments: %w(application path),
+                      action:    "Manager::Application::ConfigCLI.del() && puts %(done)",
+                    },
+                  },
                 },
                 delete: {
                   alias:     'd',
@@ -113,8 +145,13 @@ module CLI
               },
             },
             package: {
-              alias:    'p',
-              info:     "Manage built packages",
+              alias:     'p',
+              info:      "Manage built packages",
+              variables: {
+                version: {
+                  info: "Package version",
+                },
+              },
               commands: {
                 build: {
                   alias:     'b',
@@ -165,33 +202,6 @@ module CLI
                   info:      "Query informations from a source package - `.` for the whole document",
                   arguments: %w(package path),
                   action:    "puts Manager::Source::CLI.query",
-                },
-              },
-            },
-            config: {
-              alias:   'c',
-              info:    "Manage application's configuration",
-              options: {
-                nopkg: {
-                  short: 'n',
-                  info:  "Don't use pkg file, directly use the application's configuration file",
-                },
-              },
-              commands: {
-                get: {
-                  info:      "Get a value. Single dot path `.` for all keys",
-                  arguments: %w(application path),
-                  action:    "puts Manager::ConfigCLI.get",
-                },
-                set: {
-                  info:      "Set a value",
-                  arguments: %w(application path value),
-                  action:    "Manager::ConfigCLI.set() && puts %(done)",
-                },
-                del: {
-                  info:      "Delete a path",
-                  arguments: %w(application path),
-                  action:    "Manager::ConfigCLI.del() && puts %(done)",
                 },
               },
             },

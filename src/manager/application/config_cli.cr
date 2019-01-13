@@ -1,4 +1,4 @@
-module Manager::ConfigCLI
+module Manager::Application::ConfigCLI
   extend self
 
   def get(prefix, nopkg : Bool, application, path, **args)
