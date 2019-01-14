@@ -1,4 +1,5 @@
 require "exec"
+require "./logger"
 require "./prefix"
 require "./service/*"
 

@@ -2,7 +2,6 @@ require "clicr"
 require "./manager"
 require "./config"
 require "./logs"
-require "./logger"
 require "./service"
 
 module CLI
@@ -236,17 +235,17 @@ module CLI
             reload: {
               info:      "Reload the service",
               arguments: %w(service),
-              action:    "puts service().reload",
+              action:    "service().reload || exit 1",
             },
             restart: {
               info:      "Restart the service",
               arguments: %w(service),
-              action:    "puts service().restart",
+              action:    "service().restart || exit 1",
             },
             start: {
               info:      "Start the service",
               arguments: %w(service),
-              action:    "puts service().start",
+              action:    "service().start || exit 1",
             },
             status: {
               info:      "Status for specified services or all services if none set",
@@ -268,7 +267,7 @@ module CLI
             stop: {
               info:      "Stop the service",
               arguments: %w(service),
-              action:    "puts service().stop",
+              action:    "service().stop || exit 1",
             },
           },
         },

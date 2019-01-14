@@ -17,22 +17,36 @@ module Service::CLI
     print "RUN   " if !norun
     print "BOOT  " if !noboot
     puts "SERVICE\n"
-    get_status(prefix, all) do |service|
-      if !norun
-        if r = service.run?
-          STDOUT << r.colorize.green << "  "
-        else
-          STDOUT << r.colorize.red << ' '
-        end
+    if services.empty?
+      get_status(prefix, all) do |service|
+        print_run_state(service) if !norun
+        print_boot_state(service) if !noboot
+        Log.output.puts service.name
       end
-      if !noboot
-        if b = service.boot?
-          STDOUT << b.colorize.green << "  "
-        else
-          STDOUT << b.colorize.red << ' '
-        end
+    else
+      root_prefix = Prefix.new prefix
+      services.each do |service_name|
+        service = Host.service.new(root_prefix.new_app(service_name).name)
+        print_run_state(service) if !norun
+        print_boot_state(service) if !noboot
+        Log.output.puts service.name
       end
-      STDOUT.puts service.name
+    end
+  end
+
+  private def print_run_state(service : Service::OpenRC | Service::Systemd)
+    if run = service.run?
+      Log.output << run.colorize.green << "  "
+    else
+      Log.output << run.colorize.red << ' '
+    end
+  end
+
+  private def print_boot_state(service : Service::OpenRC | Service::Systemd)
+    if boot = service.boot?
+      Log.output << boot.colorize.green << "  "
+    else
+      Log.output << boot.colorize.red << ' '
     end
   end
 
