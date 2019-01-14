@@ -3,12 +3,13 @@ require "libcrown"
 struct Manager::Application::Delete
   getter app : Prefix::App
   @keep_user_group : Bool
+  @preserve_database : Bool
   @uid : UInt32
   @gid : UInt32
   @user : String
   @group : String
 
-  def initialize(@name : String, prefix : Prefix, @keep_user_group : Bool = false)
+  def initialize(@name : String, prefix : Prefix, @keep_user_group : Bool = false, @preserve_database : Bool = false)
     @app = prefix.new_app @name
 
     file = File.info @app.path
@@ -44,20 +45,29 @@ struct Manager::Application::Delete
 
   def run
     Log.info "deleting", @app.path
-    @app.service?.try do |service|
-      Log.info "deleting system service", service.name
-      service.delete
-    end
+    begin
+      if !@preserve_database
+        @app.database?.try do |database|
+          Log.info "deleting database", database.user
+          database.delete
+        end
+      end
+    ensure
+      @app.service?.try do |service|
+        Log.info "deleting system service", service.name
+        service.delete
+      end
 
-    if !@keep_user_group && Process.root?
-      libcrown = Libcrown.new
-      libcrown.del_user @uid if @user.starts_with? '_' + @name
-      libcrown.del_group @gid if @group.starts_with? '_' + @name
-      libcrown.write
-    end
+      if !@keep_user_group && Process.root?
+        libcrown = Libcrown.new
+        libcrown.del_user @uid if @user.starts_with? '_' + @name
+        libcrown.del_group @gid if @group.starts_with? '_' + @name
+        libcrown.write
+      end
 
-    FileUtils.rm_r @app.path
-    Log.info "delete completed", @app.path
-    self
+      FileUtils.rm_r @app.path
+      Log.info "delete completed", @app.path
+      self
+    end
   end
 end

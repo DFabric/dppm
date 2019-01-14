@@ -8,6 +8,7 @@ struct Manager::Application::Add
   @user : String
   @group : String
   @build : Package::Build
+  @database_password : String? = nil
 
   def initialize(@build : Package::Build, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false, database : String? = nil)
     @vars = @build.vars.dup
@@ -24,6 +25,14 @@ struct Manager::Application::Add
 
     @uid, @gid, @user, @group = initialize_owner
 
+    if database
+      Log.info "initialize database", database
+      (@app.database = database).try do |database|
+        database.check
+        @vars.merge! database.vars
+      end
+    end
+
     # Default variables
     unset_vars = Set(String).new
 
@@ -36,7 +45,12 @@ struct Manager::Application::Add
       @build.pkg.src.pkg_file.config.each_key do |var|
         if !@vars.has_key? var
           # Skip if a socket is used
-          next if var == "port" && @socket
+          if var == "port" && @socket
+            next
+          elsif var == "database_password" && @app.database?
+            @database_password = @vars["database_password"] = Database.gen_password
+            next
+          end
 
           key = @build.pkg.src.get_config(var).to_s
           if key.empty?
@@ -159,6 +173,11 @@ struct Manager::Application::Add
       FileUtils.cp(@app.libs_dir + "php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
       php_fpm = Prefix::PkgFile.new @app.libs_dir + "php"
       @app.pkg_file.exec = php_fpm.exec
+    end
+
+    @app.database?.try do |database|
+      Log.info "configure database", database.uri.to_s
+      database.create @database_password.not_nil!
     end
 
     # Running the add task

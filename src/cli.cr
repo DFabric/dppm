@@ -114,7 +114,11 @@ module CLI
                   options:   {
                     keep_user_group: {
                       short: 'k',
-                      info:  "Don't delete the user and group (for application)",
+                      info:  "Don't delete the system user and groupof the application",
+                    },
+                    preserve_database: {
+                      short: 'p',
+                      info:  "Preserve the database used by the application from deletion",
                     },
                   },
                 },

@@ -15,8 +15,37 @@ struct Prefix::App
     Host.service.new @name
   end
 
-  getter? service : Service::OpenRC | Service::Systemd | Nil do
-    Host.service.new(@name) if Host.service?
+  def service? : Service::OpenRC | Service::Systemd | Nil
+    if Host.service?
+      @service ||= service
+    end
+  end
+  
+  def database? : Database::MySQL | Nil
+    @database
+  end
+
+  getter database : Database::MySQL | Nil do
+    if pkg_file.config.has_key?("database_address")
+      address = get_config("database_address")
+      host, port = address.to_s.split(':')
+      host = host.lstrip('[').rstrip(']')
+    elsif pkg_file.config.has_key?("database_host")
+      host = get_config("database_host").to_s
+      port = get_config("database_port").to_s
+    else
+      return
+    end
+    Database.new(
+      user: get_config("database_user").to_s,
+      type: get_config("database_type").to_s,
+      host: host,
+      port: port.to_i,
+    )
+  end
+
+  def database=(database_name)
+    @database = Database.create @prefix, @name, database_name
   end
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)

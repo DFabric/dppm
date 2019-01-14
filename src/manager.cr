@@ -1,5 +1,6 @@
 require "exec"
 require "./config"
+require "./database"
 require "./host"
 require "./httpget"
 require "./logger"

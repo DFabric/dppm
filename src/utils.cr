@@ -24,8 +24,7 @@ module Utils
     case string
     when "true"  then true
     when "false" then false
-    else
-      raise "can't convert to a boolean: " + string
+    else              raise "can't convert to a boolean: " + string
     end
   end
 

@@ -1,4 +1,5 @@
 require "./config"
+require "./database"
 require "./host"
 
 struct Prefix

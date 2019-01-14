@@ -15,16 +15,18 @@ dependencies:
     github: j8r/clicr
   con:
     github: j8r/con
+  cossack:
+    github: crystal-community/cossack
   dynany:
     github: j8r/dynany
   exec:
     github: j8r/exec.cr
   libcrown:
     github: j8r/libcrown
+  mysql:
+    github: crystal-lang/crystal-mysql
   tail:
     github: j8r/tail
-  cossack:
-    github: crystal-community/cossack
   semantic_compare:
     github: j8r/semantic_compare
 
