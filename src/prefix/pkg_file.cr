@@ -33,10 +33,9 @@ struct Prefix::PkgFile
     tags : CON::Any,
     any : CON::Any
   property exec : Hash(String, String)?
-  @path : String? = nil
 
-  def path : String
-    @path ||= self.class.path @root_dir
+  getter path : String do
+    self.class.path @root_dir
   end
 
   def self.path(root_dir) : String
@@ -50,12 +49,12 @@ struct Prefix::PkgFile
 
   getter? config : Hash(String, String)?
 
-  def config : Hash(String, String)
-    @config ||= if config = @config
-                  config
-                else
-                  raise "no `config` key entry in " + path
-                end
+  getter config : Hash(String, String) do
+    if config = @config
+      config
+    else
+      raise "no `config` key entry in " + path
+    end
   end
 
   macro finished

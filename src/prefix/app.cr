@@ -7,7 +7,17 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
-  @pkg : Pkg?
+  getter pkg : Pkg do
+    Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
+  end
+
+  getter service : Service::OpenRC | Service::Systemd do
+    Host.service.new @name
+  end
+
+  getter? service : Service::OpenRC | Service::Systemd | Nil do
+    Host.service.new(@name) if Host.service?
+  end
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
     @path = @prefix.app + @name + '/'
@@ -19,10 +29,6 @@ struct Prefix::App
     @logs_dir = @path + "log/"
     @log_file_output = @logs_dir + "output.log"
     @log_file_error = @logs_dir + "error.log"
-  end
-
-  def pkg : Pkg
-    @pkg ||= Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
   end
 
   def set_config(key : String, value)

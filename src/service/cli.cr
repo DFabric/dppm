@@ -26,7 +26,7 @@ module Service::CLI
     else
       root_prefix = Prefix.new prefix
       services.each do |service_name|
-        service = Host.service.new(root_prefix.new_app(service_name).name)
+        service = root_prefix.new_app(service_name).service
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
         Log.output.puts service.name
@@ -51,14 +51,14 @@ module Service::CLI
   end
 
   def all_status
-    Host.service.each do |app|
-      yield Host.service.new app
+    Host.service.each do |service_name|
+      yield Host.service.new service_name
     end
   end
 
   def app_status(prefix : String = PREFIX, &block)
     Prefix.new(prefix).each_app do |app|
-      yield Host.service.new(app.name)
+      yield app.service
     end
   end
 end

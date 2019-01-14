@@ -2,7 +2,6 @@ require "libcrown"
 
 struct Manager::Application::Delete
   getter app : Prefix::App
-  @service : Service::Systemd | Service::OpenRC | Nil
   @keep_user_group : Bool
   @uid : UInt32
   @gid : UInt32
@@ -20,14 +19,12 @@ struct Manager::Application::Delete
     @group = libcrown.groups[@gid].name
 
     # Checks
-    if service = Host.service?.try &.new @name
+    @app.service?.try do |service|
       if service.exists?
         Log.info "a system service is found", @name
         service.check_delete
-        @service = service
       else
         Log.warn "no system service found", @name
-        @service = nil
       end
     end
   end
@@ -39,13 +36,15 @@ struct Manager::Application::Delete
       str << "\nbasedir: " << @app.path
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
-      str << "\nservice: " << @service.try &.file if @service
+      @app.service.try do |service|
+        str << "\nservice: " << service.file
+      end
     end
   end
 
   def run
     Log.info "deleting", @app.path
-    @service.try do |service|
+    @app.service?.try do |service|
       Log.info "deleting system service", service.name
       service.delete
     end

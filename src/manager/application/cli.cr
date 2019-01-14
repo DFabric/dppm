@@ -25,7 +25,13 @@ module Manager::Application::CLI
     # Create task
     vars.merge! Host.vars
     build = Package::Build.new vars, root_prefix, application, vars["version"]?
-    task = Add.new build: build, shared: !contained, add_service: !noservice, socket: socket # , database: database
+    task = Add.new(
+      build: build,
+      shared: !contained,
+      add_service: !noservice,
+      socket: socket,
+      database: database
+    )
 
     Log.info "add", task.simulate
     task.run if no_confirm || Manager.cli_confirm

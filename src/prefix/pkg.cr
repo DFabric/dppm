@@ -5,7 +5,7 @@ struct Prefix::Pkg
   getter package : String,
     version : String
 
-  protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil)
+  protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version
       @version = version
       @package = name
@@ -60,7 +60,7 @@ struct Prefix::Pkg
     else
       raise "fail to get a version"
     end
-    new prefix, package, version, src.pkg_file
+    new prefix, package, version, src.pkg_file, src
   rescue ex
     raise "can't obtain a version: #{ex}"
   end

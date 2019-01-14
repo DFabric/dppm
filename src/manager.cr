@@ -3,9 +3,9 @@ require "./config"
 require "./host"
 require "./httpget"
 require "./logger"
-require "./manager/*"
 require "./prefix"
 require "./service"
+require "./manager/*"
 
 module Manager
   extend self

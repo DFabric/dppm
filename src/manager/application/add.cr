@@ -7,20 +7,22 @@ struct Manager::Application::Add
   @gid : UInt32
   @user : String
   @group : String
-  @service : Service::Systemd | Service::OpenRC | Nil
   @build : Package::Build
 
-  def initialize(@build : Package::Build, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false)
+  def initialize(@build : Package::Build, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false, database : String? = nil)
     @vars = @build.vars.dup
 
     Log.info "getting name", @build.pkg.name
     @app = @build.pkg.new_app @vars["name"]?
 
-    if add_service && (service = Host.service?.try &.new @app.name)
-      service.check_availability
-      @service = service
+    if add_service
+      @app.service?.try do |service|
+        service.check_availability
+      end
     end
     raise "application directory already exists: " + @app.path if File.exists? @app.path
+
+    @uid, @gid, @user, @group = initialize_owner
 
     # Default variables
     unset_vars = Set(String).new
@@ -30,13 +32,13 @@ struct Manager::Application::Add
       Host.tcp_port_available port.to_u16
     end
 
-    if @build.pkg.pkg_file.config?
-      @build.pkg.pkg_file.config.each_key do |var|
+    if @build.pkg.src.pkg_file.config?
+      @build.pkg.src.pkg_file.config.each_key do |var|
         if !@vars.has_key? var
           # Skip if a socket is used
           next if var == "port" && @socket
 
-          key = @build.pkg.get_config(var).to_s
+          key = @build.pkg.src.get_config(var).to_s
           if key.empty?
             unset_vars << var
           else
@@ -52,8 +54,6 @@ struct Manager::Application::Add
     end
     raise "socket not supported by #{@app.pkg_file.name}" if @socket && !@vars.has_key? "socket"
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
-
-    @uid, @gid, @user, @group = initialize_owner
 
     @vars["package"] = @build.pkg.package
     @vars["version"] = @build.pkg.version
@@ -167,7 +167,7 @@ struct Manager::Application::Add
       Dir.cd(@app.path) { Cmd.new(@vars.dup).run add_task }
     end
 
-    @service.try do |service|
+    @app.service?.try do |service|
       # Create system services
       service.create @app, @user, @group
       service.enable @app.path
@@ -212,7 +212,7 @@ struct Manager::Application::Add
   rescue ex
     FileUtils.rm_rf @app.path
     begin
-      @service.try &.delete
+      @app.service.try &.delete
     ensure
       raise "add failed - application deleted: #{@app.path}:\n#{ex}"
     end
