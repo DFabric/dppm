@@ -13,14 +13,13 @@ module Manager::Application::CLI
   def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
-
-    main_config = MainConfig.new config, mirror, source
-    vars["mirror"] = main_config.mirror
+    MainConfig.file = config
+    vars["mirror"] = mirror || MainConfig.mirror
     vars_parser custom_vars, vars
 
     # Update cache
     root_prefix = Prefix.new prefix, true
-    Source::Cache.update root_prefix, main_config.source
+    Source::Cache.update(root_prefix, source || MainConfig.source)
 
     # Create task
     vars.merge! Host.vars

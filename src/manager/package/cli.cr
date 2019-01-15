@@ -23,12 +23,12 @@ module Manager::Package::CLI
   def build(no_confirm, config, mirror, source, prefix, package, custom_vars, version)
     vars = Hash(String, String).new
     Log.info "initializing", "build"
-    main_config = MainConfig.new config, mirror, source
-    vars["mirror"] = main_config.mirror
+    MainConfig.file = config
+    vars["mirror"] = mirror || MainConfig.mirror
 
     # Update cache
     root_prefix = Prefix.new prefix, true
-    Source::Cache.update root_prefix, main_config.source
+    Source::Cache.update(root_prefix, source || MainConfig.source)
 
     # Create task
     vars.merge! Host.vars

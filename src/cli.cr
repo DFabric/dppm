@@ -217,13 +217,13 @@ module CLI
           variables: {
             config: {
               info:    "Configuration file path",
-              default: "#{Manager::MainConfig::FILE}",
+              default: "#{MainConfig.file}",
             },
             mirror: {
-              info: "Mirror of precompiled applications (default in #{Manager::MainConfig::FILE})",
+              info: "Mirror of precompiled applications (default in #{MainConfig.file})",
             },
             source: {
-              info: "Source path/url of the packages and configurations (default in #{Manager::MainConfig::FILE})",
+              info: "Source path/url of the packages and configurations (default in #{MainConfig.file})",
             },
           },
         },

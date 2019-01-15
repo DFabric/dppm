@@ -46,7 +46,8 @@ describe Manager do
       prefix: TEMP_DPPM_PREFIX,
       application: TEST_APP_PACKAGE_NAME,
       custom_vars: custom_vars,
-      keep_user_group: true).not_nil!
+      keep_user_group: true,
+      preserve_database: false).not_nil!
     delete.app.name.should eq TEST_APP_PACKAGE_NAME
     Dir.exists?(delete.app.path).should be_false
   end

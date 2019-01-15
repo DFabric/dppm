@@ -44,8 +44,8 @@ module Manager::Source::Cache
     if source
       update prefix, source, no_confirm
     else
-      main_config = MainConfig.new config, mirror, nil
-      update prefix, main_config.source, no_confirm
+      MainConfig.file = config
+      update prefix, MainConfig.source, no_confirm
     end
   end
 end

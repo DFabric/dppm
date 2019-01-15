@@ -43,7 +43,7 @@ struct Manager::Application::Delete
     end
   end
 
-  def run
+  def run : Delete
     Log.info "deleting", @app.path
     begin
       if !@preserve_database
@@ -52,22 +52,24 @@ struct Manager::Application::Delete
           database.delete
         end
       end
-    ensure
-      @app.service?.try do |service|
+    rescue
+    end
+    @app.service?.try do |service|
+      if service.exists?
         Log.info "deleting system service", service.name
         service.delete
       end
-
-      if !@keep_user_group && Process.root?
-        libcrown = Libcrown.new
-        libcrown.del_user @uid if @user.starts_with? '_' + @name
-        libcrown.del_group @gid if @group.starts_with? '_' + @name
-        libcrown.write
-      end
-
-      FileUtils.rm_r @app.path
-      Log.info "delete completed", @app.path
-      self
     end
+
+    if !@keep_user_group && Process.root?
+      libcrown = Libcrown.new
+      libcrown.del_user @uid if @user.starts_with? '_' + @name
+      libcrown.del_group @gid if @group.starts_with? '_' + @name
+      libcrown.write
+    end
+
+    FileUtils.rm_r @app.path
+    Log.info "delete completed", @app.path
+    self
   end
 end

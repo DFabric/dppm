@@ -20,7 +20,7 @@ struct Prefix::App
       @service ||= service
     end
   end
-  
+
   def database? : Database::MySQL | Nil
     @database
   end

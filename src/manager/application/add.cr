@@ -186,15 +186,15 @@ struct Manager::Application::Add
       Dir.cd(@app.path) { Cmd.new(@vars.dup).run add_task }
     end
 
-    @app.service?.try do |service|
-      # Create system services
-      service.create @app, @user, @group
-      service.enable @app.path
-      Log.info service.class.type + " system service added", service.name
-    end
-
     # Create system user and group for the application
     if Process.root?
+      @app.service?.try do |service|
+        # Create system services
+        service.create @app, @user, @group
+        service.enable @app.path
+        Log.info service.class.type + " system service added", service.name
+      end
+
       libcrown = Libcrown.new
       add_group_member = false
       # Add a new group
