@@ -7,6 +7,16 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
+  getter? password : String? do
+    if File.exists? password_file
+      File.read password_file
+    end
+  end
+
+  getter password_file : String do
+    conf_dir + "password"
+  end
+
   getter pkg : Pkg do
     Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
   end
@@ -26,26 +36,33 @@ struct Prefix::App
   end
 
   getter database : Database::MySQL | Nil do
+    type = get_config("database_type").to_s
     if pkg_file.config.has_key?("database_address")
       address = get_config("database_address")
-      host, port = address.to_s.split(':')
+      host, port = address.to_s.split(':', limit: 2)
       host = host.lstrip('[').rstrip(']')
     elsif pkg_file.config.has_key?("database_host")
       host = get_config("database_host").to_s
       port = get_config("database_port").to_s
-    else
+    elsif !Database.supported? type
       return
     end
-    Database.new(
-      user: get_config("database_user").to_s,
-      type: get_config("database_type").to_s,
+
+    user = get_config("database_user").to_s
+    uri = URI.new(
+      scheme: nil,
       host: host,
-      port: port.to_i,
+      port: port.to_s.to_i,
+      path: nil,
+      query: nil,
+      user: user,
+      password: get_config("database_password").to_s,
     )
+    Database.new_database uri, user, type
   end
 
-  def database=(database_name)
-    @database = Database.create @prefix, @name, database_name
+  def database=(database_app : App)
+    @database = Database.create @prefix, @name, database_app
   end
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)

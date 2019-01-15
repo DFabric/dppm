@@ -21,7 +21,16 @@ struct Database::MySQL
       end
     end
   rescue ex : DB::Error
-    raise "can't open database: #{@uri}"
+    raise "can't connect to the database: #{@uri}"
+  end
+
+  def set_root_password : String
+    password = Database.gen_password
+    DB.open @uri do |db|
+      db.unprepared("ALTER USER 'root'@'%' IDENTIFIED BY '#{password}'").exec
+      db.unprepared("FLUSH PRIVILEGES").exec
+    end
+    @uri.password = password
   end
 
   def create(password : String)
@@ -39,7 +48,7 @@ struct Database::MySQL
   def delete
     DB.open @uri do |db|
       db.unprepared("DROP DATABASE IF EXISTS #{@user}").exec
-      db.unprepared("DROP USER IF EXISTS '#{@user}'@'#{@uri.host}'").exec
+      # db.unprepared("DROP USER IF EXISTS '#{@user}'@'#{@uri.host}'").exec
       db.unprepared("FLUSH PRIVILEGES").exec
     end
   end

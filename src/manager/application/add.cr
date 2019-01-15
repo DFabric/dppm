@@ -8,6 +8,7 @@ struct Manager::Application::Add
   @user : String
   @group : String
   @build : Package::Build
+  @database : Prefix::App? = nil
   @database_password : String? = nil
 
   def initialize(@build : Package::Build, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false, database : String? = nil)
@@ -26,11 +27,13 @@ struct Manager::Application::Add
     @uid, @gid, @user, @group = initialize_owner
 
     if database
+      database_app = @build.pkg.prefix.new_app database
       Log.info "initialize database", database
-      (@app.database = database).try do |database|
+      (@app.database = database_app).try do |database|
         database.check
         @vars.merge! database.vars
       end
+      @database = database_app
     end
 
     # Default variables
@@ -177,6 +180,7 @@ struct Manager::Application::Add
 
     @app.database?.try do |database|
       Log.info "configure database", database.uri.to_s
+      database.ensure_root_password @database.not_nil!
       database.create @database_password.not_nil!
     end
 

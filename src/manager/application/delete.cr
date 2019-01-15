@@ -37,7 +37,7 @@ struct Manager::Application::Delete
       str << "\nbasedir: " << @app.path
       str << "\nuser: " << @user
       str << "\ngroup: " << @group
-      @app.service.try do |service|
+      @app.service?.try do |service|
         str << "\nservice: " << service.file
       end
     end
@@ -47,7 +47,7 @@ struct Manager::Application::Delete
     Log.info "deleting", @app.path
     begin
       if !@preserve_database
-        @app.database?.try do |database|
+        @app.database.try do |database|
           Log.info "deleting database", database.user
           database.delete
         end

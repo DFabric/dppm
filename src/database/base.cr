@@ -10,6 +10,13 @@ module Database::Base
     raise "user already exists in #{@uri}: #{@user}"
   end
 
+  def ensure_root_password(database_app : Prefix::App)
+    if !@uri.password
+      File.write database_app.password_file, set_root_password
+      File.chmod database_app.password_file, 0o400
+    end
+  end
+
   def vars
     {
       "database_address" => "[#{@uri.host}]:#{@uri.port}",

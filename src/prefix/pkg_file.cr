@@ -80,27 +80,15 @@ struct Prefix::PkgFile
                      ipv6_braces.as_bool?
                    end
     {% for hash in %w(deps aliases env exec config) %}\
-    if {{hash.id}}_any = @any[{{hash}}]?
-      {{hash.id}} = Hash(String, String).new
-      {{hash.id}}_any.as_h.each do |k, v|
-        {{hash.id}}[k] = v.as_s
-      end
-      @{{hash.id}} = {{hash.id}}
+    if {{hash.id}} = @any[{{hash}}]?
+      @{{hash.id}} = {{hash.id}}.as_h.transform_values &.as_s
     end
     {% end %}
-    if tasks_any = @any["tasks"]?
-      tasks = Hash(String, Array(CON::Any)).new
-      tasks_any.as_h.each do |task, value|
-        tasks[task] = value.as_a
-      end
-      @tasks = tasks
+    if tasks = @any["tasks"]?
+      @tasks = tasks.as_h.transform_values &.as_a
     end
-    if databases_any = @any["databases"]?
-      databases = Hash(String, String?).new
-      databases_any.as_h.each do |database, value|
-        databases[database] = value.as_s?
-      end
-      @databases = databases
+    if databases = @any["databases"]?
+      @databases = databases.as_h.transform_values &.as_s?
     end
   end
   end

@@ -1,36 +1,39 @@
 require "uri"
 require "./database/*"
 require "./prefix"
+require "./main_config"
 
 module Database
   extend self
 
-  def self.new(user : String, type : String, host : String, port : Int32) : MySQL | Nil
-    uri = self.root_connection_uri host, port
-    new_database? uri, user, type
+  def self.supported?(database : String) : Bool
+    {"mysql"}.includes? database
   end
 
-  def create(prefix : Prefix, user : String, database_application : String) : MySQL | Nil
-    app = prefix.new_app database_application
-    host = app.get_config("host").to_s.lstrip('[').rstrip(']')
-    port = app.get_config("port").to_s.to_i
+  def create(prefix : Prefix, user : String, database_application : Prefix::App) : MySQL
+    host = database_application.get_config("host").to_s.lstrip('[').rstrip(']')
+    port = database_application.get_config("port").to_s
 
-    uri = self.root_connection_uri host, port
-
-    case provide = app.pkg_file.provides
+    uri = URI.new(
+      scheme: nil,
+      host: host,
+      port: port.to_i,
+      path: nil,
+      query: nil,
+      user: "root",
+      password: database_application.password?,
+    )
+    case provide = database_application.pkg_file.provides
     when "mysql" then MySQL.new uri, user
-    else              new_database uri, user, app.pkg_file.package
-    end
-  end
-
-  def new_database?(uri : URI, user : String, name : String) : MySQL | Nil
-    case name
-    when "mysql" then MySQL.new uri, user
+    else              new_database uri, user, database_application.pkg_file.package
     end
   end
 
   def new_database(uri : URI, user : String, name : String) : MySQL
-    new_database(uri, user, name) || raise "unsupported database: #{name}"
+    case name
+    when "mysql" then MySQL.new uri, user
+    else              raise "unsupported database: #{name}"
+    end
   end
 
   def gen_password : String
@@ -46,17 +49,5 @@ module Database
       break if strong_password
     end
     password
-  end
-
-  def root_connection_uri(host : String, port : Int32) : URI
-    URI.new(
-      scheme: nil,
-      host: host,
-      port: port,
-      path: nil,
-      query: nil,
-      user: "root",
-      password: nil,
-    )
   end
 end
