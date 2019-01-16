@@ -11,7 +11,8 @@ module Database
   end
 
   def create(prefix : Prefix, user : String, database_application : Prefix::App) : MySQL
-    host = database_application.get_config("host").to_s.lstrip('[').rstrip(']')
+    user = '_' + user
+    host = database_application.get_config("host").to_s
     port = database_application.get_config("port").to_s
 
     uri = URI.new(
@@ -21,8 +22,9 @@ module Database
       path: nil,
       query: nil,
       user: "root",
-      password: database_application.password?,
+      password: database_application.password,
     )
+
     case provide = database_application.pkg_file.provides
     when "mysql" then MySQL.new uri, user
     else              new_database uri, user, database_application.pkg_file.package

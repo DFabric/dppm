@@ -7,7 +7,7 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
-  getter? password : String? do
+  getter password : String? do
     if File.exists? password_file
       File.read password_file
     end
@@ -36,28 +36,22 @@ struct Prefix::App
   end
 
   getter database : Database::MySQL | Nil do
-    type = get_config("database_type").to_s
     if pkg_file.config.has_key?("database_address")
-      address = get_config("database_address")
-      host, port = address.to_s.split(':', limit: 2)
-      host = host.lstrip('[').rstrip(']')
+      uri = URI.parse "//#{get_config("database_address")}"
     elsif pkg_file.config.has_key?("database_host")
-      host = get_config("database_host").to_s
-      port = get_config("database_port").to_s
-    elsif !Database.supported? type
+      uri = URI.new(
+        host: get_config("database_host").to_s,
+        port: get_config("database_port").to_s.to_i,
+      )
+    else
       return
     end
+    type = get_config("database_type").to_s
+    return if !Database.supported? type
 
-    user = get_config("database_user").to_s
-    uri = URI.new(
-      scheme: nil,
-      host: host,
-      port: port.to_s.to_i,
-      path: nil,
-      query: nil,
-      user: user,
-      password: get_config("database_password").to_s,
-    )
+    uri.password = get_config("database_password").to_s
+    uri.user = user = get_config("database_user").to_s
+
     Database.new_database uri, user, type
   end
 

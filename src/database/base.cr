@@ -3,11 +3,11 @@ module Database::Base
     user : String
 
   private def database_exists_error
-    raise "database already exists in #{@uri}: #{@user}"
+    raise "database already exists in #{@uri.scheme}: #{@user}"
   end
 
   private def users_exists_error
-    raise "user already exists in #{@uri}: #{@user}"
+    raise "user already exists in #{@uri.scheme}: #{@user}"
   end
 
   def ensure_root_password(database_app : Prefix::App)
@@ -19,9 +19,9 @@ module Database::Base
 
   def vars
     {
-      "database_address" => "[#{@uri.host}]:#{@uri.port}",
+      "database_address" => "#{@uri.host}:#{@uri.port}",
       "database_port"    => @uri.port.to_s,
-      "database_host"    => @uri.host.not_nil!,
+      "database_host"    => @uri.hostname.not_nil!,
       "database_user"    => @user,
       "database_name"    => @user,
       "database_type"    => @uri.scheme.not_nil!,

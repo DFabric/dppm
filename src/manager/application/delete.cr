@@ -45,14 +45,11 @@ struct Manager::Application::Delete
 
   def run : Delete
     Log.info "deleting", @app.path
-    begin
-      if !@preserve_database
-        @app.database.try do |database|
-          Log.info "deleting database", database.user
-          database.delete
-        end
+    if !@preserve_database
+      @app.database.try do |database|
+        Log.info "deleting database", database.user
+        database.delete
       end
-    rescue
     end
     @app.service?.try do |service|
       if service.exists?

@@ -30,6 +30,7 @@ struct Manager::Application::Add
       database_app = @build.pkg.prefix.new_app database
       Log.info "initialize database", database
       (@app.database = database_app).try do |database|
+        database.clean
         database.check
         @vars.merge! database.vars
       end
@@ -179,7 +180,7 @@ struct Manager::Application::Add
     end
 
     @app.database?.try do |database|
-      Log.info "configure database", database.uri.to_s
+      Log.info "configure database", @database.not_nil!.name
       database.ensure_root_password @database.not_nil!
       database.create @database_password.not_nil!
     end
