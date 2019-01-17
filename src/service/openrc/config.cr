@@ -1,19 +1,18 @@
 struct Service::OpenRC::Config
-  getter section = Hash(String, String | Array(String) | Hash(String, Array(String))).new
+  getter section : Hash(String, String | Array(String) | Hash(String, Array(String)))
 
-  def initialize
-    @section = base
+  def initialize(@section : Hash(String, String | Array(String) | Hash(String, Array(String))))
   end
 
-  def self.parse(file : String)
-    if File.exists? file
-      new File.read file
+  def self.new(file : String? = nil)
+    if file && File.exists? file
+      parse File.read(file)
     else
-      new
+      new base
     end
   end
 
-  def base
+  def self.base
     {"pidfile"    => "/run/${RC_SVCNAME}.pid",
      "supervisor" => "supervise-daemon",
      "depend"     => {
@@ -28,6 +27,7 @@ struct Service::OpenRC::Config
     when "user"          then {"user"}
     when "group"         then {"group"}
     when "after"         then {"depend", "after"}
+    when "before"        then {"depend", "before"}
     when "want"          then {"depend", "want"}
     when "environment"   then {"env"}
     when "description"   then {"description"}

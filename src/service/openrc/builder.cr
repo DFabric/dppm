@@ -18,7 +18,7 @@ struct Service::OpenRC::Config
           end
           # function
         when Array(String)
-          if @extras.includes? key
+          if EXTRAS.includes? key
             extra += "#{key}=\'#{section.join ' '}\'\n"
           else
             functions += "#{key}() {\n\t#{section.join("\n\t")}\n}"

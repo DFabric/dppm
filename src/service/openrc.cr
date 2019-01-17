@@ -4,14 +4,13 @@ struct Service::OpenRC
   include System
   class_getter type : String = "openrc"
 
+  getter config : Config do
+    Config.new @file
+  end
+
   def initialize(@name : String)
     @file = "/etc/init.d/" + @name
     @boot_file = "/etc/runlevels/default/" + @name
-    @init_path = Service::ROOT_PATH + @@type.downcase
-  end
-
-  def config
-    Config
   end
 
   def self.each
@@ -28,8 +27,8 @@ struct Service::OpenRC
     delete_internal
   end
 
-  def enable(pkgdir)
-    File.symlink pkgdir + @init_path, @file
+  def enable(app : Prefix::App)
+    File.symlink app.service_file, @file
     File.chmod @file, 0o750
   end
 

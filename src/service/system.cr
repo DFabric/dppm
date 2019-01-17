@@ -1,8 +1,11 @@
 module Service::System
   getter name : String,
     file : String,
-    boot_file : String,
-    init_path : String
+    boot_file : String
+
+  def type : String
+    self.class.type
+  end
 
   def boot? : Bool
     File.exists? @boot_file
@@ -54,10 +57,10 @@ module Service::System
   end
 
   def create(app : Prefix::App, user : String, group : String)
-    sysinit_hash = config.parse app.path + init_path
+    sysinit_hash = app.service.config
     (exec = app.pkg_file.exec) || raise "exec key not present in #{app.pkg_file.path}"
 
-    Dir.mkdir_p app.path + Service::ROOT_PATH
+    Dir.mkdir_p app.service_dir
 
     Log.info "creating system service", name
 
@@ -88,6 +91,6 @@ module Service::System
     end
 
     # Convert back hashes to service files
-    File.write app.path + @init_path, sysinit_hash.build
+    File.write app.service_file, sysinit_hash.build
   end
 end

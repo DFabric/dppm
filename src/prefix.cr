@@ -1,6 +1,7 @@
 require "./config"
 require "./database"
 require "./host"
+require "./service"
 
 struct Prefix
   getter path : String,

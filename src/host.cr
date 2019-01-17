@@ -37,31 +37,6 @@ struct Host
   class_getter proc_ver : Array(String) = File.read("/proc/version").split(' '),
     kernel_ver : String = proc_ver[2].split('-')[0]
 
-  @@service : Service::Systemd.class | Service::OpenRC.class | Nil = get_sysinit
-
-  def self.service?
-    @@service
-  end
-
-  def self.service
-    if _service = @@service
-      _service
-    else
-      raise "unsupported init system"
-    end
-  end
-
-  private def self.get_sysinit
-    init = File.basename File.real_path "/sbin/init"
-    if init == "systemd"
-      Service::Systemd
-    elsif File.exists? "/sbin/openrc"
-      Service::OpenRC
-    else
-      Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems instead of `" + init + '`'
-    end
-  end
-
   # System's kernel
   {% if flag?(:linux) %}
     class_getter kernel = "linux"
@@ -90,13 +65,12 @@ struct Host
 
   # All system environment variables
   def self.vars : Hash(String, String)
-    _service = @@service
     {
       "arch"        => @@arch,
       "kernel"      => @@kernel,
       "kernel_ver"  => @@kernel_ver.to_s,
-      "sysinit"     => _service ? _service.type : "",
-      "sysinit_ver" => (_service.version if _service).to_s,
+      "sysinit"     => Service.init?.to_s,
+      "sysinit_ver" => (Service.init.version if Service.init?).to_s,
     }
   end
 

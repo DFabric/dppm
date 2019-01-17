@@ -306,6 +306,6 @@ module CLI
   end
 
   def service(prefix, service)
-    Host.service.new service
+    Service.init.new service
   end
 end

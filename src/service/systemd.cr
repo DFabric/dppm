@@ -4,6 +4,10 @@ struct Service::Systemd
   include System
   class_getter type : String = "systemd"
 
+  getter config : Config do
+    Config.new @file
+  end
+
   def initialize(@name : String)
     @file = if File.exists?(service = "/lib/systemd/system/#{@name}.service")
               service
@@ -11,11 +15,6 @@ struct Service::Systemd
               "/etc/systemd/system/#{@name}.service"
             end
     @boot_file = "/etc/systemd/system/multi-user.target.wants/#{@name}.service"
-    @init_path = Service::ROOT_PATH + @@type.downcase
-  end
-
-  def config
-    Config
   end
 
   def self.each
@@ -33,8 +32,8 @@ struct Service::Systemd
     Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
-  def enable(pkgdir) : Bool
-    File.symlink pkgdir + @init_path, @file
+  def enable(app : Prefix::App) : Bool
+    File.symlink app.service_file, @file
     Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 

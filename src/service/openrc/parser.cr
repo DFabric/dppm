@@ -1,7 +1,8 @@
 struct Service::OpenRC::Config
-  @extras = {"extra_command", "extra_started_commands", "extra_stopped_commands"}
+  EXTRAS = {"extra_command", "extra_started_commands", "extra_stopped_commands"}
 
-  def initialize(data : String)
+  def self.parse(data : String)
+    section = Hash(String, String | Array(String) | Hash(String, Array(String))).new
     line_number = 1
     function_name = ""
     function = Array(String).new
@@ -11,16 +12,16 @@ struct Service::OpenRC::Config
       line = full_line.lstrip "\t "
       if line.starts_with? "--"
         key, val = line.split '\''
-        @section[key[2..-2]] = val
+        section[key[2..-2]] = val
       elsif line.ends_with? '\''
         key, val = line.split '='
-        @section[key] = if @extras.includes? key
-                          val[1..-2].split ' '
-                        else
-                          val[1..-2]
-                        end
+        section[key] = if EXTRAS.includes? key
+                         val[1..-2].split ' '
+                       else
+                         val[1..-2]
+                       end
       elsif line.ends_with? '}'
-        @section[function_name] = function
+        section[function_name] = function
         function_name = ""
         function = Array(String).new
       elsif function_name == "depend"
@@ -35,6 +36,7 @@ struct Service::OpenRC::Config
     rescue
       raise "parse error line #{line_number}: #{full_line}"
     end
-    @section["depend"] = depend
+    section["depend"] = depend
+    new section
   end
 end

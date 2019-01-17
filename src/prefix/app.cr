@@ -22,11 +22,19 @@ struct Prefix::App
   end
 
   getter service : Service::OpenRC | Service::Systemd do
-    Host.service.new @name
+    Service.init.new @name
+  end
+
+  getter service_dir : String do
+    conf_dir + "init/"
+  end
+
+  getter service_file : String do
+    service_dir + service.type
   end
 
   def service? : Service::OpenRC | Service::Systemd | Nil
-    if Host.service?
+    if Service.init?
       @service ||= service
     end
   end

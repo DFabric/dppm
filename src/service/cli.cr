@@ -2,7 +2,7 @@ module Service::CLI
   extend self
 
   def boot(prefix : String, service : String, state : String) : Bool
-    Host.service.new(service).boot Utils.to_b(state)
+    Service.init.new(service).boot Utils.to_b(state)
   end
 
   private def get_status(prefix : String, all : Bool, &block : Service::OpenRC | Service::Systemd -> Nil)
@@ -51,8 +51,8 @@ module Service::CLI
   end
 
   def all_status
-    Host.service.each do |service_name|
-      yield Host.service.new service_name
+    Service.init.each do |service_name|
+      yield Service.init.new service_name
     end
   end
 

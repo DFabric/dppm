@@ -196,8 +196,8 @@ struct Manager::Application::Add
       @app.service?.try do |service|
         # Create system services
         service.create @app, @user, @group
-        service.enable @app.path
-        Log.info service.class.type + " system service added", service.name
+        service.enable @app
+        Log.info service.type + " system service added", service.name
       end
 
       libcrown = Libcrown.new

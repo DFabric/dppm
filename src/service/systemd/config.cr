@@ -1,19 +1,18 @@
 struct Service::Systemd::Config
-  getter section = Hash(String, Hash(String, String)).new
+  getter section : Hash(String, Hash(String, String))
 
-  def initialize
-    @section = base
+  def initialize(@section : Hash(String, Hash(String, String)))
   end
 
-  def self.parse(file : String)
-    if File.exists? file
-      new File.read file
+  def self.new(file : String? = nil)
+    if file && File.exists? file
+      parse File.read(file)
     else
-      new
+      new base
     end
   end
 
-  def base
+  def self.base
     {"Unit" => {
       "After" => "network.target",
     },
@@ -33,6 +32,7 @@ struct Service::Systemd::Config
     when "user"          then {"Service", "User"}
     when "group"         then {"Service", "Group"}
     when "after"         then {"Unit", "After"}
+    when "before"        then {"Unit", "Before"}
     when "want"          then {"Unit", "Wants"}
     when "environment"   then {"Service", "Environment"}
     when "description"   then {"Unit", "Description"}
