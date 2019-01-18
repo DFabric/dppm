@@ -1,24 +1,28 @@
 struct Service::OpenRC::Config
-  getter section : Hash(String, String | Array(String) | Hash(String, Array(String)))
+  getter section : Hash(String, String | Array(String))
+  getter depend : Hash(String, Array(String))
 
-  def initialize(@section : Hash(String, String | Array(String) | Hash(String, Array(String))))
+  def initialize(@section : Hash(String, String | Array(String)), @depend : Hash(String, Array(String)))
   end
 
   def self.new(file : String? = nil) : Config
     if file && File.exists? file
       parse File.read(file)
     else
-      new base
+      new base_section, base_depend
     end
   end
 
-  def self.base
+  def self.base_section
     {"pidfile"    => "/run/${RC_SVCNAME}.pid",
      "supervisor" => "supervise-daemon",
-     "depend"     => {
-       "after" => ["net"],
-     },
-     "reload" => ["eerror \"Reloading not available for $RC_SVCNAME\""]}
+     "reload"     => ["eerror \"Reloading not available for $RC_SVCNAME\""]}
+  end
+
+  def self.base_depend
+    {
+      "after" => ["net"],
+    }
   end
 
   def compat_layer(name : String)
@@ -47,14 +51,8 @@ struct Service::OpenRC::Config
       return "#{@section["command"]} #{@section["command_args"]}"
     end
     case keys = compat_layer name
-    when Tuple(String) then @section[keys[0]]
-    when Tuple(String, String)
-      subdata = @section[keys[0]]
-      if subdata.is_a? Hash(String, String)
-        subdata[keys[1]]
-      else
-        raise "unknown type: #{subdata}"
-      end
+    when Tuple(String)         then @section[keys[0]]
+    when Tuple(String, String) then @section[keys[1]]
     else
       raise "invalid keys: #{keys}"
     end
@@ -74,16 +72,7 @@ struct Service::OpenRC::Config
       when Tuple(String)
         @section[keys[0]] = value
       when Tuple(String, String)
-        subdata = @section[keys[0]]
-        case subdata
-        when Hash(String, String)
-          subdata[keys[1]] = value
-        when Hash(String, Array(String))
-          subdata[keys[1]] << value
-        else
-          raise "unknown type: #{subdata}"
-        end
-        @section[keys[0]] = subdata
+        @depend[keys[1]] = value.split(' ')
       else
         raise "only size of 0 and 1 is available: #{keys}"
       end

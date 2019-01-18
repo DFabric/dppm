@@ -23,14 +23,19 @@ struct Service::OpenRC::Config
           else
             functions += "#{key}() {\n\t#{section.join("\n\t")}\n}"
           end
-          # depend
-        when Hash(String, Array(String))
-          depend += "depend() {\n" + section.map { |k, a| "\t#{k} #{a.join ' '}\n" }.join + '}'
         end
       end
       str << supervise << "\"\n\n"
       str << extra << '\n' if !extra.empty?
-      str << depend << "\n\n" if !depend.empty?
+      if !@depend.empty?
+        str << "depend() {\n"
+        @depend.each do |key, services|
+          str << '\t' << key
+          services.join ' ', str
+          str << '\n'
+        end
+        str << "}\n\n"
+      end
       str << functions << "\n\n" if !functions.empty?
     end
   end
