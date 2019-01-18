@@ -21,8 +21,14 @@ struct Prefix::App
     Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
   end
 
-  getter service : Service::OpenRC | Service::Systemd do
-    Service.init.new @name
+  getter? service : Service::OpenRC | Service::Systemd | Nil
+
+  def service : Service::OpenRC | Service::Systemd
+    if _service = @service
+      _service
+    else
+      raise "service not available"
+    end
   end
 
   getter service_dir : String do
@@ -33,10 +39,47 @@ struct Prefix::App
     service_dir + service.type
   end
 
-  def service? : Service::OpenRC | Service::Systemd | Nil
-    if Service.init?
-      @service ||= service
+  def service_create(user : String, group : String)
+    _service = service
+    (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
+
+    Dir.mkdir_p service_dir
+
+    Log.info "creating system service", @name
+
+    # Set service options
+    {description:   pkg_file.description,
+     directory:     path,
+     command:       path + exec["start"],
+     user:          user,
+     group:         group,
+     restart_delay: "9",
+     umask:         "007",
+     log_output:    log_file_output,
+     log_error:     log_file_error,
+    }.each do |key, value|
+      _service.config.set key.to_s, value
     end
+
+    # add a reload directive if available
+    if exec_reload = exec["reload"]?
+      _service.config.set("reload", exec_reload)
+    end
+
+    # Add a PATH environment variable if not empty
+    if !(path_vars = env_vars).empty?
+      _service.config.env_set("PATH", path_vars)
+    end
+    if pkg_env = pkg_file.env
+      pkg_env.each { |var, value| _service.config.env_set var, value }
+    end
+
+    # Convert back hashes to service files
+    File.write service_file, _service.config.build
+  end
+
+  def service_enable
+    service.link service_file
   end
 
   def database? : Database::MySQL | Nil
@@ -77,6 +120,9 @@ struct Prefix::App
     @logs_dir = @path + "log/"
     @log_file_output = @logs_dir + "output.log"
     @log_file_error = @logs_dir + "error.log"
+    Service.init?.try do |_service|
+      @service = _service.new @name
+    end
   end
 
   def set_config(key : String, value)

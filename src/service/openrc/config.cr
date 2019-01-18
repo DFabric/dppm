@@ -4,7 +4,7 @@ struct Service::OpenRC::Config
   def initialize(@section : Hash(String, String | Array(String) | Hash(String, Array(String))))
   end
 
-  def self.new(file : String? = nil)
+  def self.new(file : String? = nil) : Config
     if file && File.exists? file
       parse File.read(file)
     else

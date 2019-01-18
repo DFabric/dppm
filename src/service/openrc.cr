@@ -1,8 +1,16 @@
-require "./system"
+require "./init_system"
 
 struct Service::OpenRC
-  include System
+  include InitSystem
   class_getter type : String = "openrc"
+
+  class_getter version : String do
+    output, error = Exec.new "/sbin/openrc", {"-V"}, &.wait
+    output.to_s =~ /([0-9]+\.[0-9]+\.[0-9]+)/
+    $1.not_nil!
+  rescue
+    raise "can't retrieve the OpenRC version: #{output}#{error}"
+  end
 
   getter config : Config do
     Config.new @file
@@ -27,8 +35,8 @@ struct Service::OpenRC
     delete_internal
   end
 
-  def enable(app : Prefix::App)
-    File.symlink app.service_file, @file
+  def link(service_file : String)
+    File.symlink service_file, @file
     File.chmod @file, 0o750
   end
 
@@ -37,15 +45,6 @@ struct Service::OpenRC
     Service.exec? "/sbin/rc-service", {@name, {{action}}}
   end
   {% end %}
-
-  def self.version : String
-    output, error = Exec.new "/sbin/openrc", {"-V"}, &.wait
-    if output.to_s =~ /([0-9]+\.[0-9]+\.[0-9]+)/
-      $1
-    else
-      raise "can't retrieve the OpenRC version: #{output}#{error}"
-    end
-  end
 end
 
 require "./openrc/*"

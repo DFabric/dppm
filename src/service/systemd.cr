@@ -1,8 +1,15 @@
-require "./system"
+require "./init_system"
 
 struct Service::Systemd
-  include System
+  include InitSystem
   class_getter type : String = "systemd"
+
+  class_getter version : Int32 do
+    output, error = Exec.new "/bin/systemctl", {"--version"}, &.wait
+    output.to_s.lines[0].lstrip("systemd ").to_i
+  rescue
+    raise "can't retrieve the systemd version: #{output}#{error}"
+  end
 
   getter config : Config do
     Config.new @file
@@ -32,8 +39,8 @@ struct Service::Systemd
     Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
-  def enable(app : Prefix::App) : Bool
-    File.symlink app.service_file, @file
+  def link(service_file : String)
+    File.symlink service_file, @file
     Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
@@ -42,15 +49,6 @@ struct Service::Systemd
     Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
   end
   {% end %}
-
-  def self.version : Int32
-    output, error = Exec.new "/bin/systemctl", {"--version"}, &.wait
-    if output.to_s =~ / ([0-9]+)\n/
-      $1.to_i
-    else
-      raise "can't retrieve the systemd version: #{output}#{error}"
-    end
-  end
 end
 
 require "./systemd/*"

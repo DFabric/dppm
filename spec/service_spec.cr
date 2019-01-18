@@ -18,16 +18,16 @@ describe Service do
 
   {% for sysinit in %w(OpenRC Systemd) %}
     describe {{sysinit}} do
+      Service.init = Service::{{sysinit.id}}
       test_prefix = Prefix.new(__DIR__ + "/service_test", create: true)
       test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
       FileUtils.cp_r __DIR__ + "/samples/" + TEST_APP_PACKAGE_NAME, test_app.path
 
 
-      Service.init = Service::{{sysinit.id}}
       service_config = Service::{{sysinit.id}}::Config.new
 
       it "creates a service" do
-        Service::{{sysinit.id}}.new(TEST_APP_PACKAGE_NAME).create(test_app, user, group)
+        test_app.service_create user, group
       end
 
       it "parses the service" do

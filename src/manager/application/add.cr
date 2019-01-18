@@ -193,11 +193,11 @@ struct Manager::Application::Add
 
     # Create system user and group for the application
     if Process.root?
-      @app.service?.try do |service|
+      if @app.service?
         # Create system services
-        service.create @app, @user, @group
-        service.enable @app
-        Log.info service.type + " system service added", service.name
+        @app.service_create @user, @group
+        @app.service_enable
+        Log.info @app.service.type + " system service added", @app.service.name
       end
 
       libcrown = Libcrown.new
