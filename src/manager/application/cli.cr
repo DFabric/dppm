@@ -67,7 +67,7 @@ module Manager::Application::CLI
       raise "exec key not present in #{app.pkg_file.path}"
     end
     env_vars = app.pkg_file.env || Hash(String, String).new
-    env_vars["PATH"] = app.env_vars
+    env_vars["PATH"] = app.path_env_var
     Log.info "executing command", exec_start
 
     if port = app.get_config("port")
@@ -75,8 +75,8 @@ module Manager::Application::CLI
     end
     Exec.run cmd: exec_start,
       env: env_vars,
-      output: STDOUT,
-      error: STDERR,
+      output: Log.output,
+      error: Log.error,
       chdir: app.path, &.wait
   end
 end

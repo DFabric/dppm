@@ -64,7 +64,8 @@ struct Host
   {% end %}
 
   # All system environment variables
-  def self.vars : Hash(String, String)
+  class_getter vars : Hash(String, String) do
+    Service.init? || Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
     {
       "arch"        => @@arch,
       "kernel"      => @@kernel,

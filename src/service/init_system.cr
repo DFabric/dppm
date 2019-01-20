@@ -19,6 +19,10 @@ module Service::InitSystem
     File.writable? @file
   end
 
+  def creatable? : Bool
+    File.writable? File.dirname(@file)
+  end
+
   def boot(value : Bool) : Bool
     case value
     when boot? # nothing to do
@@ -36,16 +40,6 @@ module Service::InitSystem
     stop if run?
     boot false if boot?
     File.delete @file if exists?
-  end
-
-  def check_availability
-    if exists?
-      raise "system service already exist: " + name
-    elsif !File.writable? File.dirname(@file)
-      Log.warn "service creation unavailable, root permissions required", name
-    else
-      Log.info "service available for creation", name
-    end
   end
 
   def check_delete

@@ -1,3 +1,6 @@
+require "./openrc"
+require "./systemd"
+
 module Service::CLI
   extend self
 
@@ -21,7 +24,7 @@ module Service::CLI
       get_status(prefix, all) do |service|
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
-        Log.output.puts service.name
+        puts service.name
       end
     else
       root_prefix = Prefix.new prefix
@@ -29,24 +32,24 @@ module Service::CLI
         service = root_prefix.new_app(service_name).service
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
-        Log.output.puts service.name
+        puts service.name
       end
     end
   end
 
   private def print_run_state(service : Service::OpenRC | Service::Systemd)
     if run = service.run?
-      Log.output << run.colorize.green << "  "
+      STDOUT << run.colorize.green << "  "
     else
-      Log.output << run.colorize.red << ' '
+      STDOUT << run.colorize.red << ' '
     end
   end
 
   private def print_boot_state(service : Service::OpenRC | Service::Systemd)
     if boot = service.boot?
-      Log.output << boot.colorize.green << "  "
+      STDOUT << boot.colorize.green << "  "
     else
-      Log.output << boot.colorize.red << ' '
+      STDOUT << boot.colorize.red << ' '
     end
   end
 

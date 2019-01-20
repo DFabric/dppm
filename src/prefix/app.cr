@@ -40,7 +40,7 @@ struct Prefix::App
   end
 
   def service_create(user : String, group : String)
-    _service = service
+    service_config = service.config
     (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
 
     Dir.mkdir_p service_dir
@@ -48,34 +48,29 @@ struct Prefix::App
     Log.info "creating system service", @name
 
     # Set service options
-    {description:   pkg_file.description,
-     directory:     path,
-     command:       path + exec["start"],
-     user:          user,
-     group:         group,
-     restart_delay: "9",
-     umask:         "007",
-     log_output:    log_file_output,
-     log_error:     log_file_error,
-    }.each do |key, value|
-      _service.config.set key.to_s, value
-    end
+    service_config.user = user
+    service_config.group = group
+    service_config.directory = path
+    service_config.description = pkg_file.description
+    service_config.log_output = log_file_output
+    service_config.log_error = log_file_error
+    service_config.command = path + exec["start"]
 
     # add a reload directive if available
     if exec_reload = exec["reload"]?
-      _service.config.set("reload", exec_reload)
+      service_config.reload_signal = exec_reload
     end
 
     # Add a PATH environment variable if not empty
-    if !(path_vars = env_vars).empty?
-      _service.config.env_set("PATH", path_vars)
+    if !(path_var = path_env_var).empty?
+      service_config.env_vars["PATH"] = path_var
     end
     if pkg_env = pkg_file.env
-      pkg_env.each { |var, value| _service.config.env_set var, value }
+      service_config.env_vars.merge! pkg_env
     end
 
     # Convert back hashes to service files
-    File.write service_file, _service.config.build
+    File.write service_file, service_config.build
   end
 
   def service_enable
@@ -120,8 +115,8 @@ struct Prefix::App
     @logs_dir = @path + "log/"
     @log_file_output = @logs_dir + "output.log"
     @log_file_error = @logs_dir + "error.log"
-    Service.init?.try do |_service|
-      @service = _service.new @name
+    Service.init?.try do |service|
+      @service = service.new @name
     end
   end
 
@@ -155,7 +150,7 @@ struct Prefix::App
     end
   end
 
-  def env_vars : String
+  def path_env_var : String
     String.build do |str|
       str << app_path << "/bin"
       if Dir.exists? libs_dir

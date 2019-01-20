@@ -19,7 +19,11 @@ struct Manager::Application::Add
 
     if add_service
       @app.service?.try do |service|
-        service.check_availability
+        if service.exists?
+          raise "system service already exist: " + service.name
+        elsif service.creatable?
+          Log.warn "service creation unavailable, root permissions required", service.name
+        end
       end
     end
     raise "application directory already exists: " + @app.path if File.exists? @app.path

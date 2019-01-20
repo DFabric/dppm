@@ -13,7 +13,7 @@ struct Service::OpenRC
   end
 
   getter config : Config do
-    Config.new @file
+    Config.read @file
   end
 
   def initialize(@name : String)
@@ -47,4 +47,4 @@ struct Service::OpenRC
   {% end %}
 end
 
-require "./openrc/*"
+require "./openrc_config"

@@ -12,7 +12,7 @@ struct Service::Systemd
   end
 
   getter config : Config do
-    Config.new @file
+    Config.read @file
   end
 
   def initialize(@name : String)
@@ -51,4 +51,4 @@ struct Service::Systemd
   {% end %}
 end
 
-require "./systemd/*"
+require "./systemd_config"
