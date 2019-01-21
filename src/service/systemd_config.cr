@@ -12,12 +12,6 @@ struct Service::Systemd::Config
     if restart_delay = ini["Service"]["RestartSec"]?
       @restart_delay = restart_delay.to_u32
     end
-    if log_output = ini["Service"]["StandardOutput"]?
-      @log_output = log_output.lstrip "file:"
-    end
-    if log_error = ini["Service"]["StandardError"]?
-      @log_error = log_error.lstrip "file:"
-    end
     if after = ini["Unit"]["After"]?
       @after = after.split ' '
     end
@@ -30,20 +24,31 @@ struct Service::Systemd::Config
     if env_vars = ini["Service"]["Environment"]?
       parse_env_vars env_vars
     end
-    # /bin/sh -c 'pa >>output &>>error'
 
-    # systemd 236 and more supports file logging
-    # if Systemd.version >= 236
-    # @section[keys[0]][keys[1]] = "file:" + value
-    # else
-    # Log.warn "file logging not supported", "systemd version '#{Systemd.version}' too old (>=336 needed)"
-    # end
+    if log_output = ini["Service"]["StandardOutput"]?
+      @log_output = log_output.lstrip "file:"
+    end
+    if log_error = ini["Service"]["StandardError"]?
+      @log_error = log_error.lstrip "file:"
+    end
+
+    # /bin/sh -c '&>>error >>output'
+
+    if command = ini["Service"]["ExecStart"]?
+      if command.starts_with? SYSTEM_SHELL_LOG_REDIRECT
+        shell_command = command.lchop SYSTEM_SHELL_LOG_REDIRECT
+        @log_error, output_with_command = shell_command.split " >>", limit: 2
+        @log_output, @command = output_with_command.rchop.split ' ', limit: 2
+      else
+        @command = command
+      end
+    end
+
     @user = ini["Service"]["User"]?
     @group = ini["Service"]["Group"]?
     @directory = ini["Service"]["WorkingDirectory"]?
     @description = ini["Unit"]["Description"]?
     @umask = ini["Service"]["UMask"]?
-    @command = ini["Service"]["ExecStart"]?
   end
 
   def build
@@ -52,6 +57,8 @@ struct Service::Systemd::Config
 end
 
 module Service::Config
+  private SYSTEM_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
+
   def to_systemd : String
     # Transform the hash to a systemd service
     systemd = {"Unit"    => Hash(String, String).new,
@@ -70,17 +77,27 @@ module Service::Config
     if group = @group
       systemd["Service"]["Group"] = group
     end
+
+    # File logging introduced in systemd 236
+    # A hack using shell redirection is needed before
+    if Systemd.version < 236
+      if (command = @command) && (log_output = @log_output) && (log_error = @log_error)
+        systemd["Service"]["ExecStart"] = SYSTEM_SHELL_LOG_REDIRECT + log_error + " >>" + log_output + ' ' + command + '\''
+      end
+    else
+      if command = @command
+        systemd["Service"]["ExecStart"] = command
+      end
+      if log_output = @log_output
+        systemd["Service"]["StandardOutput"] = "file:" + log_output
+      end
+      if log_error = @log_error
+        systemd["Service"]["StandardError"] = "file:" + log_error
+      end
+    end
+
     if directory = @directory
       systemd["Service"]["WorkingDirectory"] = directory
-    end
-    if command = @command
-      systemd["Service"]["ExecStart"] = command
-    end
-    if log_output = @log_output
-      systemd["Service"]["StandardOutput"] = "file:" + log_output
-    end
-    if log_error = @log_error
-      systemd["Service"]["StandardError"] = "file:" + log_error
     end
     if description = @description
       systemd["Unit"]["Description"] = description

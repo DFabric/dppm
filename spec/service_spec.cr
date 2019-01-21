@@ -52,14 +52,14 @@ describe Service do
   end
 
   describe Service::Systemd do
-    describe "version <236 with file logging workaround" do
+    describe "version < 236 with file logging workaround" do
       Service.init = Service::Systemd
       Service::Systemd.version = 230
       test_service
       Service.init = nil
     end
 
-    describe "version >=236 supporting file logging" do
+    describe "recent version supporting file logging" do
       Service.init = Service::Systemd
       Service::Systemd.version = 240
       test_service
