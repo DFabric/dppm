@@ -50,9 +50,17 @@ struct Database::MySQL
       end
     end
     false
+  rescue ex : DB::Error
+    raise "can't connect to the database: #{@uri}"
   end
 
-  def check
+  def check_connection
+    DB.open @uri { }
+  rescue ex : DB::Error
+    raise "can't connect to the database: #{@uri}"
+  end
+
+  def check_user
     DB.open @uri do |db|
       db.unprepared("SELECT User FROM mysql.user WHERE User = '#{@user}'").query do |rs|
         database_exists_error if database_exists? db, @user
@@ -72,6 +80,8 @@ struct Database::MySQL
       db.unprepared("FLUSH PRIVILEGES").exec
     end
     @uri.password = password
+  rescue ex : DB::Error
+    raise "can't connect to the database: #{@uri}"
   end
 
   def create(password : String)
@@ -99,11 +109,15 @@ struct Database::MySQL
       end
       db.unprepared("FLUSH PRIVILEGES").exec
     end
+  rescue ex : DB::Error
+    raise "can't connect to the database: #{@uri}"
   end
 
   def delete
     DB.open @uri do |db|
       db.unprepared("DROP DATABASE IF EXISTS #{@user}").exec
     end
+  rescue ex : DB::Error
+    raise "can't connect to the database: #{@uri}"
   end
 end

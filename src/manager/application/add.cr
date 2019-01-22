@@ -21,8 +21,8 @@ struct Manager::Application::Add
       @app.service?.try do |service|
         if service.exists?
           raise "system service already exist: " + service.name
-        elsif service.creatable?
-          Log.warn "service creation unavailable, root permissions required", service.name
+        elsif !service.creatable?
+          Log.warn "service creation unavailable, ensure to have root permissions", service.name
         end
       end
     end
@@ -35,7 +35,7 @@ struct Manager::Application::Add
       Log.info "initialize database", database
       (@app.database = database_app).try do |database|
         database.clean
-        database.check
+        database.check_user
         @vars.merge! database.vars
       end
       @database = database_app
@@ -183,10 +183,10 @@ struct Manager::Application::Add
       @app.pkg_file.exec = php_fpm.exec
     end
 
-    @app.database?.try do |database|
-      Log.info "configure database", @database.not_nil!.name
-      database.ensure_root_password @database.not_nil!
-      database.create @database_password.not_nil!
+    if (app_database = @app.database?) && (database = @database) && (database_password = @database_password)
+      Log.info "configure database", database.name
+      app_database.ensure_root_password database
+      app_database.create database_password
     end
 
     # Running the add task
@@ -199,7 +199,10 @@ struct Manager::Application::Add
     if Process.root?
       if @app.service?
         # Create system services
-        @app.service_create @user, @group
+        if database = @database
+          database_name = database.name
+        end
+        @app.service_create @user, @group, database_name
         @app.service_enable
         Log.info @app.service.type + " system service added", @app.service.name
       end

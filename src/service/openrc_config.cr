@@ -37,12 +37,14 @@ struct Service::OpenRC::Config
       else
         case function_name
         when "depend"
-          values = line.split ' '
-          case values[0]
-          when "after"  then @after = values[1..-1]
-          when "before" then @before = values[1..-1]
-          when "want"   then @want = values[1..-1]
-          else               raise "unsupported line depend directive"
+          directive = true
+          line.split(' ') do |element|
+            if directive
+              raise "unsupported line depend directive: " + element if element != "after"
+              directive = false
+            elsif element != OPENRC_NETWORK_SERVICE
+              @after << element
+            end
           end
         when "reload"
           if line.starts_with? OPENRC_RELOAD_COMMAND
@@ -69,6 +71,7 @@ module Service::Config
   private OPENRC_SHEBANG         = "#!/sbin/openrc-run"
   private OPENRC_SUPERVISOR      = "supervisor=supervise-daemon"
   private OPENRC_ENV_VARS_PREFIX = "supervise_daemon_args=\"--env '"
+  private OPENRC_NETWORK_SERVICE = "net"
 
   def to_openrc : String
     String.build do |str|
@@ -98,20 +101,8 @@ module Service::Config
       end
 
       str << "\n\ndepend() {\n\tafter "
-      if !@after.empty?
-        @after.join ' ', str
-        str << '\n'
-      else
-        str << "net\n"
-      end
-      if !@before.empty?
-        @before.join ' ', str
-        str << '\n'
-      end
-      if !@want.empty?
-        @want.join ' ', str
-        str << '\n'
-      end
+      @after << OPENRC_NETWORK_SERVICE
+      @after.join ' ', str
       str << "}\n"
 
       if @reload_signal

@@ -39,7 +39,7 @@ struct Prefix::App
     service_dir + service.type
   end
 
-  def service_create(user : String, group : String)
+  def service_create(user : String, group : String, database_name : String? = nil)
     service_config = service.config
     (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
 
@@ -55,6 +55,7 @@ struct Prefix::App
     service_config.log_output = log_file_output
     service_config.log_error = log_file_error
     service_config.command = path + exec["start"]
+    service_config.after << database_name if database_name
 
     # add a reload directive if available
     if exec_reload = exec["reload"]?

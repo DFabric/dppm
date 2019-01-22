@@ -8,9 +8,7 @@ module Service::Config
     log_output : String? = nil,
     log_error : String? = nil,
     env_vars : Hash(String, String) = Hash(String, String).new,
-    after : Array(String) = Array(String).new,
-    before : Array(String) = Array(String).new,
-    want : Array(String) = Array(String).new,
+    after : Set(String) = Set(String).new,
     umask : String? = "007",
     restart_delay : UInt32? = 9_u32
 

@@ -26,7 +26,7 @@ struct Service::Systemd
 
   def self.each
     Dir["/lib/systemd/system/*.service", "/etc/systemd/system/*.service"].each do |service|
-      yield File.basename(service)[0..-9]
+      yield File.basename(service).rstrip ".service"
     end
   end
 

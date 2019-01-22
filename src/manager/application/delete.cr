@@ -19,8 +19,16 @@ struct Manager::Application::Delete
     @user = libcrown.users[@uid].name
     @group = libcrown.groups[@gid].name
 
+    begin
+      if !@preserve_database && (database = @app.database)
+        database.check_connection
+      end
+    rescue ex
+      raise "#{ex}\neither start the database or use the preseve database option"
+    end
+
     # Checks
-    @app.service?.try do |service|
+    if service = @app.service?
       if service.exists?
         Log.info "a system service is found", @name
         service.check_delete
@@ -45,13 +53,11 @@ struct Manager::Application::Delete
 
   def run : Delete
     Log.info "deleting", @app.path
-    if !@preserve_database
-      @app.database.try do |database|
-        Log.info "deleting database", database.user
-        database.delete
-      end
+    if !@preserve_database && (database = @app.database)
+      Log.info "deleting database", database.user
+      database.delete
     end
-    @app.service?.try do |service|
+    if service = @app.service?
       if service.exists?
         Log.info "deleting system service", service.name
         service.delete

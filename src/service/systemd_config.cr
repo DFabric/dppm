@@ -13,13 +13,11 @@ struct Service::Systemd::Config
       @restart_delay = restart_delay.to_u32
     end
     if after = ini["Unit"]["After"]?
-      @after = after.split ' '
-    end
-    if before = ini["Unit"]["Before"]?
-      @before = before.split ' '
-    end
-    if want = ini["Unit"]["Wants"]?
-      @want = want.split ' '
+      after.split(' ') do |service|
+        if service != SYSTEMD_NETWORK_SERVICE
+          @after << service.rchop ".service"
+        end
+      end
     end
     if env_vars = ini["Service"]["Environment"]?
       parse_env_vars env_vars
@@ -32,11 +30,9 @@ struct Service::Systemd::Config
       @log_error = log_error.lstrip "file:"
     end
 
-    # /bin/sh -c '&>>error >>output'
-
     if command = ini["Service"]["ExecStart"]?
-      if command.starts_with? SYSTEM_SHELL_LOG_REDIRECT
-        shell_command = command.lchop SYSTEM_SHELL_LOG_REDIRECT
+      if command.starts_with? SYSTEMD_SHELL_LOG_REDIRECT
+        shell_command = command.lchop SYSTEMD_SHELL_LOG_REDIRECT
         @log_error, output_with_command = shell_command.split " >>", limit: 2
         @log_output, @command = output_with_command.rchop.split ' ', limit: 2
       else
@@ -57,7 +53,8 @@ struct Service::Systemd::Config
 end
 
 module Service::Config
-  private SYSTEM_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
+  private SYSTEMD_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
+  private SYSTEMD_NETWORK_SERVICE    = "network.target"
 
   def to_systemd : String
     # Transform the hash to a systemd service
@@ -82,7 +79,7 @@ module Service::Config
     # A hack using shell redirection is needed before
     if Systemd.version < 236
       if (command = @command) && (log_output = @log_output) && (log_error = @log_error)
-        systemd["Service"]["ExecStart"] = SYSTEM_SHELL_LOG_REDIRECT + log_error + " >>" + log_output + ' ' + command + '\''
+        systemd["Service"]["ExecStart"] = SYSTEMD_SHELL_LOG_REDIRECT + log_error + " >>" + log_output + ' ' + command + '\''
       end
     else
       if command = @command
@@ -108,17 +105,15 @@ module Service::Config
     if restart_delay = @restart_delay
       systemd["Service"]["RestartSec"] = restart_delay.to_s
     end
-    systemd["Unit"]["After"] = if !@after.empty?
-                                 @after.join ' '
-                               else
-                                 "network.target"
-                               end
-    if !@before.empty?
-      systemd["Unit"]["Before"] = before.join ' '
+
+    @after << SYSTEMD_NETWORK_SERVICE
+    systemd["Unit"]["After"] = String.build do |str|
+      @after.join(' ', str) do |service|
+        str << service
+        str << ".service" if service != SYSTEMD_NETWORK_SERVICE
+      end
     end
-    if !@want.empty?
-      systemd["Unit"]["Wants"] = want.join ' '
-    end
+
     if !@env_vars.empty?
       systemd["Service"]["Environment"] = build_env_vars
     end
