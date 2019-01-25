@@ -4,9 +4,9 @@ module Manager::Source::Cache
   extend self
 
   def latest?(source : String, src_path : String)
-    if Utils.is_http? source
+    if HTTPHelper.url? source
       # != File.info(src_prefix).modification_time.to_s("%Y%m%d").to_i
-      HTTPget.string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
+      HTTPHelper.get_string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
       $0.starts_with? File.info(src_path).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
     end
   end
@@ -21,10 +21,10 @@ module Manager::Source::Cache
       else
         FileUtils.rm_rf prefix.src
       end
-      if Utils.is_http? source
+      if HTTPHelper.url? source
         Log.info "downloading packages source", source
         file = prefix.path + '/' + File.basename source
-        HTTPget.file source, file
+        HTTPHelper.get_file source, file
         Manager.exec "/bin/tar", {"zxf", file, "-C", prefix.path}
         File.delete file
         File.rename Dir[prefix.path + "/*packages-source*"][0], prefix.src

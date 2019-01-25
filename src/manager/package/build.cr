@@ -75,7 +75,7 @@ struct Manager::Package::Build
         package_archive = package_full_name + ".tar.xz"
         package_mirror = @vars["mirror"] + '/' + package_archive
         Log.info "downloading", package_mirror
-        HTTPget.file package_mirror
+        HTTPHelper.get_file package_mirror
         Log.info "extracting", package_mirror
         Manager.exec "/bin/tar", {"Jxf", package_archive}
 

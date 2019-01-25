@@ -59,10 +59,4 @@ describe Utils do
     Utils.to_b("true").should eq true
     Utils.to_b("false").should eq false
   end
-
-  it "checks if a string is a http url" do
-    Utils.is_http?("http://example.com").should eq true
-    Utils.is_http?("https://example.com").should eq true
-    Utils.is_http?("ftp://example.com").should eq false
-  end
 end

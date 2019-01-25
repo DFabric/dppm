@@ -205,11 +205,11 @@ struct Manager::Cmd
       result
     when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
     # Download
-    when "getstring" then HTTPget.string cmd[1]
+    when "getstring" then HTTPHelper.get_string cmd[1]
     when "getfile"
       url = cmd[1]
       file = cmd[2]? || File.basename url
-      HTTPget.file url, file
+      HTTPHelper.get_file url, file
       "file retrieved"
       # Compression
       # Use the system `tar` and `unzip` for now

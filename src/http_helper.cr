@@ -1,10 +1,10 @@
 require "cossack"
 
 # Method for redirections using the cossack http client
-module HTTPget
+module HTTPHelper
   extend self
 
-  def string(url)
+  def get_string(url)
     response = Cossack::Client.new(&.use Cossack::RedirectionMiddleware).get url
     case response.status
     when 200, 301, 302 then response.body
@@ -15,7 +15,11 @@ module HTTPget
     raise "failed to get #{url.colorize.underline}: #{ex}"
   end
 
-  def file(url, path = File.basename(url))
-    File.write path, HTTPget.string(url)
+  def get_file(url : String, path : String = File.basename(url))
+    File.write path, self.get_string(url)
+  end
+
+  def url?(link) : Bool
+    link.starts_with?("http://") || link.starts_with?("https://")
   end
 end

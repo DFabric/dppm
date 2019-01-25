@@ -115,7 +115,7 @@ struct Prefix::PkgFile
           yield version.as_s
         end
       else
-        HTTPget.string(src.to_s).each_line do |line|
+        HTTPHelper.get_string(src.to_s).each_line do |line|
           yield $0 if line =~ /#{regex}/
         end
       end
@@ -127,13 +127,13 @@ struct Prefix::PkgFile
   def version_from_tag(tag : String) : String
     src = @tags[tag]["src"].as_s
     # Test if the src is an URL or a version number
-    if Utils.is_http? src
+    if HTTPHelper.url? src
       regex = if regex_tag = @tags[tag]["regex"]?
                 regex_tag
               else
                 @tags["self"]["regex"]
               end.as_s
-      /(#{regex})/ =~ HTTPget.string(src)
+      /(#{regex})/ =~ HTTPHelper.get_string src
       $1
     else
       src

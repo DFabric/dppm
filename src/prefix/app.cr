@@ -23,9 +23,9 @@ struct Prefix::App
 
   getter? service : Service::OpenRC | Service::Systemd | Nil
 
-  def service : Service::OpenRC | Service::Systemd
-    if _service = @service
-      _service
+  getter service : Service::OpenRC | Service::Systemd do
+    if service = Service.init?
+      service.new @name
     else
       raise "service not available"
     end
@@ -116,9 +116,6 @@ struct Prefix::App
     @logs_dir = @path + "log/"
     @log_file_output = @logs_dir + "output.log"
     @log_file_error = @logs_dir + "error.log"
-    Service.init?.try do |service|
-      @service = service.new @name
-    end
   end
 
   def set_config(key : String, value)

@@ -1,41 +1,5 @@
 require "mysql"
 
-# Temporary fix
-
-class MySql::Connection < DB::Connection
-  def initialize(context : DB::ConnectionContext)
-    super(context)
-    @socket = uninitialized TCPSocket
-
-    begin
-      host = context.uri.hostname.not_nil!
-      port = context.uri.port || 3306
-      username = context.uri.user
-      password = context.uri.password
-
-      path = context.uri.path
-      if path && path.size > 1
-        initial_catalog = path[1..-1]
-      else
-        initial_catalog = nil
-      end
-
-      @socket = TCPSocket.new(host, port)
-      handshake = read_packet(Protocol::HandshakeV10)
-
-      write_packet(1) do |packet|
-        Protocol::HandshakeResponse41.new(username, password, initial_catalog, handshake.auth_plugin_data).write(packet)
-      end
-
-      read_ok_or_err do |packet, status|
-        raise "packet #{status} not implemented"
-      end
-    rescue Errno
-      raise DB::ConnectionRefused.new
-    end
-  end
-end
-
 struct Database::MySQL
   include Base
 
