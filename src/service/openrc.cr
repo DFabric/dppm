@@ -12,13 +12,21 @@ struct Service::OpenRC
     raise "can't retrieve the OpenRC version: #{output}#{error}"
   end
 
-  getter config : Config do
-    Config.read @file
-  end
-
   def initialize(@name : String)
     @file = "/etc/init.d/" + @name
     @boot_file = "/etc/runlevels/default/" + @name
+  end
+
+  getter config : Config do
+    if @file && File.exists? @file
+      Config.from_openrc File.read(@file)
+    else
+      Config.new
+    end
+  end
+
+  def config_build : String
+    config.to_openrc
   end
 
   def self.each

@@ -11,10 +11,6 @@ struct Service::Systemd
     raise "can't retrieve the systemd version: #{output}#{error}"
   end
 
-  getter config : Config do
-    Config.read @file
-  end
-
   def initialize(@name : String)
     @file = if File.exists?(service = "/lib/systemd/system/#{@name}.service")
               service
@@ -22,6 +18,18 @@ struct Service::Systemd
               "/etc/systemd/system/#{@name}.service"
             end
     @boot_file = "/etc/systemd/system/multi-user.target.wants/#{@name}.service"
+  end
+
+  getter config : Config do
+    if @file && File.exists? @file
+      Config.from_systemd File.read(@file)
+    else
+      Config.new
+    end
+  end
+
+  def config_build : String
+    config.to_systemd
   end
 
   def self.each

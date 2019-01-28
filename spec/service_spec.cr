@@ -7,6 +7,11 @@ module Service
     @@supported = true
   end
 
+  module InitSystem
+    def file=(@file)
+    end
+  end
+
   struct Systemd
     def self.version=(@@version)
     end
@@ -20,25 +25,26 @@ def test_service
   FileUtils.cp_r __DIR__ + "/samples/" + TEST_APP_PACKAGE_NAME, test_app.path
 
   service_config = test_app.service.config.class.new
+  test_app.service.file = test_app.service_file
 
   it "creates a service" do
     test_app.service_create user, group
   end
 
   it "parses the service" do
-    service_config = test_app.service.config.class.read test_app.service_file
+    test_app.service.config
   end
 
   it "gets user value" do
-    service_config.user.should eq user
+    test_app.service.config.user.should eq user
   end
 
   it "checks service file building" do
-    File.read(test_app.service_file).should eq service_config.build
+    File.read(test_app.service_file).should eq test_app.service.config_build
   end
 
   it "verifies PATH environment variable" do
-    service_config.env_vars["PATH"].should eq test_app.path_env_var
+    test_app.service.config.env_vars["PATH"].should eq test_app.path_env_var
   end
 
   FileUtils.rm_r test_prefix.path

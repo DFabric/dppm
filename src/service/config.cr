@@ -1,4 +1,4 @@
-module Service::Config
+struct Service::Config
   property user : String? = nil,
     group : String? = nil,
     directory : String? = nil,
@@ -12,17 +12,7 @@ module Service::Config
     umask : String? = "007",
     restart_delay : UInt32? = 9_u32
 
-  macro included
   def initialize
-  end
-
-  def self.read(file : String) : Config
-    if file && File.exists? file
-      new File.read(file)
-    else
-      new
-    end
-  end
   end
 
   def parse_env_vars(env_vars : String)

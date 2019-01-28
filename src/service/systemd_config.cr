@@ -1,60 +1,54 @@
 require "ini"
 require "./config"
 
-struct Service::Systemd::Config
-  include Service::Config
+struct Service::Config
+  private SYSTEMD_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
+  private SYSTEMD_NETWORK_SERVICE    = "network.target"
 
-  def initialize(data : String)
+  def self.from_systemd(data : String)
+    service = new
     ini = INI.parse data
     if reload = ini["Service"]["ExecReload"]?
-      @reload_signal = reload.lchop("/bin/kill -").rchop(" $MAINPID")
+      service.reload_signal = reload.lchop("/bin/kill -").rchop(" $MAINPID")
     end
     if restart_delay = ini["Service"]["RestartSec"]?
-      @restart_delay = restart_delay.to_u32
+      service.restart_delay = restart_delay.to_u32
     end
     if after = ini["Unit"]["After"]?
-      after.split(' ') do |service|
-        if service != SYSTEMD_NETWORK_SERVICE
-          @after << service.rchop ".service"
+      after.split(' ') do |service_name|
+        if service_name != SYSTEMD_NETWORK_SERVICE
+          service.after << service_name.rchop ".service"
         end
       end
     end
     if env_vars = ini["Service"]["Environment"]?
-      parse_env_vars env_vars
+      service.parse_env_vars env_vars
     end
 
     if log_output = ini["Service"]["StandardOutput"]?
-      @log_output = log_output.lstrip "file:"
+      service.log_output = log_output.lstrip "file:"
     end
     if log_error = ini["Service"]["StandardError"]?
-      @log_error = log_error.lstrip "file:"
+      service.log_error = log_error.lstrip "file:"
     end
 
     if command = ini["Service"]["ExecStart"]?
       if command.starts_with? SYSTEMD_SHELL_LOG_REDIRECT
         shell_command = command.lchop SYSTEMD_SHELL_LOG_REDIRECT
-        @log_error, output_with_command = shell_command.split " >>", limit: 2
-        @log_output, @command = output_with_command.rchop.split ' ', limit: 2
+        service.log_error, output_with_command = shell_command.split " >>", limit: 2
+        service.log_output, service.command = output_with_command.rchop.split ' ', limit: 2
       else
-        @command = command
+        service.command = command
       end
     end
 
-    @user = ini["Service"]["User"]?
-    @group = ini["Service"]["Group"]?
-    @directory = ini["Service"]["WorkingDirectory"]?
-    @description = ini["Unit"]["Description"]?
-    @umask = ini["Service"]["UMask"]?
+    service.user = ini["Service"]["User"]?
+    service.group = ini["Service"]["Group"]?
+    service.directory = ini["Service"]["WorkingDirectory"]?
+    service.description = ini["Unit"]["Description"]?
+    service.umask = ini["Service"]["UMask"]?
+    service
   end
-
-  def build
-    to_systemd
-  end
-end
-
-module Service::Config
-  private SYSTEMD_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
-  private SYSTEMD_NETWORK_SERVICE    = "network.target"
 
   def to_systemd : String
     # Transform the hash to a systemd service

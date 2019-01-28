@@ -21,14 +21,20 @@ struct Prefix::App
     Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
   end
 
-  getter? service : Service::OpenRC | Service::Systemd | Nil
+  @service_intialized = false
+
+  def service? : Service::OpenRC | Service::Systemd | Nil
+    if !@service_intialized
+      if service = Service.init?
+        @service = service.new @name
+      end
+      @service_intialized = true
+    end
+    @service
+  end
 
   getter service : Service::OpenRC | Service::Systemd do
-    if service = Service.init?
-      service.new @name
-    else
-      raise "service not available"
-    end
+    service? || raise "service not available"
   end
 
   getter service_dir : String do
@@ -39,8 +45,11 @@ struct Prefix::App
     service_dir + service.type
   end
 
+  def service_tap(&block : Service::OpenRC | Service::Systemd -> Service::OpenRC | Service::Systemd)
+    @service = yield service
+  end
+
   def service_create(user : String, group : String, database_name : String? = nil)
-    service_config = service.config
     (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
 
     Dir.mkdir_p service_dir
@@ -48,30 +57,36 @@ struct Prefix::App
     Log.info "creating system service", @name
 
     # Set service options
-    service_config.user = user
-    service_config.group = group
-    service_config.directory = path
-    service_config.description = pkg_file.description
-    service_config.log_output = log_file_output
-    service_config.log_error = log_file_error
-    service_config.command = path + exec["start"]
-    service_config.after << database_name if database_name
+    service_tap do |service|
+      service.config_tap do |config|
+        config.user = user
+        config.group = group
+        config.directory = path
+        config.description = pkg_file.description
+        config.log_output = log_file_output
+        config.log_error = log_file_error
+        config.command = path + exec["start"]
+        config.after << database_name if database_name
 
-    # add a reload directive if available
-    if exec_reload = exec["reload"]?
-      service_config.reload_signal = exec_reload
-    end
+        # add a reload directive if available
+        if exec_reload = exec["reload"]?
+          config.reload_signal = exec_reload
+        end
 
-    # Add a PATH environment variable if not empty
-    if !(path_var = path_env_var).empty?
-      service_config.env_vars["PATH"] = path_var
-    end
-    if pkg_env = pkg_file.env
-      service_config.env_vars.merge! pkg_env
-    end
+        # Add a PATH environment variable if not empty
+        if !(path_var = path_env_var).empty?
+          config.env_vars["PATH"] = path_var
+        end
+        if pkg_env = pkg_file.env
+          config.env_vars.merge! pkg_env
+        end
 
-    # Convert back hashes to service files
-    File.write service_file, service_config.build
+        # Convert back hashes to service files
+        config
+      end
+      File.write service_file, service.config_build
+      service
+    end
   end
 
   def service_enable

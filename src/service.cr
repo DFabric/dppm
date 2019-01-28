@@ -12,20 +12,17 @@ module Service
   end
 
   @@init : Systemd.class | OpenRC.class | Nil
-  @@supported : Bool?
+  @@initialized = false
 
   def self.init? : Systemd.class | OpenRC.class | Nil
-    if !@@supported.is_a? Bool
+    if !@@initialized
       init_system = File.basename File.real_path "/sbin/init"
-      @@supported = if init_system == "systemd"
-                      @@init = Service::Systemd
-                      true
-                    elsif File.exists? "/sbin/openrc"
-                      @@init = Service::OpenRC
-                      true
-                    else
-                      false
-                    end
+      if init_system == "systemd"
+        @@init = Service::Systemd
+      elsif File.exists? "/sbin/openrc"
+        @@init = Service::OpenRC
+      end
+      @@initialized = true
     end
     @@init
   end
