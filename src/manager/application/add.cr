@@ -47,28 +47,27 @@ struct Manager::Application::Add
       Host.tcp_port_available port.to_u16
     end
 
-    if @build.pkg.src.pkg_file.config?
-      @build.pkg.src.pkg_file.config.each_key do |var|
-        if !@vars.has_key? var
-          # Skip if a socket is used
-          if var == "port" && @socket
-            next
-          elsif var == "database_password" && @app.database?
-            @database_password = @vars["database_password"] = Database.gen_password
-            next
-          end
+    src = @build.pkg.src
+    src.each_config_key do |var|
+      if !@vars.has_key? var
+        # Skip if a socket is used
+        if var == "port" && @socket
+          next
+        elsif var == "database_password" && @app.database?
+          @database_password = @vars["database_password"] = Database.gen_password
+          next
+        end
 
-          key = @build.pkg.src.get_config(var).to_s
-          if key.empty?
-            unset_vars << var
+        key = src.get_config(var).to_s
+        if key.empty?
+          unset_vars << var
+        else
+          if var == "port"
+            @vars["port"] = Host.available_port(key.to_u16).to_s
           else
-            if var == "port"
-              @vars["port"] = Host.available_port(key.to_u16).to_s
-            else
-              @vars[var] = key
-            end
-            Log.info "default value set for unset variable", var + ": " + key
+            @vars[var] = key
           end
+          Log.info "default value set for unset variable", var + ": " + key
         end
       end
     end
@@ -133,9 +132,6 @@ struct Manager::Application::Add
     Dir.mkdir @app.path
     @build.run if !@build.exists
 
-    # Build and add missing dependencies
-    Package::Deps.new(@app.prefix, @app.libs_dir).build @vars.dup, @build.deps, @shared
-
     app_shared = @shared
     if !@app.pkg_file.shared
       Log.warn "can't be shared, must be self-contained", @app.pkg_file.package
@@ -158,28 +154,28 @@ struct Manager::Application::Add
     copy_dir @build.pkg.conf_dir, @app.conf_dir
     copy_dir @build.pkg.data_dir, @app.data_dir
     Dir.mkdir @app.logs_dir
-    @app.set_permissions
+
+    # Build and add missing dependencies and copy library configurations
+    Package::Deps.new(@app.prefix, @app.libs_dir).build @vars.dup, @build.deps, @shared do |dep_pkg|
+      dep_pkg.config.try do |dep_config|
+        Log.info "copying library configuration files", dep_pkg.name
+        dep_conf_dir = @app.conf_dir + dep_pkg.package
+        Dir.mkdir_p dep_conf_dir
+        FileUtils.cp dep_config.file, dep_conf_dir + '/' + File.basename(dep_config.file)
+      end
+    end
 
     # Set configuration variables
     Log.info "setting configuration variables", @app.name
-    if @app.pkg_file.config?
-      @app.pkg_file.config.each_key do |var|
-        if var == "socket"
-          next
-        elsif variable_value = @vars[var]?
-          @app.set_config var, variable_value
-        end
+    @app.each_config_key do |var|
+      if var == "socket"
+        next
+      elsif variable_value = @vars[var]?
+        @app.set_config var, variable_value
       end
-      @app.config.write
     end
-
-    # PHP-FPM based application
-    if (deps = @app.pkg_file.deps) && deps.has_key? "php"
-      php_fpm_conf = @app.conf_dir + "php-fpm.conf"
-      FileUtils.cp(@app.libs_dir + "php/etc/php-fpm.conf", php_fpm_conf) if !File.exists? php_fpm_conf
-      php_fpm = Prefix::PkgFile.new @app.libs_dir + "php"
-      @app.pkg_file.exec = php_fpm.exec
-    end
+    @app.write_configs
+    @app.set_permissions
 
     if (app_database = @app.database?) && (database = @database) && (database_password = @database_password)
       Log.info "configure database", database.name
@@ -196,10 +192,10 @@ struct Manager::Application::Add
     # Create system user and group for the application
     if Process.root?
       if @app.service?
-        # Create system services
         if database = @database
           database_name = database.name
         end
+        Log.info "creating system service", @app.service.name
         @app.service_create @user, @group, database_name
         @app.service_enable
         Log.info @app.service.type + " system service added", @app.service.name

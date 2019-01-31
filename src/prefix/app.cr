@@ -7,6 +7,39 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
+  record Lib, relative_path : String, pkg : Prefix::Pkg, config : Config::Types?
+
+  protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
+    @path = @prefix.app + @name + '/'
+    if pkg_file
+      pkg_file.path = nil
+      pkg_file.root_dir = @path
+      @pkg_file = pkg_file
+    end
+    @logs_dir = @path + "log/"
+    @log_file_output = @logs_dir + "output.log"
+    @log_file_error = @logs_dir + "error.log"
+    @bin_path = app_path + "/bin"
+  end
+
+  getter libs : Array(Lib) do
+    libs = Array(Lib).new
+    return libs if !Dir.exists? libs_dir
+
+    Dir.each_child libs_dir do |lib_package|
+      relative_path = libs_dir + lib_package
+      config_file = nil
+      if Dir.exists?(conf_lib_dir = conf_dir + lib_package)
+        Dir.each_child conf_lib_dir do |file|
+          config_file = Config.new? conf_lib_dir + '/' + file
+        end
+      end
+      libs << Lib.new relative_path, @prefix.new_pkg(File.basename(File.real_path(relative_path))), config_file
+    end
+
+    libs
+  end
+
   getter password : String? do
     if File.exists? password_file
       File.read password_file
@@ -37,12 +70,12 @@ struct Prefix::App
     service? || raise "service not available"
   end
 
-  getter service_dir : String do
-    conf_dir + "init/"
+  getter service_path : String do
+    conf_dir + "init"
   end
 
   getter service_file : String do
-    service_dir + service.type
+    service_path + '/' + service.type
   end
 
   def service_tap(&block : Service::OpenRC | Service::Systemd -> Service::OpenRC | Service::Systemd)
@@ -50,11 +83,13 @@ struct Prefix::App
   end
 
   def service_create(user : String, group : String, database_name : String? = nil)
-    (exec = pkg_file.exec) || raise "exec key not present in #{pkg_file.path}"
-
-    Dir.mkdir_p service_dir
-
-    Log.info "creating system service", @name
+    if !(exec = pkg_file.exec)
+      libs.each do |library|
+        exec ||= library.pkg.pkg_file.exec
+      end
+    end
+    exec || raise "exec key not present in #{pkg_file.path}"
+    Dir.mkdir_p service_path
 
     # Set service options
     service_tap do |service|
@@ -98,12 +133,14 @@ struct Prefix::App
   end
 
   getter database : Database::MySQL | Nil do
-    if pkg_file.config.has_key?("database_address")
+    if !config
+      return
+    elsif pkg_file.config.has_key?("database_address")
       uri = URI.parse "//#{get_config("database_address")}"
     elsif pkg_file.config.has_key?("database_host")
       uri = URI.new(
         host: get_config("database_host").to_s,
-        port: get_config("database_port").to_s.to_i,
+        port: get_config("database_port").to_s.to_i?,
       )
     else
       return
@@ -121,24 +158,64 @@ struct Prefix::App
     @database = Database.create @prefix, @name, database_app
   end
 
-  protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
-    @path = @prefix.app + @name + '/'
-    if pkg_file
-      pkg_file.path = nil
-      pkg_file.root_dir = @path
-      @pkg_file = pkg_file
+  private def config_from_libs(key : String, &block)
+    libs.each do |library|
+      if library_pkg_config = library.pkg.pkg_file.config?
+        if config_key = library_pkg_config[key]?
+          library.config.try do |lib_config|
+            yield lib_config, config_key
+          end
+        end
+      end
     end
-    @logs_dir = @path + "log/"
-    @log_file_output = @logs_dir + "output.log"
-    @log_file_error = @logs_dir + "error.log"
   end
 
-  def set_config(key : String, value)
-    config.set pkg_file.config[key], value
+  private def keys_from_libs(&block)
+    libs.each do |library|
+      library.pkg.pkg_file.config?.try &.each_key do |key|
+        yield key
+      end
+    end
+  end
+
+  def get_config(key : String)
+    config_from_pkg_file key do |config_file, config_key|
+      return config_file.get config_key
+    end
+    config_from_libs key do |lib_config, config_key|
+      return lib_config.get config_key
+    end
+    raise "config key not found: " + key
   end
 
   def del_config(key : String)
-    config.del pkg_file.config[key]
+    config_from_pkg_file key do |config_file, config_key|
+      return config_file.del config_key
+    end
+    config_from_libs key do |lib_config, config_key|
+      return lib_config.del config_key
+    end
+    raise "config key not found: " + key
+  end
+
+  def set_config(key : String, value)
+    config_from_pkg_file key do |config_file, config_key|
+      return config_file.set config_key, value
+    end
+    config_from_libs key do |lib_config, config_key|
+      return lib_config.set config_key, value
+    end
+    raise "config key not found: " + key
+  end
+
+  def each_config_key(&block : String ->)
+    internal_each_config_key { |key| yield key }
+    keys_from_libs { |key| yield key }
+  end
+
+  def write_configs
+    config.try &.write
+    libs.each &.pkg.config.try &.write
   end
 
   def real_app_path : String
@@ -155,21 +232,11 @@ struct Prefix::App
     File.chmod logs_dir, 0o700
   end
 
-  def each_lib(&block : String ->)
-    if Dir.exists? libs_dir
-      Dir.each_child(libs_dir) do |lib_package|
-        yield File.real_path(libs_dir + lib_package) + '/'
-      end
-    end
-  end
-
   def path_env_var : String
     String.build do |str|
-      str << app_path << "/bin"
-      if Dir.exists? libs_dir
-        Dir.each_child(libs_dir) do |library|
-          str << ':' << libs_dir << library << "/bin"
-        end
+      str << @bin_path
+      libs.each do |library|
+        str << ':' << library.pkg.bin_path
       end
     end
   end

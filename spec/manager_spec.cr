@@ -34,7 +34,7 @@ describe Manager do
       database: nil).not_nil!
     add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     Dir.exists?(add.app.path).should be_true
-    add.app.each_lib &.includes?(TEST_LIB_PACKAGE_NAME).should be_true
+    add.app.libs.each &.pkg.package.should eq TEST_LIB_PACKAGE_NAME
   end
 
   it "deletes an application" do

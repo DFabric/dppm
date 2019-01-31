@@ -22,8 +22,9 @@ struct Prefix::PkgFile
     description : String,
     info : String,
     provides : String?,
-    deps : Hash(String, String)?,
+    exec : Hash(String, String)?,
     aliases : Hash(String, String)?,
+    deps : Hash(String, String)?,
     env : Hash(String, String)?,
     databases : Hash(String, String?)?,
     tasks : Hash(String, Array(CON::Any))?,
@@ -32,7 +33,6 @@ struct Prefix::PkgFile
     version : CON::Any,
     tags : CON::Any,
     any : CON::Any
-  property exec : Hash(String, String)?
 
   getter path : String do
     self.class.path @root_dir

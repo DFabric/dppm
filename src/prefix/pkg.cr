@@ -9,12 +9,13 @@ struct Prefix::Pkg
     if version
       @version = version
       @package = name
+      @name = @package + '_' + @version
     elsif name.includes? '_'
+      @name = name
       @package, @version = name.split '_', limit: 2
     else
       raise "no version provided for #{name}"
     end
-    @name = @package + '_' + @version
 
     @path = @prefix.pkg + @name + '/'
     if pkg_file
@@ -22,6 +23,7 @@ struct Prefix::Pkg
       pkg_file.root_dir = @path
       @pkg_file = pkg_file
     end
+    @bin_path = @path + "bin"
   end
 
   def self.create(prefix : Prefix, name : String, version : String?, tag : String?)
@@ -80,5 +82,20 @@ struct Prefix::Pkg
 
   def src : Src
     @src ||= Src.new @prefix, @package, @pkg_file
+  end
+
+  def get_config(key : String)
+    config_from_pkg_file key do |config_file, config_key|
+      return config_file.get config_key
+    end
+    deps.each &.config_from_pkg_file key do |config_file, config_key|
+      return config_file.get config_key
+    end
+    raise "config key not found: " + key
+  end
+
+  def each_config_key(&block : String ->)
+    internal_each_config_key { |key| yield key }
+    deps.each &.internal_each_config_key { |key| yield key }
   end
 end

@@ -20,12 +20,12 @@ struct Manager::Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @pkg.name
-    Deps.new(prefix, @pkg.libs_dir).resolve(@pkg.pkg_file).each do |dep_pkg_file, versions|
-      @deps[dep_pkg_file.package] = if versions.includes?(latest = dep_pkg_file.version_from_tag "latest")
-                                      latest
-                                    else
-                                      versions[0].to_s
-                                    end
+    Deps.new(prefix, @pkg.libs_dir).resolve(@pkg.pkg_file).each do |dep_src, versions|
+      @deps[dep_src.name] = if versions.includes?(latest = dep_src.pkg_file.version_from_tag "latest")
+                              latest
+                            else
+                              versions[0].to_s
+                            end
     end
     @vars["prefix"] = prefix.path
     @vars["version"] = @pkg.version
@@ -55,7 +55,7 @@ struct Manager::Package::Build
     FileUtils.cp_r(@pkg.src.path, @pkg.path)
 
     # Build dependencies
-    Deps.new(@pkg.prefix, @pkg.libs_dir).build @vars.dup, @deps
+    Deps.new(@pkg.prefix, @pkg.libs_dir).build @vars.dup, @deps { }
 
     if (tasks = @pkg.pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @pkg.name

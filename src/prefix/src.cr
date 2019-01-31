@@ -10,4 +10,19 @@ struct Prefix::Src
   def new_pkg(pkg_name : String, version : String?) : Pkg
     Pkg.new @prefix, pkg_name, version, pkg_file
   end
+
+  def get_config(key : String)
+    config_from_pkg_file key do |config_file, config_key|
+      return config_file.get config_key
+    end
+    deps.each &.config_from_pkg_file key do |config_file, config_key|
+      return config_file.get config_key
+    end
+    raise "config key not found: " + key
+  end
+
+  def each_config_key(&block : String ->)
+    internal_each_config_key { |key| yield key }
+    deps.each &.internal_each_config_key { |key| yield key }
+  end
 end

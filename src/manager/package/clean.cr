@@ -8,8 +8,8 @@ struct Manager::Package::Clean
     Log.info "excluding used packages by applications", @prefix.pkg
     @prefix.each_app do |app|
       @packages.delete File.basename(app.real_app_path)
-      app.each_lib do |lib_package|
-        @packages.delete File.basename(lib_package)
+      app.libs.each do |library|
+        @packages.delete library.pkg.name
       end
     end
   end

@@ -3,6 +3,8 @@ require "./base"
 module Prefix::ProgramData
   include Base
 
+  getter bin_path : String
+
   getter libs_dir : String do
     @path + "lib/"
   end

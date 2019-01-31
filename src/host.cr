@@ -70,7 +70,7 @@ struct Host
       "arch"        => @@arch,
       "kernel"      => @@kernel,
       "kernel_ver"  => @@kernel_ver.to_s,
-      "sysinit"     => Service.init?.to_s,
+      "sysinit"     => (Service.init.type if Service.init?).to_s,
       "sysinit_ver" => (Service.init.version if Service.init?).to_s,
     }
   end
