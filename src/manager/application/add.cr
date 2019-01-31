@@ -114,7 +114,7 @@ struct Manager::Application::Add
     end
     {uid, gid, user, group}
   rescue ex
-    raise "error while setting user and group: #{ex}"
+    raise Exception.new "error while setting user and group:\n#{ex}", ex
   end
 
   def simulate
@@ -239,7 +239,7 @@ struct Manager::Application::Add
     begin
       @app.service.try &.delete
     ensure
-      raise "add failed - application deleted: #{@app.path}:\n#{ex}"
+      raise Exception.new "add failed - application deleted: #{@app.path}:\n#{ex}", ex
     end
   end
 

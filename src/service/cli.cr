@@ -4,7 +4,7 @@ require "./systemd"
 module Service::CLI
   extend self
 
-  def boot(prefix : String, service : String, state : String) : Bool
+  def boot(service : String, state : String, **args) : Bool
     Service.init.new(service).boot Utils.to_b(state)
   end
 
@@ -16,7 +16,7 @@ module Service::CLI
     end
   end
 
-  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String)) : Nil
+  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String), debug = nil) : Nil
     print "RUN   " if !norun
     print "BOOT  " if !noboot
     puts "SERVICE\n"

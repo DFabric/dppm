@@ -62,7 +62,7 @@ struct Service::Config
       end
       line_number += 1
     rescue ex
-      raise "parse error line at #{line_number}: #{full_line}\n#{ex}"
+      raise Exception.new "parse error line at #{line_number}: #{full_line}\n#{ex}", ex
     end
     service
   end

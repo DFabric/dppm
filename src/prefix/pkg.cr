@@ -64,7 +64,7 @@ struct Prefix::Pkg
     end
     new prefix, package, version, src.pkg_file, src
   rescue ex
-    raise "can't obtain a version: #{ex}"
+    raise Exception.new "can't obtain a version:\n#{ex}", ex
   end
 
   def new_app(app_name : String? = nil) : App

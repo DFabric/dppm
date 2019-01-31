@@ -49,7 +49,10 @@ struct Manager::Package::Build
   end
 
   def run
-    raise "package already present: " + @pkg.path if @exists
+    if @exists
+      Log.info "package already present", @pkg.path
+      return self
+    end
 
     # Copy the sources to the @pkg.name directory to build
     FileUtils.cp_r(@pkg.src.path, @pkg.path)
@@ -91,7 +94,7 @@ struct Manager::Package::Build
     self
   rescue ex
     FileUtils.rm_rf @pkg.path
-    raise "build failed - package deleted: #{@pkg.path}:\n#{ex}"
+    raise Exception.new "build failed - package deleted: #{@pkg.path}:\n#{ex}", ex
   end
 
   private def move(path)

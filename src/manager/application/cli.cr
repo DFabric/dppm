@@ -1,7 +1,7 @@
 module Manager::Application::CLI
   extend self
 
-  def delete(no_confirm, config, mirror, source, prefix, application, custom_vars, keep_user_group, preserve_database)
+  def delete(no_confirm, config, mirror, source, prefix, application, custom_vars, keep_user_group, preserve_database, debug = nil)
     Log.info "initializing", "delete"
 
     task = Delete.new application, Prefix.new(prefix), keep_user_group, preserve_database
@@ -10,7 +10,7 @@ module Manager::Application::CLI
     task.run if no_confirm || Manager.cli_confirm
   end
 
-  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database)
+  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
     MainConfig.file = config

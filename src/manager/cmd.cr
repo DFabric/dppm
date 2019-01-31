@@ -56,7 +56,7 @@ struct Manager::Cmd
         end
       end
     rescue ex
-      raise "error at line #{@line_number}): \n#{ex}"
+      raise Exception.new "error at line #{@line_number}:\n#{ex}", ex
     end
   end
 

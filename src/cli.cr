@@ -9,6 +9,7 @@ module CLI
   include Clicr
 
   def run
+    __debug = false
     create(
       name: "dppm",
       info: "The DPlatform Package Manager",
@@ -16,6 +17,12 @@ module CLI
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
           default: Manager::PREFIX,
+        },
+      },
+      options: {
+        debug: {
+          short: 'd',
+          info:  "Debug print with error backtraces",
         },
       },
       commands: {
@@ -291,21 +298,25 @@ module CLI
   rescue ex : ArgumentRequired | UnknownCommand | UnknownOption | UnknownVariable
     abort ex
   rescue ex
-    Log.error ex.to_s
+    if __debug
+      ex.inspect_with_backtrace Log.error
+    else
+      Log.error ex.to_s
+    end
   end
 
-  def version(prefix)
+  def version(**args)
     puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify.chomp + " [" + `git describe --tags --long --always`.stringify.chomp + "]\n\n"}}
     Host.vars.each do |k, v|
       puts k + ": " + v
     end
   end
 
-  def server(prefix)
+  def server(**args)
     "available soon!"
   end
 
-  def service(prefix, service)
+  def service(service, **args)
     Service.init.new service
   end
 end

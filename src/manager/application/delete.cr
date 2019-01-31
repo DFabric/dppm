@@ -24,7 +24,7 @@ struct Manager::Application::Delete
         database.check_connection
       end
     rescue ex
-      raise "#{ex}\neither start the database or use the preseve database option"
+      raise Exception.new "either start the database or use the preseve database option:\n#{ex}", ex
     end
 
     # Checks

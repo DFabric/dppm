@@ -12,7 +12,7 @@ module Manager::Package::CLI
     end
   end
 
-  def delete(no_confirm, config, mirror, source, prefix, package, custom_vars, version)
+  def delete(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
     Log.info "initializing", "delete"
     task = Delete.new Prefix.new(prefix), package, version
 
@@ -20,7 +20,7 @@ module Manager::Package::CLI
     task.run if no_confirm || Manager.cli_confirm
   end
 
-  def build(no_confirm, config, mirror, source, prefix, package, custom_vars, version)
+  def build(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "build"
     MainConfig.file = config

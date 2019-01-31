@@ -39,7 +39,7 @@ module Manager::Source::Cache
     end
   end
 
-  def cli(config, mirror, source, prefix, no_confirm)
+  def cli(config, source, prefix, no_confirm, **args)
     prefix = Prefix.new prefix, create: true
     if source
       update prefix, source, no_confirm
