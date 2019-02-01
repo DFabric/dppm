@@ -14,13 +14,12 @@ struct Manager::Package::Clean
     end
   end
 
-  def simulate
-    String.build do |str|
-      str << "\nbasedir: " << @prefix.pkg
-      str << "\nunused packages: \n"
-      @packages.each do |pkg|
-        str << pkg << '\n'
-      end
+  def simulate(io = Log.output)
+    io << "task: clean"
+    io << "\nbasedir: " << @prefix.pkg
+    io << "\nunused packages: \n"
+    @packages.each do |pkg|
+      io << pkg << '\n'
     end
   end
 

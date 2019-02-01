@@ -6,7 +6,7 @@ module Manager::Application::CLI
 
     task = Delete.new application, Prefix.new(prefix), keep_user_group, preserve_database
 
-    Log.info "delete", task.simulate
+    task.simulate
     task.run if no_confirm || Manager.cli_confirm
   end
 
@@ -32,7 +32,7 @@ module Manager::Application::CLI
       database: database
     )
 
-    Log.info "add", task.simulate
+    task.simulate
     task.run if no_confirm || Manager.cli_confirm
   end
 

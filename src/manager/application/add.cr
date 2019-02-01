@@ -117,11 +117,12 @@ struct Manager::Application::Add
     raise Exception.new "error while setting user and group:\n#{ex}", ex
   end
 
-  def simulate
-    String.build do |str|
-      @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      @build.simulate_deps str
+  def simulate(io = Log.output)
+    io << "task: add"
+    @vars.each do |var, value|
+      io << '\n' << var << ": " << value
     end
+    @build.simulate_deps io
   end
 
   def run

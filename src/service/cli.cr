@@ -17,14 +17,14 @@ module Service::CLI
   end
 
   def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String), debug = nil) : Nil
-    print "RUN   " if !norun
-    print "BOOT  " if !noboot
-    puts "SERVICE\n"
+    Log.output << "RUN   " if !norun
+    Log.output << "BOOT  " if !noboot
+    Log.output.puts "SERVICE\n"
     if services.empty?
       get_status(prefix, all) do |service|
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
-        puts service.name
+        Log.output.puts service.name
       end
     else
       root_prefix = Prefix.new prefix
@@ -32,24 +32,24 @@ module Service::CLI
         service = root_prefix.new_app(service_name).service
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
-        puts service.name
+        Log.output.puts service.name
       end
     end
   end
 
   private def print_run_state(service : Service::OpenRC | Service::Systemd)
     if run = service.run?
-      STDOUT << run.colorize.green << "  "
+      Log.output << run.colorize.green << "  "
     else
-      STDOUT << run.colorize.red << ' '
+      Log.output << run.colorize.red << ' '
     end
   end
 
   private def print_boot_state(service : Service::OpenRC | Service::Systemd)
     if boot = service.boot?
-      STDOUT << boot.colorize.green << "  "
+      Log.output << boot.colorize.green << "  "
     else
-      STDOUT << boot.colorize.red << ' '
+      Log.output << boot.colorize.red << ' '
     end
   end
 

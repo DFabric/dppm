@@ -38,16 +38,15 @@ struct Manager::Application::Delete
     end
   end
 
-  def simulate
-    String.build do |str|
-      str << "\nname: " << @name
-      str << "\npackage: " << @app.pkg_file.package
-      str << "\nbasedir: " << @app.path
-      str << "\nuser: " << @user
-      str << "\ngroup: " << @group
-      @app.service?.try do |service|
-        str << "\nservice: " << service.file
-      end
+  def simulate(io = Log.output)
+    io << "task: delete"
+    io << "\nname: " << @name
+    io << "\npackage: " << @app.pkg_file.package
+    io << "\nbasedir: " << @app.path
+    io << "\nuser: " << @user
+    io << "\ngroup: " << @group
+    @app.service?.try do |service|
+      io << "\nservice: " << service.file
     end
   end
 

@@ -34,17 +34,26 @@ struct Manager::Package::Build
     @vars["arch_alias"] = @arch_alias
   end
 
-  def simulate
-    String.build do |str|
-      @vars.each { |k, v| str << "\n#{k}: #{v}" }
-      simulate_deps str
+  def simulate(io = Log.output)
+    io << "task: build"
+    @vars.each do |var, value|
+      io << '\n' << var << ": " << value
     end
+    simulate_deps io
   end
 
   def simulate_deps(io)
     if !@deps.empty?
       io << "\ndeps: "
-      @deps.map { |k, v| k + ':' + v }.join(", ", io)
+      start = true
+      @deps.each do |dep, ver|
+        if start
+          start = false
+        else
+          io << ", "
+        end
+        io << dep << ':' << ver
+      end
     end
   end
 

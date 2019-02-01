@@ -7,7 +7,7 @@ module Manager::Package::CLI
     if task.packages.empty?
       Log.info "No packages to clean", task.prefix.path
     else
-      Log.info "clean", task.simulate
+      task.simulate
       task.run if no_confirm || Manager.cli_confirm
     end
     task
@@ -17,7 +17,7 @@ module Manager::Package::CLI
     Log.info "initializing", "delete"
     task = Delete.new Prefix.new(prefix), package, version
 
-    Log.info "delete", task.simulate
+    task.simulate
     task.run if no_confirm || Manager.cli_confirm
   end
 
@@ -34,7 +34,7 @@ module Manager::Package::CLI
     # Create task
     vars.merge! Host.vars
     task = Build.new vars, root_prefix, package, version
-    Log.info "build", task.simulate
+    task.simulate
     task.run if no_confirm || Manager.cli_confirm
   end
 

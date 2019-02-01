@@ -18,12 +18,11 @@ struct Manager::Package::Delete
     end
   end
 
-  def simulate
-    String.build do |str|
-      str << "\npackage: " << @pkg.package
-      str << "\nversion: " << @pkg.version
-      str << "\nbasedir: " << @pkg.path
-    end
+  def simulate(io = Log.output)
+    io << "task: delete"
+    io << "\npackage: " << @pkg.package
+    io << "\nversion: " << @pkg.version
+    io << "\nbasedir: " << @pkg.path
   end
 
   def run
