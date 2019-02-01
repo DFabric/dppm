@@ -303,6 +303,7 @@ module CLI
     else
       Log.error ex.to_s
     end
+    exit 1
   end
 
   def version(**args)

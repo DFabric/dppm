@@ -32,9 +32,14 @@ struct Service::Systemd
     config.to_systemd
   end
 
-  def self.each
-    Dir["/lib/systemd/system/*.service", "/etc/systemd/system/*.service"].each do |service|
-      yield File.basename(service).rstrip ".service"
+  def self.each(&block : String -> _)
+    {"/lib/systemd/system", "/etc/systemd/system"}.each do |service_dir|
+      Dir.each_child service_dir do |service|
+        if service.ends_with? ".service"
+          service_name = service.rchop ".service"
+          yield service_name if !service_name.ends_with? '@'
+        end
+      end
     end
   end
 

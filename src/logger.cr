@@ -6,35 +6,34 @@ struct Log
   @@colorize = true
   @@date = false
 
-  def self.date
-    @@output << Time.now.to_s("%F %T%z ") if @@date
+  def self.print_date(io)
+    Time.now.to_s("%F %T%z ", io) if @@date
   end
 
   def self.info(title : String, message : String)
-    date
-    @@output.puts(if colorize
-      "#{"INFO".colorize.blue.mode(:bold)} #{title.colorize.white}: #{message}"
+    print_date @@output
+    if colorize
+      @@output << "INFO".colorize.blue.mode(:bold) << ' ' << title.colorize.white << ": " << message << '\n'
     else
-      "INFO \"#{title}: #{message}\""
-    end)
+      @@output << "INFO \"" << title << ": " << message << "\"\n"
+    end
   end
 
   def self.warn(title : String, message : String)
-    date
-    @@error.puts(if colorize
-      "#{"WARN".colorize.yellow.mode(:bold)} #{title.colorize.white.mode(:bold)}: #{message}"
+    print_date @@error
+    if colorize
+      @@error << "WARN".colorize.yellow.mode(:bold) << ' ' << title.colorize.white.mode(:bold) << ": " << message << '\n'
     else
-      "WARN \"#{title}: #{message}\""
-    end)
+      @@error << "WARN \"" << title << ": " << "message\"\n"
+    end
   end
 
   def self.error(message : String)
-    date
-    @@error.puts(if colorize
-      "#{"ERR!".colorize.red.mode(:bold)} #{message.colorize.light_magenta}"
+    print_date @@error
+    if colorize
+      @@error << "ERR!".colorize.red.mode(:bold) << ' ' << message.colorize.light_magenta << '\n'
     else
-      "ERR! \"#{message}\""
-    end)
-    exit 1
+      @@error << "ERR! \"" << message << "\"\n"
+    end
   end
 end

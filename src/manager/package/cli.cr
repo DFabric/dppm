@@ -10,6 +10,7 @@ module Manager::Package::CLI
       Log.info "clean", task.simulate
       task.run if no_confirm || Manager.cli_confirm
     end
+    task
   end
 
   def delete(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)

@@ -22,7 +22,7 @@ struct Manager::Package::Delete
     String.build do |str|
       str << "\npackage: " << @pkg.package
       str << "\nversion: " << @pkg.version
-      str << "\nbasepath: " << @pkg.path
+      str << "\nbasedir: " << @pkg.path
     end
   end
 

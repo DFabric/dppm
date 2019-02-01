@@ -47,7 +47,7 @@ struct Host
   {% elsif flag?(:darwin) %}
     class_getter kernel = "darwin"
   {% else %}
-    Log.error "unsupported system"
+    Log.error "unsupported system"; exit 1
   {% end %}
 
   # Architecture
@@ -60,7 +60,7 @@ struct Host
   {% elsif flag?(:aarch64) %}
     class_getter arch = "arm64"
   {% else %}
-    Log.error "unsupported architecure"
+    Log.error "unsupported architecure"; exit 1
   {% end %}
 
   # All system environment variables
@@ -69,7 +69,7 @@ struct Host
     {
       "arch"        => @@arch,
       "kernel"      => @@kernel,
-      "kernel_ver"  => @@kernel_ver.to_s,
+      "kernel_ver"  => @@kernel_ver,
       "sysinit"     => (Service.init.type if Service.init?).to_s,
       "sysinit_ver" => (Service.init.version if Service.init?).to_s,
     }

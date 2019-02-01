@@ -3,12 +3,12 @@ require "random"
 module Utils
   extend self
 
-  def ascii_alphanumeric_underscore?(string : String)
-    string.each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return }
+  def ascii_alphanumeric_underscore?(string : String) : Bool
+    string.each_char { |char| char.ascii_lowercase? || char.ascii_number? || char == '_' || return false }
     true
   end
 
-  def ascii_alphanumeric_dash?(name : String)
+  def ascii_alphanumeric_dash?(name : String) : Bool
     raise "the name must starts with `a-z` or `0-9`, not a dash  `-`: " + name if name.starts_with? '-'
     name.each_char do |char|
       char.ascii_lowercase? || char.ascii_number? || char == '-' || raise "the name contains other characters than `a-z`, `0-9` and `-`: " + name
@@ -16,7 +16,7 @@ module Utils
     true
   end
 
-  def to_b(string)
+  def to_b(string : String) : Bool
     case string
     when "true"  then true
     when "false" then false
@@ -28,38 +28,34 @@ module Utils
     array = Array(String | Int32).new
     escape = false
     current = IO::Memory.new
-
-    string.each_char do |char|
-      if escape
-        current << char
-        escape = false
-      else
-        case char
-        when '\\' then escape = true
-        when '.'
-          if !array[-1]?.is_a? Int32
-            array << current.to_s
-            current.clear
-          end
-        when '['
-          if !current.empty?
-            array << current.to_s
-            current.clear
-          end
-        when ']'
-          array << current.to_s.to_i
+    reader = Char::Reader.new string
+    while reader.has_next?
+      case char = reader.current_char
+      when '\\' then current << reader.next_char
+      when '.'
+        if !array[-1]?.is_a? Int32
+          array << current.to_s
           current.clear
-        else
-          current << char
         end
+      when '['
+        if !current.empty?
+          array << current.to_s
+          current.clear
+        end
+      when ']'
+        array << current.to_s.to_i
+        current.clear
+      else
+        current << char
       end
+      reader.next_char
     end
     array << current.to_s if !current.empty?
 
     array
   end
 
-  def to_type(string : String, strict = false)
+  def to_type(string : String, strict = false) : Array(String) | Bool | Float64 | Hash(String, String) | Int64 | String | Nil
     case string
     when "true"  then true
     when "false" then false

@@ -29,8 +29,8 @@ struct Service::OpenRC
     config.to_openrc
   end
 
-  def self.each
-    Dir.new("/etc/init.d").each do |service|
+  def self.each(&block : String -> _)
+    Dir.each_child "/etc/init.d" do |service|
       yield service
     end
   end
