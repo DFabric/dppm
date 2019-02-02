@@ -157,7 +157,7 @@ struct Manager::Application::Add
     Dir.mkdir @app.logs_dir
 
     # Build and add missing dependencies and copy library configurations
-    Package::Deps.new(@app.prefix, @app.libs_dir).build @vars.dup, @build.deps, @shared do |dep_pkg|
+    @build.install_deps @app, @vars.dup, @shared do |dep_pkg|
       dep_pkg.config.try do |dep_config|
         Log.info "copying library configuration files", dep_pkg.name
         dep_conf_dir = @app.conf_dir + dep_pkg.package

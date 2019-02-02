@@ -1,7 +1,7 @@
 struct Manager::Package::Build
   getter pkg : Prefix::Pkg,
     exists : Bool = false,
-    deps : Hash(String, String) = Hash(String, String).new,
+    deps : Set(Prefix::Pkg) = Set(Prefix::Pkg).new,
     vars : Hash(String, String)
   @arch_alias : String
 
@@ -20,12 +20,13 @@ struct Manager::Package::Build
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @pkg.name
-    Deps.new(prefix, @pkg.libs_dir).resolve(@pkg.pkg_file).each do |dep_src, versions|
-      @deps[dep_src.name] = if versions.includes?(latest = dep_src.pkg_file.version_from_tag "latest")
-                              latest
-                            else
-                              versions[0].to_s
-                            end
+    @pkg.src.resolve_deps.each do |dep_name, versions|
+      version = if versions.includes?(latest = prefix.new_src(dep_name).pkg_file.version_from_tag "latest")
+                  latest
+                else
+                  versions[0].to_s
+                end
+      @deps << pkg.prefix.new_pkg dep_name, version
     end
     @vars["prefix"] = prefix.path
     @vars["version"] = @pkg.version
@@ -46,14 +47,43 @@ struct Manager::Package::Build
     if !@deps.empty?
       io << "\ndeps: "
       start = true
-      @deps.each do |dep, ver|
+      @deps.each do |dep_pkg|
         if start
           start = false
         else
           io << ", "
         end
-        io << dep << ':' << ver
+        io << dep_pkg.name
       end
+    end
+  end
+
+  def install_deps(dest_pkg : Prefix::Pkg | Prefix::App, vars : Hash(String, String), shared : Bool = true, &block)
+    Log.info "dependencies", "building"
+    Dir.mkdir_p dest_pkg.libs_dir
+
+    # Build each dependency
+    @deps.each do |dep_pkg|
+      dest_pkg_dep_dir = dest_pkg.libs_dir + dep_pkg.name
+      if !Dir.exists? dep_pkg.path
+        Log.info "building dependency", dep_pkg.path
+        Package::Build.new(
+          vars: vars,
+          prefix: dest_pkg.prefix,
+          package: dep_pkg.package,
+          version: dep_pkg.version).run
+      end
+      if !File.exists? dest_pkg_dep_dir
+        if shared
+          Log.info "adding symlink to dependency", dep_pkg.name
+          File.symlink dep_pkg.path, dest_pkg_dep_dir
+        else
+          Log.info "copying dependency", dep_pkg.name
+          FileUtils.cp_r dep_pkg.path, dest_pkg_dep_dir
+        end
+      end
+      Log.info "dependency added", dep_pkg.name
+      yield dep_pkg
     end
   end
 
@@ -67,7 +97,7 @@ struct Manager::Package::Build
     FileUtils.cp_r(@pkg.src.path, @pkg.path)
 
     # Build dependencies
-    Deps.new(@pkg.prefix, @pkg.libs_dir).build @vars.dup, @deps { }
+    install_deps(@pkg, @vars.dup) { }
 
     if (tasks = @pkg.pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @pkg.name

@@ -13,6 +13,7 @@ struct Prefix::PkgFile
       end
     end
   end
+
   getter package : String,
     name : String,
     type : Type,

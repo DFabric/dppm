@@ -15,7 +15,7 @@ struct Prefix::Src
     config_from_pkg_file key do |config_file, config_key|
       return config_file.get config_key
     end
-    deps.each &.config_from_pkg_file key do |config_file, config_key|
+    deps_with_expr.each_key &.config_from_pkg_file key do |config_file, config_key|
       return config_file.get config_key
     end
     raise "config key not found: " + key
@@ -23,6 +23,6 @@ struct Prefix::Src
 
   def each_config_key(&block : String ->)
     internal_each_config_key { |key| yield key }
-    deps.each &.internal_each_config_key { |key| yield key }
+    deps_with_expr.each_key &.internal_each_config_key { |key| yield key }
   end
 end

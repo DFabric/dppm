@@ -5,10 +5,6 @@ module Prefix::ProgramData
 
   getter bin_path : String
 
-  getter libs_dir : String do
-    @path + "lib/"
-  end
-
   getter data_dir : String do
     @path + "srv/"
   end
