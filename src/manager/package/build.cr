@@ -101,7 +101,7 @@ struct Manager::Package::Build
 
     if (tasks = @pkg.pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @pkg.name
-      Dir.cd(@pkg.path) { Cmd.new(@vars.dup).run build_task }
+      Dir.cd(@pkg.path) { Cmd.new(@vars).run build_task }
       # Standard package build
     else
       Log.info "standard building", @pkg.name

@@ -5,7 +5,9 @@
 
 # DPPM
 
-*The DPlatform's Package Manager*
+Dedicated Platform Package Manager
+
+In development - the API is stabilizing, but expect breaking changes.
 
 ## Features
 

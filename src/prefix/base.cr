@@ -44,8 +44,10 @@ module Prefix::Base
 
   protected def config_from_pkg_file(key : String, &block)
     config.try do |config|
-      if config_key = pkg_file.config[key]?
-        yield config, config_key
+      if config_vars = pkg_file.config.vars
+        if config_key = config_vars[key]?
+          yield config, config_key
+        end
       end
     end
   end
@@ -53,7 +55,7 @@ module Prefix::Base
   abstract def each_config_key(&block : String ->)
 
   protected def internal_each_config_key(&block : String ->)
-    pkg_file.config?.try &.each_key do |var|
+    pkg_file.config.vars.try &.each_key do |var|
       yield var
     end
   end

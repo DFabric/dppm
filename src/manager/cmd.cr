@@ -5,10 +5,7 @@ struct Manager::Cmd
   @line_number : Int32 = 0
 
   def initialize(vars : Hash(String, String))
-    # Create a PATH variable
-    vars.each do |k, v|
-      @vars[k.upcase] = v
-    end
+    @vars = vars.transform_keys &.upcase
   end
 
   def self.find_bin(pkgdir, cmd)

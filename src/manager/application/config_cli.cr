@@ -8,7 +8,7 @@ module Manager::Application::ConfigCLI
       app.config!.get path
     elsif path == "."
       String.build do |str|
-        app.pkg_file.config.each_key do |key|
+        app.each_config_key do |key|
           str << key << ": " << app.get_config(key) << '\n'
         end
       end

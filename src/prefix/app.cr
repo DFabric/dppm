@@ -28,13 +28,14 @@ struct Prefix::App
 
     Dir.each_child libs_dir do |lib_package|
       relative_path = libs_dir + lib_package
+      lib_pkg = @prefix.new_pkg File.basename(File.real_path(relative_path))
       config_file = nil
-      if Dir.exists?(conf_lib_dir = conf_dir + lib_package)
+      if Dir.exists?(conf_lib_dir = conf_dir + lib_pkg.package)
         Dir.each_child conf_lib_dir do |file|
           config_file = Config.new? conf_lib_dir + '/' + file
         end
       end
-      libs << Lib.new relative_path, @prefix.new_pkg(File.basename(File.real_path(relative_path))), config_file
+      libs << Lib.new relative_path, lib_pkg, config_file
     end
 
     libs
@@ -133,18 +134,18 @@ struct Prefix::App
   end
 
   getter database : Database::MySQL | Nil do
-    if !config
-      return
-    elsif pkg_file.config.has_key?("database_address")
-      uri = URI.parse "//#{get_config("database_address")}"
-    elsif pkg_file.config.has_key?("database_host")
-      uri = URI.new(
-        host: get_config("database_host").to_s,
-        port: get_config("database_port").to_s.to_i?,
-      )
-    else
-      return
+    if config_vars = pkg_file.config.vars
+      if config_vars.has_key? "database_address"
+        uri = URI.parse "//#{get_config("database_address")}"
+      elsif config_vars.has_key? "database_host"
+        uri = URI.new(
+          host: get_config("database_host").to_s,
+          port: get_config("database_port").to_s.to_i?,
+        )
+      end
     end
+    return if !uri
+
     type = get_config("database_type").to_s
     return if !Database.supported? type
 
@@ -160,8 +161,8 @@ struct Prefix::App
 
   private def config_from_libs(key : String, &block)
     libs.each do |library|
-      if library_pkg_config = library.pkg.pkg_file.config?
-        if config_key = library_pkg_config[key]?
+      if library_pkg_config_vars = library.pkg.pkg_file.config.vars
+        if config_key = library_pkg_config_vars[key]?
           library.config.try do |lib_config|
             yield lib_config, config_key
           end
@@ -172,7 +173,7 @@ struct Prefix::App
 
   private def keys_from_libs(&block)
     libs.each do |library|
-      library.pkg.pkg_file.config?.try &.each_key do |key|
+      library.pkg.pkg_file.config.vars.try &.each_key do |key|
         yield key
       end
     end

@@ -26,31 +26,28 @@ module Utils
 
   def to_array(string : String) : Array(String | Int32)
     array = Array(String | Int32).new
-    escape = false
-    current = IO::Memory.new
+    buffer = IO::Memory.new
     reader = Char::Reader.new string
+
     while reader.has_next?
       case char = reader.current_char
-      when '\\' then current << reader.next_char
+      when '\\' then buffer << reader.next_char
       when '.'
-        if !array[-1]?.is_a? Int32
-          array << current.to_s
-          current.clear
-        end
+        array << buffer.to_s
+        buffer.clear
       when '['
-        if !current.empty?
-          array << current.to_s
-          current.clear
-        end
+        array << buffer.to_s
+        buffer.clear
       when ']'
-        array << current.to_s.to_i
-        current.clear
+        reader.next_char if reader.has_next? && reader.peek_next_char == '.'
+        array << buffer.to_s.to_i
+        buffer.clear
       else
-        current << char
+        buffer << char
       end
       reader.next_char
     end
-    array << current.to_s if !current.empty?
+    array << buffer.to_s if !buffer.empty?
 
     array
   end
