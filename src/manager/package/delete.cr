@@ -23,6 +23,7 @@ struct Manager::Package::Delete
     io << "\npackage: " << @pkg.package
     io << "\nversion: " << @pkg.version
     io << "\nbasedir: " << @pkg.path
+    io << '\n'
   end
 
   def run

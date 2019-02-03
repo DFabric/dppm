@@ -14,7 +14,7 @@ module Manager
   PREFIX = Process.root? ? "/srv/dppm" : ENV["HOME"] + "/.dppm"
 
   def cli_confirm
-    puts "\n\nContinue? [N/y]"
+    puts "\nContinue? [N/y]"
     case gets
     when "Y", "y" then true
     else               puts "cancelled."

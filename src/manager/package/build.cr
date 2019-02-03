@@ -56,6 +56,7 @@ struct Manager::Package::Build
         io << dep_pkg.name
       end
     end
+    io << '\n'
   end
 
   def install_deps(dest_pkg : Prefix::Pkg | Prefix::App, vars : Hash(String, String), shared : Bool = true, &block)
@@ -64,7 +65,7 @@ struct Manager::Package::Build
 
     # Build each dependency
     @deps.each do |dep_pkg|
-      dest_pkg_dep_dir = dest_pkg.libs_dir + dep_pkg.name
+      dest_pkg_dep_dir = dest_pkg.libs_dir + dep_pkg.package
       if !Dir.exists? dep_pkg.path
         Log.info "building dependency", dep_pkg.path
         Package::Build.new(

@@ -228,9 +228,12 @@ struct Prefix::App
   end
 
   def set_permissions
+    File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
+    File.chmod(app_path, 0o700) if !File.symlink? app_path
     File.chmod conf_dir, 0o700
+    File.chmod @path, 0o750
+    File.chmod logs_dir, 0o750
     File.chmod data_dir, 0o750
-    File.chmod logs_dir, 0o700
   end
 
   def path_env_var : String

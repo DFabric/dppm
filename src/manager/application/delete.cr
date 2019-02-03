@@ -48,6 +48,7 @@ struct Manager::Application::Delete
     @app.service?.try do |service|
       io << "\nservice: " << service.file
     end
+    io << '\n'
   end
 
   def run : Delete
