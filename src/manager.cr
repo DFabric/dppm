@@ -11,7 +11,15 @@ require "./manager/*"
 
 module Manager
   extend self
-  PREFIX = Process.root? ? "/srv/dppm" : ENV["HOME"] + "/.dppm"
+  PREFIX = begin
+    if Process.root?
+      "/srv/dppm"
+    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
+      xdg_data_home + "/dppm"
+    else
+      ENV["HOME"] + "/.dppm"
+    end
+  end
 
   def cli_confirm
     puts "\nContinue? [N/y]"

@@ -1,6 +1,7 @@
 struct Manager::Application::Add
   getter app : Prefix::App,
     vars : Hash(String, String)
+  @add_service : Bool
   @socket : Bool
   @shared : Bool
   @uid : UInt32
@@ -11,15 +12,18 @@ struct Manager::Application::Add
   @database : Prefix::App? = nil
   @database_password : String? = nil
 
-  def initialize(@build : Package::Build, @shared : Bool = true, add_service : Bool = true, @socket : Bool = false, database : String? = nil)
+  def initialize(@build : Package::Build, @shared : Bool = true, @add_service : Bool = true, @socket : Bool = false, database : String? = nil)
     @vars = @build.vars.dup
 
     Log.info "getting name", @build.pkg.name
     @app = @build.pkg.new_app @vars["name"]?
 
-    if add_service
+    if @add_service
       @app.service?.try do |service|
-        if service.exists? || !service.creatable?
+        if !service.creatable?
+          Log.warn "service creation not available - root permissions missing?", service.name
+          @add_service = false
+        elsif service.exists?
           raise "system service already exist: " + service.name
         end
       end
@@ -192,7 +196,7 @@ struct Manager::Application::Add
 
     # Create system user and group for the application
     if Process.root?
-      if @app.service?
+      if @add_service
         if database = @database
           database_name = database.name
         end

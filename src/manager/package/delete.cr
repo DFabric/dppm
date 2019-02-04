@@ -3,6 +3,7 @@ struct Manager::Package::Delete
 
   def initialize(prefix : Prefix, package : String, version : String?)
     @pkg = prefix.new_pkg package, version
+    raise "package doesn't exist: " + @pkg.path if !File.exists? @pkg.path
 
     # Check if the package is still in use by an application
     Log.info "check packages in use", @pkg.path
