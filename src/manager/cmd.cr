@@ -52,9 +52,9 @@ struct Manager::Cmd
           raise "expected Array"
         end
       end
-    rescue ex
-      raise Exception.new "error at line #{@line_number}:\n#{ex}", ex
     end
+  rescue ex
+    raise Exception.new "error at line #{@line_number}:\n#{ex}", ex
   end
 
   private def var_reader(cmd : String)
@@ -223,8 +223,10 @@ struct Manager::Cmd
     else
       # check if the command is available in `bin` of the package and dependencies
       if bin = Cmd.find_bin(@vars["BASEDIR"], command) || Process.find_executable(command)
-        Manager.exec bin, cmd[1..-1]
-        "success"
+        output, error = Exec.new bin, cmd[1..-1], error: Log.error do |process|
+          raise "execution returned an error: #{command} #{cmd.join ' '}" if !process.wait.success?
+        end
+        output.to_s
       else
         raise "unknown command or variable: #{cmd}"
       end

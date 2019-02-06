@@ -16,4 +16,8 @@ module Config::Format
     yield self
     write
   end
+
+  def parse
+    @data = parse File.read(@file)
+  end
 end

@@ -12,7 +12,7 @@ require "./manager/*"
 module Manager
   extend self
   PREFIX = begin
-    if Process.root?
+    if Process.root? && Dir.exists? "/srv"
       "/srv/dppm"
     elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
       xdg_data_home + "/dppm"

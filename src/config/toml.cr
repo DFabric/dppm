@@ -8,11 +8,11 @@ struct Config::TOML
   getter file : String
 
   def initialize(@file : String)
-    @data = read
+    @data = parse File.read(@file)
   end
 
-  def read : Hash(String, Hash(String, String))
-    @data = ::INI.parse File.read(@file)
+  def parse(content : String) : Hash(String, Hash(String, String))
+    @data = ::INI.parse content
   end
 
   def get(path : Array)

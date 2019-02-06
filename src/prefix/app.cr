@@ -134,7 +134,7 @@ struct Prefix::App
   end
 
   getter database : Database::MySQL | Nil do
-    if config_vars = pkg_file.config.vars
+    if config_vars = pkg_file.config_vars
       if config_vars.has_key? "database_address"
         uri = URI.parse "//#{get_config("database_address")}"
       elsif config_vars.has_key? "database_host"
@@ -161,7 +161,7 @@ struct Prefix::App
 
   private def config_from_libs(key : String, &block)
     libs.each do |library|
-      if library_pkg_config_vars = library.pkg.pkg_file.config.vars
+      if library_pkg_config_vars = library.pkg.pkg_file.config_vars
         if config_key = library_pkg_config_vars[key]?
           library.config.try do |lib_config|
             yield lib_config, config_key
@@ -173,7 +173,7 @@ struct Prefix::App
 
   private def keys_from_libs(&block)
     libs.each do |library|
-      library.pkg.pkg_file.config.vars.try &.each_key do |key|
+      library.pkg.pkg_file.config_vars.try &.each_key do |key|
         yield key
       end
     end
@@ -181,6 +181,7 @@ struct Prefix::App
 
   def get_config(key : String)
     config_from_pkg_file key do |config_file, config_key|
+      config_export
       return config_file.get config_key
     end
     config_from_libs key do |lib_config, config_key|
@@ -191,6 +192,7 @@ struct Prefix::App
 
   def del_config(key : String)
     config_from_pkg_file key do |config_file, config_key|
+      config_export
       return config_file.del config_key
     end
     config_from_libs key do |lib_config, config_key|
@@ -201,6 +203,7 @@ struct Prefix::App
 
   def set_config(key : String, value)
     config_from_pkg_file key do |config_file, config_key|
+      config_export
       return config_file.set config_key, value
     end
     config_from_libs key do |lib_config, config_key|
@@ -210,12 +213,16 @@ struct Prefix::App
   end
 
   def each_config_key(&block : String ->)
-    internal_each_config_key { |key| yield key }
+    internal_each_config_key do |key|
+      config_export
+      yield key
+    end
     keys_from_libs { |key| yield key }
   end
 
   def write_configs
     config.try &.write
+    config_import
     libs.each &.pkg.config.try &.write
   end
 
@@ -242,6 +249,56 @@ struct Prefix::App
       libs.each do |library|
         str << ':' << library.pkg.bin_path
       end
+    end
+  end
+
+  # Import the readable configuration to the application
+  private def config_import
+    update_configuration do |pkg_file_config|
+      full_command = pkg_file_config.import
+      splitted_command = full_command.split ' '
+      command = splitted_command[0]
+      args = splitted_command[1..-1]
+
+      Exec.new command, args, output: Log.output, error: Log.error, chdir: @path do |process|
+        raise "can't import configuration: " + full_command if !process.wait.success?
+      end
+    end
+  end
+
+  # Export the application's internal configuration to a readable config file
+  private def config_export
+    update_configuration do |pkg_file_config|
+      full_command = pkg_file_config.export
+      splitted_command = full_command.split ' '
+      command = splitted_command[0]
+      args = splitted_command[1..-1]
+
+      output, error = Exec.new command, args, error: Log.error, chdir: @path do |process|
+        raise "can't export configuration: " + full_command if !process.wait.success?
+      end
+      File.write config!.file, output.to_s
+      @config = Config.new config!.file
+    end
+  end
+
+  private def update_configuration(&block : PkgFile::Config -> _)
+    if (pkg_file_config = pkg_file.config)
+      origin_file = @path + pkg_file_config.origin
+      return if !File.exists? origin_file
+      config_time = File.info(config!.file).modification_time.to_s("%Y-%m-%d %H:%M:%S")
+      origin_file_info = File.info(origin_file)
+      return if config_time == origin_file_info.modification_time.to_s("%Y-%m-%d %H:%M:%S")
+
+      # Required by Nextcloud
+      File.chown origin_file, Process.uid, Process.gid
+
+      yield pkg_file_config
+
+      File.chown origin_file, origin_file_info.owner, origin_file_info.group
+      time = Time.utc_now
+      File.touch @path + pkg_file_config.origin, time
+      File.touch config!.file, time
     end
   end
 end

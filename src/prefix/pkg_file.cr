@@ -14,25 +14,7 @@ struct Prefix::PkgFile
     end
   end
 
-  struct Config
-    getter vars : Hash(String, String)? = nil,
-      export : String? = nil,
-      import : String? = nil,
-      origin : String? = nil
-
-    def initialize(config_any)
-      if config_any && (config = config_any.as_h?)
-        if vars = config_any["vars"]?
-          @vars = vars.as_h.transform_values &.as_s
-        end
-        {% for string in %w(export import origin) %}\
-        if {{string.id}} = config[{{string}}]?
-          @{{string.id}} = {{string.id}}.as_s
-        end
-        {% end %}
-      end
-    end
-  end
+  record Config, export : String, import : String, origin : String
 
   getter package : String,
     name : String,
@@ -49,12 +31,13 @@ struct Prefix::PkgFile
     env : Hash(String, String)?,
     databases : Hash(String, String?)?,
     tasks : Hash(String, Array(CON::Any))?,
+    config_vars : Hash(String, String)?,
     shared : Bool?,
     ipv6_braces : Bool?,
     version : CON::Any,
     tags : CON::Any,
     any : CON::Any,
-    config : Config
+    config : Config?
 
   getter path : String do
     self.class.path @root_dir
@@ -91,7 +74,7 @@ struct Prefix::PkgFile
     @ipv6_braces = if ipv6_braces = @any["ipv6_braces"]?
                      ipv6_braces.as_bool?
                    end
-    @config = Config.new @any["config"]?
+
     {% for hash in %w(deps aliases env exec) %}\
     if {{hash.id}} = @any[{{hash}}]?
       @{{hash.id}} = {{hash.id}}.as_h.transform_values &.as_s
@@ -102,6 +85,20 @@ struct Prefix::PkgFile
     end
     if databases = @any["databases"]?
       @databases = databases.as_h.transform_values &.as_s?
+    end
+
+    if (config_any = @any["config"]?) && (config = config_any.as_h?)
+      if vars = config_any["vars"]?
+        @config_vars = vars.as_h.transform_values &.as_s
+      end
+      {% for string in %w(export import origin) %}\
+      if {{string.id}}_any = config[{{string}}]?
+        {{string.id}} = {{string.id}}_any.as_s
+      end
+      {% end %}
+      if export && import && origin
+        @config = Config.new export, import, origin
+      end
     end
   end
   end

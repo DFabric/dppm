@@ -7,11 +7,11 @@ struct Config::CON
   getter file : String
 
   def initialize(@file : String)
-    @data = read
+    @data = parse File.read(@file)
   end
 
-  def read : ::CON::Any
-    @data = ::CON.parse File.read(@file)
+  def parse(content : String)
+    @data = ::CON.parse content
   end
 
   def get(path : Array)
