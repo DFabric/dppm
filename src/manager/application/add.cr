@@ -162,11 +162,11 @@ struct Manager::Application::Add
 
     # Build and add missing dependencies and copy library configurations
     @build.install_deps @app, @vars.dup, @shared do |dep_pkg|
-      dep_pkg.config.try do |dep_config|
+      if dep_config = dep_pkg.config
         Log.info "copying library configuration files", dep_pkg.name
         dep_conf_dir = @app.conf_dir + dep_pkg.package
         Dir.mkdir_p dep_conf_dir
-        FileUtils.cp dep_config.file, dep_conf_dir + '/' + File.basename(dep_config.file)
+        FileUtils.cp dep_pkg.config_file!.path, dep_conf_dir + '/' + File.basename(dep_pkg.config_file!.path)
       end
     end
 

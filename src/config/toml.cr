@@ -5,13 +5,8 @@ require "ini"
 struct Config::TOML
   include Format
   getter data : Hash(String, Hash(String, String))
-  getter file : String
 
-  def initialize(@file : String)
-    @data = parse File.read(@file)
-  end
-
-  def parse(content : String) : Hash(String, Hash(String, String))
+  def initialize(content : String, file : File? = nil)
     @data = ::INI.parse content
   end
 
@@ -66,7 +61,7 @@ struct Config::TOML
     end
   end
 
-  def write
-    File.write @file, ::INI.build(@data, space: true).lstrip("[]\n")
+  def build : String
+    ::INI.build(@data, space: true).rchop "[]\n"
   end
 end

@@ -2,9 +2,10 @@ require "./pkg_file"
 require "semantic_compare"
 
 module Prefix::Base
-  getter path : String
-  getter name : String
-  getter prefix : Prefix
+  getter path : String,
+    name : String,
+    prefix : Prefix,
+    config_file : File?
 
   getter libs_dir : String do
     @path + "lib/"
@@ -25,13 +26,20 @@ module Prefix::Base
     config || raise "no valid config file: #{conf_dir}config.*"
   end
 
+  def config_file! : File
+    @config_initialized || config
+    @config_file || raise "config file not available"
+  end
+
   def config : Config::Types?
     if !@config_initialized
       if Dir.exists? conf_dir.rchop
         Dir.each_child conf_dir do |file|
           file_path = conf_dir + file
           if file.starts_with? "config."
-            @config = Config.new? file_path
+            config_file = File.new file_path
+            @config = Config.new? config_file
+            @config_file = config_file
           end
         end
       end

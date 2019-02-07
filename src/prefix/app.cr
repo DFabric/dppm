@@ -32,7 +32,7 @@ struct Prefix::App
       config_file = nil
       if Dir.exists?(conf_lib_dir = conf_dir + lib_pkg.package)
         Dir.each_child conf_lib_dir do |file|
-          config_file = Config.new? conf_lib_dir + '/' + file
+          config_file = Config.new? File.new(conf_lib_dir + '/' + file)
         end
       end
       libs << Lib.new relative_path, lib_pkg, config_file
@@ -221,9 +221,15 @@ struct Prefix::App
   end
 
   def write_configs
-    config.try &.write
+    if app_config = config
+      File.write config_file!.path, app_config.build
+    end
     config_import
-    libs.each &.pkg.config.try &.write
+    libs.each do |library|
+      if pkg_config = library.config
+        File.write library.pkg.config_file!.path, pkg_config.build
+      end
+    end
   end
 
   def real_app_path : String
@@ -277,8 +283,9 @@ struct Prefix::App
       output, error = Exec.new command, args, error: Log.error, chdir: @path do |process|
         raise "can't export configuration: " + full_command if !process.wait.success?
       end
-      File.write config!.file, output.to_s
-      @config = Config.new config!.file
+      File.write config_file!.path, output.to_s
+      config_file!.rewind
+      @config = Config.new config_file!
     end
   end
 
@@ -286,9 +293,9 @@ struct Prefix::App
     if (pkg_file_config = pkg_file.config)
       origin_file = @path + pkg_file_config.origin
       return if !File.exists? origin_file
-      config_time = File.info(config!.file).modification_time.to_s("%Y-%m-%d %H:%M:%S")
+      config_time = File.info(config_file!.path).modification_time
       origin_file_info = File.info(origin_file)
-      return if config_time == origin_file_info.modification_time.to_s("%Y-%m-%d %H:%M:%S")
+      return if config_time == origin_file_info.modification_time
 
       # Required by Nextcloud
       File.chown origin_file, Process.uid, Process.gid
@@ -298,7 +305,7 @@ struct Prefix::App
       File.chown origin_file, origin_file_info.owner, origin_file_info.group
       time = Time.utc_now
       File.touch @path + pkg_file_config.origin, time
-      File.touch config!.file, time
+      File.touch config_file!.path, time
     end
   end
 end

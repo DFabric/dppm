@@ -4,13 +4,8 @@ require "dynany/json"
 struct Config::JSON
   include Format
   getter data : ::JSON::Any
-  getter file : String
 
-  def initialize(@file : String)
-    @data = parse File.read(@file)
-  end
-
-  def parse(content : String) : ::JSON::Any
+  def initialize(content : String, file : File? = nil)
     @data = ::JSON.parse content
   end
 
@@ -31,7 +26,7 @@ struct Config::JSON
     @data.delete path
   end
 
-  def write
-    File.write @file, @data.to_pretty_json
+  def build : String
+    @data.to_pretty_json
   end
 end

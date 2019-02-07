@@ -4,15 +4,8 @@ require "ini"
 struct Config::INI
   include Format
   getter data : Hash(String, Hash(String, String))
-  getter file : String
-  getter space : Bool
 
-  def initialize(@file : String)
-    @data = parse File.read(@file)
-    @space = @data.includes?(" = ") ? true : false
-  end
-
-  def parse(content : String) : Hash(String, Hash(String, String))
+  def initialize(content : String)
     @data = ::INI.parse content
   end
 
@@ -43,7 +36,7 @@ struct Config::INI
     end
   end
 
-  def write
-    File.write @file, ::INI.build(@data, @space)
+  def build : String
+    ::INI.build @data, true
   end
 end

@@ -4,13 +4,8 @@ require "dynany/yaml"
 struct Config::YAML
   include Format
   getter data : ::YAML::Any
-  getter file : String
 
-  def initialize(@file : String)
-    @data = parse File.read(@file)
-  end
-
-  def parse(content : String) : ::YAML::Any
+  def initialize(content : String, file : File? = nil)
     @data = ::YAML.parse content
   end
 
@@ -31,7 +26,7 @@ struct Config::YAML
     @data.delete path
   end
 
-  def write
-    File.write @file, @data.to_yaml
+  def build : String
+    @data.to_yaml
   end
 end

@@ -10,14 +10,4 @@ module Config::Format
   def del(path : String)
     del Utils.to_array(path)
   end
-
-  def open(update : Bool = false, &block : Config ->)
-    read if update
-    yield self
-    write
-  end
-
-  def parse
-    @data = parse File.read(@file)
-  end
 end
