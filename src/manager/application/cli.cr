@@ -61,13 +61,10 @@ module Manager::Application::CLI
   def exec(prefix, application, **args)
     app = Prefix.new(prefix).new_app application
 
-    if exec = app.pkg_file.exec
-      exec_start = exec["start"]
-    else
-      raise "exec key not present in #{app.pkg_file.path}"
-    end
     env_vars = app.pkg_file.env || Hash(String, String).new
     env_vars["PATH"] = app.path_env_var
+
+    exec_start = app.exec["start"]
     Log.info "executing command", exec_start
 
     if port = app.get_config("port")

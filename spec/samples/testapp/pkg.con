@@ -17,8 +17,9 @@ version {
   }
 }
 config {
-  host "host"
-  port "vars.port"
+  vars {
+    port "vars.port"
+  }
 }
 tags {
   stable { src "0.0.1" }
@@ -82,7 +83,6 @@ tasks {
   add [
     "get etc/config.json vars.port"
     "set etc/config.json vars.port 127"
-    "set etc/config.json host 'localhost'"
     "set etc/config.json server {}"
     "read etc/config.json"
     "set etc/config.json server.url 'test'"

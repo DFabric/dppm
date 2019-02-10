@@ -55,6 +55,15 @@ struct Prefix::App
     Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
   end
 
+  getter exec : Hash(String, String) do
+    if !(exec = pkg_file.exec)
+      libs.each do |library|
+        exec ||= library.pkg.pkg_file.exec
+      end
+    end
+    exec || raise "exec key not present in #{pkg_file.path}"
+  end
+
   @service_intialized = false
 
   def service? : Service::OpenRC | Service::Systemd | Nil
@@ -84,12 +93,6 @@ struct Prefix::App
   end
 
   def service_create(user : String, group : String, database_name : String? = nil)
-    if !(exec = pkg_file.exec)
-      libs.each do |library|
-        exec ||= library.pkg.pkg_file.exec
-      end
-    end
-    exec || raise "exec key not present in #{pkg_file.path}"
     Dir.mkdir_p service_path
 
     # Set service options

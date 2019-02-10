@@ -1,5 +1,4 @@
 {
-  "host": "localhost",
   "vars": {
     "port": 1
   }

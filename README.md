@@ -73,11 +73,13 @@ To follow last application logs:
 
 `dppm logs -f [application]`
 
-## How to build
+## Development
 
 You will need a [Crystal](https://crystal-lang.org) development environment
 
 You can either [install it](https://crystal-lang.org/docs/installation) or use a [Docker image](https://hub.docker.com/r/jrei/crystal-alpine)
+
+### How to build
 
 Install dependencies and build `dppm`:
 
@@ -88,6 +90,16 @@ Run it
 `./bin/dppm --help`
 
 For more informations, see the [official docs](https://crystal-lang.org/docs/using_the_compiler/)
+
+### Run tests
+
+Integration tests are stateful and need to be runned all in a batch sequentially.
+
+To run them: `crystal spec spec/integration_spec.cr`
+
+Other tests are stateless and can be runned independently to each other
+
+To run all tests: `crystal spec`
 
 ## License                                                                                                 
 

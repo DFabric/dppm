@@ -7,7 +7,6 @@ url         "http://localhost"
 description "Test Package"
 info        "This is a test package that can be used in Tests"
 
-
 version {
   self {
     src [ "0.0.1" ]
@@ -16,7 +15,11 @@ version {
 tags {
   latest { src "0.0.1" }
 }
-
+config {
+  vars {
+    host "main.host"
+  }
+}
 tasks {
   build [
     "mkdir bin"

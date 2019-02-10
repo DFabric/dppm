@@ -18,11 +18,13 @@ module Service
   end
 end
 
-def test_service
+def assert_service(service)
+  Service.init = service
+
   user = group = TEST_APP_PACKAGE_NAME
   test_prefix = Prefix.new(__DIR__ + "/service_test", create: true)
   test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
-  FileUtils.cp_r __DIR__ + "/samples/" + TEST_APP_PACKAGE_NAME, test_app.path
+  FileUtils.cp_r SAMPLES_DIR + '/' + TEST_APP_PACKAGE_NAME, test_app.path
 
   service_config = test_app.service.config.class.new
   test_app.service.file = test_app.service_file
@@ -48,28 +50,23 @@ def test_service
   end
 
   FileUtils.rm_r test_prefix.path
+  Service.init = nil
 end
 
 describe Service do
   describe Service::OpenRC do
-    Service.init = Service::OpenRC
-    test_service
-    Service.init = nil
+    assert_service Service::OpenRC
   end
 
   describe Service::Systemd do
     describe "version < 236 with file logging workaround" do
-      Service.init = Service::Systemd
       Service::Systemd.version = 230
-      test_service
-      Service.init = nil
+      assert_service Service::Systemd
     end
 
     describe "recent version supporting file logging" do
-      Service.init = Service::Systemd
       Service::Systemd.version = 240
-      test_service
-      Service.init = nil
+      assert_service Service::Systemd
     end
   end
 end
