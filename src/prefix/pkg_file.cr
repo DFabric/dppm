@@ -14,8 +14,6 @@ struct Prefix::PkgFile
     end
   end
 
-  record Config, export : String, import : String, origin : String
-
   getter package : String,
     name : String,
     type : Type,
@@ -25,13 +23,16 @@ struct Prefix::PkgFile
     description : String,
     info : String,
     provides : String?,
+    config_export : String?,
+    config_import : String?,
+    config_origin : String?,
+    config_vars : Hash(String, String)?,
     exec : Hash(String, String)?,
     aliases : Hash(String, String)?,
     deps : Hash(String, String)?,
     env : Hash(String, String)?,
     databases : Hash(String, String?)?,
     tasks : Hash(String, Array(CON::Any))?,
-    config_vars : Hash(String, String)?,
     shared : Bool?,
     ipv6_braces : Bool?,
     version : CON::Any,
@@ -93,11 +94,11 @@ struct Prefix::PkgFile
       end
       {% for string in %w(export import origin) %}\
       if {{string.id}}_any = config[{{string}}]?
-        {{string.id}} = {{string.id}}_any.as_s
+        @config_{{string.id}} = {{string.id}}_any.as_s
       end
       {% end %}
-      if export && import && origin
-        @config = Config.new export, import, origin
+      if @config_import && !@config_origin
+        raise "config.import requires config.origin to be set"
       end
     end
   end

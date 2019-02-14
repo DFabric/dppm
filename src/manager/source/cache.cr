@@ -25,7 +25,7 @@ module Manager::Source::Cache
         Log.info "downloading packages source", source
         file = prefix.path + '/' + File.basename source
         HTTPHelper.get_file source, file
-        Manager.exec "/bin/tar", {"zxf", file, "-C", prefix.path}
+        Host.exec "/bin/tar", {"zxf", file, "-C", prefix.path}
         File.delete file
         File.rename Dir[prefix.path + "/*packages-source*"][0], prefix.src
         Log.info "cache updated", prefix.src

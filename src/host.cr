@@ -111,4 +111,19 @@ struct Host
     end
     raise "the limit of #{UInt16::MAX} for port numbers is reached, no ports available"
   end
+
+  def self.exec(command : String, args : Array(String) | Tuple) : String
+    Exec.new command, args, output: Log.output, error: Log.error do |process|
+      raise "execution returned an error: #{command} #{args.join ' '}" if !process.wait.success?
+    end
+    "success"
+  end
+
+  def self.exec?(command : String, args : Array(String) | Tuple) : Bool
+    success = false
+    Exec.new command, args, output: Log.output, error: Log.error do |process|
+      success = process.wait.success?
+    end
+    return success
+  end
 end

@@ -62,6 +62,6 @@ struct Config::TOML
   end
 
   def build : String
-    ::INI.build(@data, space: true).rchop "[]\n"
+    ::INI.build(@data, space: true).lchop "[]\n"
   end
 end

@@ -1,20 +1,18 @@
 require "con"
 
-struct Manager::Cmd
+struct Prefix::ProgramData::Task
   getter vars : Hash(String, String) = Hash(String, String).new
+  @all_bin_paths : Array(String)
   @line_number : Int32 = 0
 
-  def initialize(vars : Hash(String, String))
+  def initialize(vars : Hash(String, String), @all_bin_paths : Array(String))
     @vars = vars.transform_keys &.upcase
   end
 
-  def self.find_bin(pkgdir, cmd)
-    path = "#{pkgdir}/bin/#{cmd}"
-    return path if File.executable? path
-
-    Dir.each_child(pkgdir + "/lib") do |library|
-      path = "#{pkgdir}/lib/#{library}/bin/#{cmd}"
-      return path if File.executable? path
+  def executable?(cmd : String) : String?
+    @all_bin_paths.each do |path|
+      bin = path + '/' + cmd
+      return bin if File.executable? bin
     end
   end
 
@@ -140,7 +138,7 @@ struct Manager::Cmd
     when "if"                     then ifexpr cmdline[3..-1]
     when "elif"                   then last_cond ? false : ifexpr(cmdline[5..-1])
     when "else"                   then !last_cond
-    when cmdline.starts_with? '/' then Manager.exec command, cmd[1..-1]
+    when cmdline.starts_with? '/' then Host.exec command, cmd[1..-1]
       # use globs while executing a command
     when "glob"
       if dir = cmd[3]?
@@ -212,11 +210,11 @@ struct Manager::Cmd
       "file retrieved"
       # Compression
       # Use the system `tar` and `unzip` for now
-    when "unzip"     then Manager.exec "/usr/bin/unzip", {"-oq", cmd[1], "-d", cmd[2]}; "zip archive extracted"
-    when "untar_bz2" then Manager.exec "/bin/tar", {"jxf", cmd[1], "-C", cmd[2]}; "bzip2 archive extracted"
-    when "untar_gz"  then Manager.exec "/bin/tar", {"zxf", cmd[1], "-C", cmd[2]}; "gzip archive extracted"
-    when "untar_lz"  then Manager.exec "/bin/tar", {"axf", cmd[1], "-C", cmd[2]}; "lz archive extracted"
-    when "untar_xz"  then Manager.exec "/bin/tar", {"Jxf", cmd[1], "-C", cmd[2]}; "xz archive extracted"
+    when "unzip"     then Host.exec "/usr/bin/unzip", {"-oq", cmd[1], "-d", cmd[2]}; "zip archive extracted"
+    when "untar_bz2" then Host.exec "/bin/tar", {"jxf", cmd[1], "-C", cmd[2]}; "bzip2 archive extracted"
+    when "untar_gz"  then Host.exec "/bin/tar", {"zxf", cmd[1], "-C", cmd[2]}; "gzip archive extracted"
+    when "untar_lz"  then Host.exec "/bin/tar", {"axf", cmd[1], "-C", cmd[2]}; "lz archive extracted"
+    when "untar_xz"  then Host.exec "/bin/tar", {"Jxf", cmd[1], "-C", cmd[2]}; "xz archive extracted"
     when "exit"      then Log.info "exit called", "exiting."; exit 1
     when "error"     then raise cmdline[4..-1].lstrip
     when "true"      then "true"
@@ -224,8 +222,8 @@ struct Manager::Cmd
     when "puts"      then cmdline[3..-1].lstrip
     else
       # check if the command is available in `bin` of the package and dependencies
-      if bin = Cmd.find_bin(@vars["BASEDIR"], command) || Process.find_executable(command)
-        output, error = Exec.new bin, cmd[1..-1], error: Log.error do |process|
+      if bin = executable?(command) || Process.find_executable(command)
+        output, error = Exec.new bin, cmd[1..-1], error: Log.error, env: @vars do |process|
           raise "execution returned an error: #{command} #{cmd.join ' '}" if !process.wait.success?
         end
         output.to_s

@@ -1,6 +1,5 @@
 struct Manager::Package::Build
   getter pkg : Prefix::Pkg,
-    exists : Bool = false,
     deps : Set(Prefix::Pkg) = Set(Prefix::Pkg).new,
     vars : Hash(String, String)
   @arch_alias : String
@@ -16,7 +15,6 @@ struct Manager::Package::Build
 
     if File.exists? @pkg.path
       Log.info "already present", @pkg.path
-      @exists = true
     end
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @pkg.name
@@ -33,6 +31,9 @@ struct Manager::Package::Build
     @vars["package"] = @pkg.package
     @vars["basedir"] = @pkg.path
     @vars["arch_alias"] = @arch_alias
+    if env = @pkg.pkg_file.env
+      @vars.merge! env
+    end
   end
 
   def simulate(io = Log.output)
@@ -89,7 +90,7 @@ struct Manager::Package::Build
   end
 
   def run
-    if @exists
+    if File.exists? @pkg.path
       Log.info "package already present", @pkg.path
       return self
     end
@@ -100,52 +101,11 @@ struct Manager::Package::Build
     # Build dependencies
     install_deps(@pkg, @vars.dup) { }
 
-    if (tasks = @pkg.pkg_file.tasks) && (build_task = tasks["build"]?)
-      Log.info "building", @pkg.name
-      Dir.cd(@pkg.path) { Cmd.new(@vars).run build_task }
-      # Standard package build
-    else
-      Log.info "standard building", @pkg.name
-
-      working_directory = if @pkg.pkg_file.type.app?
-                            Dir.mkdir @pkg.app_path
-                            @pkg.app_path
-                          else
-                            @pkg.path
-                          end
-      Dir.cd working_directory do
-        package_full_name = "#{@pkg.package}-static_#{@pkg.version}_#{Host.kernel}_#{Host.arch}"
-        package_archive = package_full_name + ".tar.xz"
-        package_mirror = @vars["mirror"] + '/' + package_archive
-        Log.info "downloading", package_mirror
-        HTTPHelper.get_file package_mirror
-        Log.info "extracting", package_mirror
-        Manager.exec "/bin/tar", {"Jxf", package_archive}
-
-        # Move out files from the archive folder
-        Dir.cd package_full_name do
-          move "./"
-        end
-        FileUtils.rm_r({package_archive, package_full_name})
-      end
-    end
-    FileUtils.rm_rf @pkg.libs_dir
+    @pkg.build @vars
     Log.info "build completed", @pkg.path
     self
   rescue ex
     FileUtils.rm_rf @pkg.path
     raise Exception.new "build failed - package deleted: #{@pkg.path}:\n#{ex}", ex
-  end
-
-  private def move(path)
-    Dir.each_child(path) do |entry|
-      src = path + entry
-      dest = '.' + src
-      if Dir.exists? dest
-        move src + '/'
-      else
-        File.rename src, dest
-      end
-    end
   end
 end

@@ -7,8 +7,6 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
-  record Lib, relative_path : String, pkg : Prefix::Pkg, config : Config::Types?
-
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
     @path = @prefix.app + @name + '/'
     if pkg_file
@@ -22,25 +20,6 @@ struct Prefix::App
     @bin_path = app_path + "/bin"
   end
 
-  getter libs : Array(Lib) do
-    libs = Array(Lib).new
-    return libs if !Dir.exists? libs_dir
-
-    Dir.each_child libs_dir do |lib_package|
-      relative_path = libs_dir + lib_package
-      lib_pkg = @prefix.new_pkg File.basename(File.real_path(relative_path))
-      config_file = nil
-      if Dir.exists?(conf_lib_dir = conf_dir + lib_pkg.package)
-        Dir.each_child conf_lib_dir do |file|
-          config_file = Config.new? File.new(conf_lib_dir + '/' + file)
-        end
-      end
-      libs << Lib.new relative_path, lib_pkg, config_file
-    end
-
-    libs
-  end
-
   getter password : String? do
     if File.exists? password_file
       File.read password_file
@@ -48,7 +27,7 @@ struct Prefix::App
   end
 
   getter password_file : String do
-    conf_dir + "password"
+    conf_dir + ".password"
   end
 
   getter pkg : Pkg do
@@ -146,16 +125,24 @@ struct Prefix::App
           port: get_config("database_port").to_s.to_i?,
         )
       end
+      if config_vars.has_key? "database_type"
+        type = get_config("database_type").to_s
+      end
     end
-    return if !uri
 
-    type = get_config("database_type").to_s
+    if !type && (databases = pkg_file.databases)
+      type = databases.first.first
+    else
+      return
+    end
     return if !Database.supported? type
 
-    uri.password = get_config("database_password").to_s
-    uri.user = user = get_config("database_user").to_s
+    if uri
+      uri.password = get_config("database_password").to_s
+      uri.user = user = get_config("database_user").to_s
 
-    Database.new_database uri, user, type
+      Database.new_database uri, user, type
+    end
   end
 
   def database=(database_app : App)
@@ -263,38 +250,41 @@ struct Prefix::App
 
   # Import the readable configuration to the application
   private def config_import
-    update_configuration do |pkg_file_config|
-      full_command = pkg_file_config.import
-      splitted_command = full_command.split ' '
-      command = splitted_command[0]
-      args = splitted_command[1..-1]
+    if full_command = pkg_file.config_import
+      update_configuration do
+        splitted_command = full_command.split ' '
+        command = splitted_command[0]
+        args = splitted_command[1..-1]
 
-      Exec.new command, args, output: Log.output, error: Log.error, chdir: @path do |process|
-        raise "can't import configuration: " + full_command if !process.wait.success?
+        Exec.new command, args, output: Log.output, error: Log.error, chdir: @path, env: pkg_file.env do |process|
+          raise "can't import configuration: " + full_command if !process.wait.success?
+        end
       end
     end
   end
 
   # Export the application's internal configuration to a readable config file
   private def config_export
-    update_configuration do |pkg_file_config|
-      full_command = pkg_file_config.export
-      splitted_command = full_command.split ' '
-      command = splitted_command[0]
-      args = splitted_command[1..-1]
+    if export = pkg_file.config_export
+      update_configuration do
+        full_command = export
+        splitted_command = full_command.split ' '
+        command = splitted_command[0]
+        args = splitted_command[1..-1]
 
-      output, error = Exec.new command, args, error: Log.error, chdir: @path do |process|
-        raise "can't export configuration: " + full_command if !process.wait.success?
+        output, error = Exec.new command, args, error: Log.error, chdir: @path, env: pkg_file.env do |process|
+          raise "can't export configuration: " + full_command if !process.wait.success?
+        end
+        File.write config_file!.path, output.to_s
+        config_file!.rewind
+        @config = Config.new config_file!
       end
-      File.write config_file!.path, output.to_s
-      config_file!.rewind
-      @config = Config.new config_file!
     end
   end
 
-  private def update_configuration(&block : PkgFile::Config -> _)
-    if (pkg_file_config = pkg_file.config)
-      origin_file = @path + pkg_file_config.origin
+  private def update_configuration(&block)
+    if origin_file = pkg_file.config_origin
+      origin_file = @path + origin_file
       return if !File.exists? origin_file
       config_time = File.info(config_file!.path).modification_time
       origin_file_info = File.info(origin_file)
@@ -303,12 +293,18 @@ struct Prefix::App
       # Required by Nextcloud
       File.chown origin_file, Process.uid, Process.gid
 
-      yield pkg_file_config
+      yield
 
       File.chown origin_file, origin_file_info.owner, origin_file_info.group
       time = Time.utc_now
-      File.touch @path + pkg_file_config.origin, time
+      File.touch origin_file, time
       File.touch config_file!.path, time
+    end
+  end
+
+  def add(vars : Hash(String, String))
+    if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
+      Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run add_task }
     end
   end
 end

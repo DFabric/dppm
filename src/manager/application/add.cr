@@ -21,7 +21,7 @@ struct Manager::Application::Add
     if @add_service
       @app.service?.try do |service|
         if !service.creatable?
-          Log.warn "service creation not available - root permissions missing?", service.name
+          Log.warn "service creation not available - root permissions missing?", service.file
           @add_service = false
         elsif service.exists?
           raise "system service already exist: " + service.name
@@ -71,8 +71,19 @@ struct Manager::Application::Add
           else
             @vars[var] = key
           end
-          Log.info "default value set for unset variable", var + ": " + key
+          Log.info "default value set '#{var}'", key
         end
+      end
+    end
+
+    # Database required
+    if !@vars.has_key?("database_type") && (databases = src.pkg_file.databases)
+      database_type = databases.first.first
+      raise "database password required: " + database_type if !@database_password
+      raise "database name required: " + database_type if !@vars.has_key?("database_name")
+      raise "database user required: " + database_type if !@vars.has_key?("database_user")
+      if !@vars.has_key?("database_address") || !(@vars.has_key?("database_host") && @vars.has_key?("database_port"))
+        raise "database address or host and port required:" + database_type
       end
     end
     raise "socket not supported by #{@app.pkg_file.name}" if @socket && !@vars.has_key? "socket"
@@ -86,6 +97,9 @@ struct Manager::Application::Add
     @vars["gid"] = @gid.to_s
     @vars["user"] = @user
     @vars["group"] = @group
+    if env = @app.pkg_file.env
+      @vars.merge! env
+    end
   end
 
   # An user uid and a group gid is required
@@ -135,7 +149,7 @@ struct Manager::Application::Add
 
     # Create the new application
     Dir.mkdir @app.path
-    @build.run if !@build.exists
+    @build.run
 
     app_shared = @shared
     if !@app.pkg_file.shared
@@ -190,9 +204,7 @@ struct Manager::Application::Add
 
     # Running the add task
     Log.info "running configuration tasks", @build.pkg.name
-    if (tasks = @app.pkg_file.tasks) && (add_task = tasks["add"]?)
-      Dir.cd(@app.path) { Cmd.new(@vars).run add_task }
-    end
+    @app.add @vars
 
     # Create system user and group for the application
     if Process.root?
@@ -243,6 +255,7 @@ struct Manager::Application::Add
     FileUtils.rm_rf @app.path
     begin
       @app.service.try &.delete
+      @app.database?.try &.delete
     ensure
       raise Exception.new "add failed - application deleted: #{@app.path}:\n#{ex}", ex
     end

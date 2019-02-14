@@ -25,14 +25,7 @@ module Manager
     puts "\nContinue? [N/y]"
     case gets
     when "Y", "y" then true
-    else               puts "cancelled."
+    else               abort "cancelled."
     end
-  end
-
-  def exec(command : String, args : Array(String) | Tuple) : String
-    Exec.new command, args, output: Log.output, error: Log.error do |process|
-      raise "execution returned an error: #{command} #{args.join ' '}" if !process.wait.success?
-    end
-    "success"
   end
 end

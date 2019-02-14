@@ -98,4 +98,50 @@ struct Prefix::Pkg
     internal_each_config_key { |key| yield key }
     deps_with_expr.each_key &.internal_each_config_key { |key| yield key }
   end
+
+  def build(vars : Hash(String, String))
+    if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
+      Log.info "building", @name
+      Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
+      # Standard package build
+    else
+      Log.info "standard building", @name
+
+      working_directory = if pkg_file.type.app?
+                            Dir.mkdir app_path
+                            app_path
+                          else
+                            @path
+                          end
+      Dir.cd working_directory do
+        package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
+        package_archive = package_full_name + ".tar.xz"
+        package_mirror = vars["mirror"] + '/' + package_archive
+        Log.info "downloading", package_mirror
+        HTTPHelper.get_file package_mirror
+        Log.info "extracting", package_mirror
+        Host.exec "/bin/tar", {"Jxf", package_archive}
+
+        # Move out files from the archive folder
+        Dir.cd package_full_name do
+          move "./"
+        end
+        FileUtils.rm_r({package_archive, package_full_name})
+      end
+    end
+    FileUtils.rm_rf libs_dir
+    @libs = @all_bin_paths = nil
+  end
+
+  private def move(path : String)
+    Dir.each_child(path) do |entry|
+      src = path + entry
+      dest = '.' + src
+      if Dir.exists? dest
+        move src + '/'
+      else
+        File.rename src, dest
+      end
+    end
+  end
 end

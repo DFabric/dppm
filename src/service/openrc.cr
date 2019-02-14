@@ -36,7 +36,7 @@ struct Service::OpenRC
   end
 
   def run?
-    Service.exec? "/sbin/rc-service", {@name, "status"}
+    Host.exec? "/sbin/rc-service", {@name, "status"}
   end
 
   def delete
@@ -50,7 +50,7 @@ struct Service::OpenRC
 
   {% for action in %w(start stop restart reload) %}
   def {{action.id}} : Bool
-    Service.exec? "/sbin/rc-service", {@name, {{action}}}
+    Host.exec? "/sbin/rc-service", {@name, {{action}}}
   end
   {% end %}
 end

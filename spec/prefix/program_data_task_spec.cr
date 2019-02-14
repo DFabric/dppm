@@ -1,13 +1,13 @@
 require "../spec_helper"
-require "../../src/manager"
+require "../../src/prefix"
 
-describe Manager::Cmd do
+describe Prefix::ProgramData::Task do
   path = Dir.current + "/cmd_test"
   temppath = path + "/command"
   Dir.mkdir path
   Dir.cd path
   File.write "test_file", "data"
-  cmd = Manager::Cmd.new(Hash(String, String).new)
+  cmd = Prefix::ProgramData::Task.new(Hash(String, String).new, Array(String).new)
 
   describe "command" do
     it "current" do

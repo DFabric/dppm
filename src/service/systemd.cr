@@ -44,22 +44,22 @@ struct Service::Systemd
   end
 
   def run?
-    Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
+    Host.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
   end
 
   def delete : Bool
     delete_internal
-    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
+    Host.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
   def link(service_file : String)
     File.symlink service_file, @file
-    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
+    Host.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
   {% for action in %w(start stop restart reload) %}
   def {{action.id}} : Bool
-    Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
+    Host.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
   end
   {% end %}
 end
