@@ -16,7 +16,7 @@ module Service::CLI
     end
   end
 
-  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String), debug = nil) : Nil
+  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String), **args) : Nil
     Log.output << "RUN   " if !norun
     Log.output << "BOOT  " if !noboot
     Log.output.puts "SERVICE\n"

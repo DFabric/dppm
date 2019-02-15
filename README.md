@@ -50,13 +50,13 @@ To show the help:
 
 To list [available packages](https://github.com/DFabric/package-sources) (applications, built and available packages):
 
-`dppm m list`
+`dppm list`
 
 A typical installation can be:
 
 ```sh
 # add a new application to the system
-dppm m app add [application]
+dppm app add [application]
 
 # start the service and  auto start the service at boot
 dppm service start [application]
