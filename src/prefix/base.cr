@@ -7,12 +7,12 @@ module Prefix::Base
     prefix : Prefix,
     config_file : File?
 
-  getter libs_dir : String do
+  getter lib_dir : String do
     @path + "lib/"
   end
 
   getter conf_dir : String do
-    @path + "etc/"
+    @path + "conf/"
   end
 
   getter pkg_file : PkgFile do
@@ -79,7 +79,7 @@ module Prefix::Base
   def resolve_deps(dependencies : Hash(String, Array(SemanticVersion)) = Hash(String, Array(SemanticVersion)).new) : Hash(String, Array(SemanticVersion))
     # No need to parse if the deps list is empty
     deps_with_expr.each do |dep_src, version_expr|
-      if !File.exists? libs_dir + dep_src.name
+      if !File.exists? lib_dir + dep_src.name
         Log.info "calculing dependency", dep_src.name
         newvers = Array(SemanticVersion).new
 
@@ -105,5 +105,9 @@ module Prefix::Base
       end
     end
     dependencies
+  end
+
+  def finalize
+    @file.try &.close
   end
 end

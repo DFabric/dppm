@@ -129,7 +129,7 @@ struct Prefix::Pkg
         FileUtils.rm_r({package_archive, package_full_name})
       end
     end
-    FileUtils.rm_rf libs_dir
+    FileUtils.rm_rf lib_dir
     @libs = @all_bin_paths = nil
   end
 

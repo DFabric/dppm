@@ -231,7 +231,7 @@ struct Prefix::App
   end
 
   def set_permissions
-    File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
+    File.chmod(lib_dir, 0o700) if Dir.exists? lib_dir
     File.chmod(app_path, 0o750) if !File.symlink? app_path
     File.chmod conf_dir, 0o700
     File.chmod @path, 0o750

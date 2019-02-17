@@ -17,7 +17,7 @@ module Prefix::ProgramData
   end
 
   getter data_dir : String do
-    @path + "srv/"
+    @path + "data/"
   end
 
   getter app_path : String do
@@ -26,10 +26,10 @@ module Prefix::ProgramData
 
   getter libs : Array(Lib) do
     libs = Array(Lib).new
-    return libs if !Dir.exists? libs_dir
+    return libs if !Dir.exists? lib_dir
 
-    Dir.each_child libs_dir do |lib_package|
-      relative_path = libs_dir + lib_package
+    Dir.each_child lib_dir do |lib_package|
+      relative_path = lib_dir + lib_package
       lib_pkg = @prefix.new_pkg File.basename(File.real_path(relative_path))
       config_file = nil
       if Dir.exists?(conf_lib_dir = conf_dir + lib_pkg.package)

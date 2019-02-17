@@ -2,6 +2,7 @@ require "./config"
 require "./database"
 require "./host"
 require "./service"
+require "./http_helper"
 
 struct Prefix
   getter path : String,
