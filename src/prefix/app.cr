@@ -117,6 +117,15 @@ struct Prefix::App
 
   getter database : Database::MySQL | Nil do
     if config_vars = pkg_file.config_vars
+      if config_vars.has_key? "database_type"
+        type = get_config("database_type").to_s
+      elsif databases = pkg_file.databases
+        type = databases.first.first
+      else
+        return
+      end
+      return if !Database.supported? type
+
       if config_vars.has_key? "database_address"
         uri = URI.parse "//#{get_config("database_address")}"
       elsif config_vars.has_key? "database_host"
@@ -125,17 +134,9 @@ struct Prefix::App
           port: get_config("database_port").to_s.to_i?,
         )
       end
-      if config_vars.has_key? "database_type"
-        type = get_config("database_type").to_s
-      end
-    end
-
-    if !type && (databases = pkg_file.databases)
-      type = databases.first.first
     else
       return
     end
-    return if !Database.supported? type
 
     if uri
       uri.password = get_config("database_password").to_s
