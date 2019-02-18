@@ -26,15 +26,15 @@ module Prefix::ProgramData
 
   getter libs : Array(Lib) do
     libs = Array(Lib).new
-    return libs if !Dir.exists? lib_dir
+    return libs if !Dir.exists? libs_dir
 
-    Dir.each_child lib_dir do |lib_package|
-      relative_path = lib_dir + lib_package
+    Dir.each_child libs_dir do |lib_package|
+      relative_path = libs_dir + lib_package
       lib_pkg = @prefix.new_pkg File.basename(File.real_path(relative_path))
       config_file = nil
-      if Dir.exists?(conf_lib_dir = conf_dir + lib_pkg.package)
-        Dir.each_child conf_lib_dir do |file|
-          config_file = Config.new? File.new(conf_lib_dir + '/' + file)
+      if Dir.exists?(conf_libs_dir = conf_dir + lib_pkg.package)
+        Dir.each_child conf_libs_dir do |file|
+          config_file = Config.new? File.new(conf_libs_dir + '/' + file)
         end
       end
       libs << Lib.new relative_path, lib_pkg, config_file

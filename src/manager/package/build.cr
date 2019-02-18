@@ -62,11 +62,11 @@ struct Manager::Package::Build
 
   def install_deps(dest_pkg : Prefix::Pkg | Prefix::App, vars : Hash(String, String), shared : Bool = true, &block)
     Log.info "dependencies", "building"
-    Dir.mkdir_p dest_pkg.lib_dir
+    Dir.mkdir_p dest_pkg.libs_dir
 
     # Build each dependency
     @deps.each do |dep_pkg|
-      dest_pkg_dep_dir = dest_pkg.lib_dir + dep_pkg.package
+      dest_pkg_dep_dir = dest_pkg.libs_dir + dep_pkg.package
       if !Dir.exists? dep_pkg.path
         Log.info "building dependency", dep_pkg.path
         Package::Build.new(
