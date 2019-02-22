@@ -10,7 +10,7 @@ module Manager::Application::CLI
     task.run if no_confirm || Manager.cli_confirm
   end
 
-  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database, debug = nil)
+  def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database = nil, url = nil, web_server = nil, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
     MainConfig.file = config
@@ -29,7 +29,9 @@ module Manager::Application::CLI
       shared: !contained,
       add_service: !noservice,
       socket: socket,
-      database: database
+      database: database,
+      url: url,
+      web_server: web_server
     )
 
     task.simulate

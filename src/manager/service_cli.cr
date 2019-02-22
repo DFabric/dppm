@@ -1,7 +1,4 @@
-require "./openrc"
-require "./systemd"
-
-module Service::CLI
+module Manager::ServiceCLI
   extend self
 
   def boot(service : String, state : String, **args) : Bool

@@ -1,6 +1,5 @@
 require "exec"
-require "./prefix"
-require "./service/cli"
+require "./service/*"
 
 module Service
   @@init : Systemd.class | OpenRC.class | Nil

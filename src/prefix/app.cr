@@ -1,4 +1,5 @@
 require "./program_data"
+require "libcrown"
 
 struct Prefix::App
   include ProgramData
@@ -117,8 +118,8 @@ struct Prefix::App
 
   getter database : Database::MySQL | Nil do
     if config_vars = pkg_file.config_vars
-      if config_vars.has_key? "database_type"
-        type = get_config("database_type").to_s
+      if database_type = get_config?("database_type")
+        type = database_type.to_s
       elsif databases = pkg_file.databases
         type = databases.first.first
       else
@@ -126,11 +127,11 @@ struct Prefix::App
       end
       return if !Database.supported? type
 
-      if config_vars.has_key? "database_address"
-        uri = URI.parse "//#{get_config("database_address")}"
-      elsif config_vars.has_key? "database_host"
+      if database_address = get_config?("database_address")
+        uri = URI.parse "//#{database_address}"
+      elsif database_host = get_config?("database_host")
         uri = URI.new(
-          host: get_config("database_host").to_s,
+          host: database_host.to_s,
           port: get_config("database_port").to_s.to_i?,
         )
       end
@@ -171,6 +172,15 @@ struct Prefix::App
   end
 
   def get_config(key : String)
+    get_config(key) { raise "config key not found: " + key }
+  end
+
+  def get_config?(key : String)
+    get_config(key) { nil }
+  end
+
+  # Get the config key. If not found, returns the block.
+  def get_config(key : String, &block)
     config_from_pkg_file key do |config_file, config_key|
       config_export
       return config_file.get config_key
@@ -178,7 +188,7 @@ struct Prefix::App
     config_from_libs key do |lib_config, config_key|
       return lib_config.get config_key
     end
-    raise "config key not found: " + key
+    yield
   end
 
   def del_config(key : String)
@@ -303,9 +313,144 @@ struct Prefix::App
     end
   end
 
+  getter web_site_file : String do
+    conf_dir + "web-site"
+  end
+
+  def webserver? : Prefix::App?
+    if File.exists? web_site_file
+      @prefix.new_app File.basename(File.dirname((File.dirname(File.dirname(File.real_path(web_site_file))))))
+    end
+  end
+
+  getter? website : WebSite::Caddy? do
+    if server = webserver?
+      server.parse_site @name
+    end
+  end
+
+  def website=(@website : WebSite::Caddy)
+  end
+
+  # Adds a new site.
+  # Assumes the app is a Web Server.
+  def new_website(app_name : String, build_conf_dir : String) : WebSite::Caddy
+    raise "Web server doesn't exists: #{@path}" if !Dir.exists? @path
+    default_site_file = build_conf_dir + "web/" + pkg_file.package
+    site = parse_site app_name, default_site_file
+
+    # Add security headers
+    if !File.exists? default_site_file
+      site.headers["Strict-Transport-Security"] = "max-age=31536000;"
+      site.headers["X-XSS-Protection"] = "1; mode=block"
+      site.headers["X-Content-Type-Options"] = "nosniff"
+      site.headers["X-Frame-Options"] = "DENY"
+      site.headers["Content-Security-Policy"] = "frame-ancestors 'none';"
+    end
+    site.log_file_error = logs_dir + app_name + "-error.log"
+    site.log_file_output = logs_dir + app_name + "-output.log"
+    site.file = conf_dir + "sites/" + app_name
+    site
+  end
+
+  protected def parse_site(app_name : String, file : String? = nil) : WebSite::Caddy
+    file ||= conf_dir + "sites/" + app_name
+    case pkg_file.package
+    when "caddy" then WebSite::Caddy.new file
+    else              raise "unsupported web server: " + pkg_file.package
+    end
+  end
+
   def add(vars : Hash(String, String))
     if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
       Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run add_task }
     end
+
+    if website = @website
+      Log.info "adding web site", website.file
+      dir = File.dirname website.file
+      Dir.mkdir dir if !File.exists? dir
+
+      app_uri = uri?
+      if File.exists? conf_dir + "php"
+        website.root = app_path
+        website.fastcgi = @path + "socket"
+      else
+        website.proxy = app_uri.dup
+      end
+
+      website.hosts.clear
+      if url = vars["url"]?
+        website.hosts << URI.parse url
+      else
+        raise "no url address available for the web site"
+      end
+      @website = website
+      website.write
+      File.symlink website.file, web_site_file
+    end
+  end
+
+  def delete(preserve_database : Bool = false, keep_user_group : Bool = false)
+    Log.info "deleting", @path
+
+    if service = service?
+      if service.exists?
+        Log.info "deleting system service", service.name
+        service.delete
+      end
+    end
+
+    if !preserve_database && (app_database = database)
+      Log.info "deleting database", app_database.user
+      app_database.delete
+    end
+
+    if webserver = webserver?
+      website = webserver.parse_site @name
+      Log.info "deleting web site", website.file
+      File.delete web_site_file
+      File.delete website.file
+      if output_file = website.log_file_output
+        File.delete output_file if File.exists? output_file
+      end
+      if error_file = website.log_file_error
+        File.delete error_file if File.exists? error_file
+      end
+      webserver.service.restart if webserver.service.run?
+    end
+
+    if Process.root?
+      libcrown = Libcrown.new
+      # Delete the web server from the group of the user
+      if webserver
+        libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
+      end
+      if !keep_user_group
+        libcrown.del_user file_info.owner if owner.user.name.starts_with? '_' + @name
+        libcrown.del_group file_info.group if owner.group.name.starts_with? '_' + @name
+      end
+      libcrown.write
+    end
+    Log.info "delete completed", @path
+  ensure
+    FileUtils.rm_r @path
+  end
+
+  def uri? : URI?
+    if (host = get_config? "host") && (port = get_config? "port")
+      URI.parse "//#{host}:#{port}"
+    end
+  end
+
+  record Owner, user : Libcrown::User, group : Libcrown::Group
+
+  getter file_info : File::Info do
+    File.info @path
+  end
+
+  getter owner : Owner do
+    libcrown = Libcrown.new nil
+    Owner.new libcrown.users[file_info.owner], libcrown.groups[file_info.group]
   end
 end

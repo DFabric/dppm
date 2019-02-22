@@ -2,6 +2,7 @@ require "./config"
 require "./database"
 require "./host"
 require "./service"
+require "./web_site"
 require "./http_helper"
 
 struct Prefix

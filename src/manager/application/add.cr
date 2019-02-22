@@ -9,10 +9,19 @@ struct Manager::Application::Add
   @user : String
   @group : String
   @build : Package::Build
+  @web_server_uid : UInt32? = nil
   @database : Prefix::App? = nil
   @database_password : String? = nil
 
-  def initialize(@build : Package::Build, @shared : Bool = true, @add_service : Bool = true, @socket : Bool = false, database : String? = nil)
+  def initialize(
+    @build : Package::Build,
+    @shared : Bool = true,
+    @add_service : Bool = true,
+    @socket : Bool = false,
+    database : String? = nil,
+    url : String? = nil,
+    web_server : String? = nil
+  )
     @vars = @build.vars.dup
 
     Log.info "getting name", @build.pkg.name
@@ -28,19 +37,19 @@ struct Manager::Application::Add
         end
       end
     end
-    raise "application directory already exists: " + @app.path if File.exists? @app.path
+    @app.exists!
 
     @uid, @gid, @user, @group = initialize_owner
 
     if database
-      database_app = @build.pkg.prefix.new_app database
+      @database = database_app = @build.pkg.prefix.new_app database
       Log.info "initialize database", database
-      (@app.database = database_app).try do |database|
+
+      (@app.database = database_app).tap do |database|
         database.clean
         database.check_user
         @vars.merge! database.vars
       end
-      @database = database_app
     end
 
     # Default variables
@@ -51,8 +60,17 @@ struct Manager::Application::Add
       Host.tcp_port_available port.to_u16
     end
 
-    src = @build.pkg.src
-    src.each_config_key do |var|
+    source_package = @build.pkg.exists? || @build.pkg.src
+
+    if web_server
+      webserver = @app.prefix.new_app web_server
+      @web_server_uid = webserver.file_info.owner
+      @app.website = webserver.new_website @app.name, source_package.conf_dir
+      @vars["web_server"] = web_server
+    end
+
+    set_url = false
+    source_package.each_config_key do |var|
       if !@vars.has_key? var
         # Skip if a socket is used
         if var == "port" && @socket
@@ -60,9 +78,12 @@ struct Manager::Application::Add
         elsif var == "database_password" && @app.database?
           @database_password = @vars["database_password"] = Database.gen_password
           next
+        elsif var == "url"
+          set_url = true
+          next
         end
 
-        key = src.get_config(var).to_s
+        key = source_package.get_config(var).to_s
         if key.empty?
           unset_vars << var
         else
@@ -76,14 +97,25 @@ struct Manager::Application::Add
       end
     end
 
+    if url
+      @vars["url"] = url
+      @vars["domain"] = URI.parse(url).hostname.to_s
+    else
+      @vars["domain"] = @vars["host"]
+      if set_url
+        @vars["url"] = "http://" + @vars["host"] + '/' + @app.name
+      end
+    end
+
     # Database required
-    if !@vars.has_key?("database_type") && (databases = src.pkg_file.databases)
-      database_type = databases.first.first
-      raise "database password required: " + database_type if !@database_password
-      raise "database name required: " + database_type if !@vars.has_key?("database_name")
-      raise "database user required: " + database_type if !@vars.has_key?("database_user")
-      if !@vars.has_key?("database_address") || !(@vars.has_key?("database_host") && @vars.has_key?("database_port"))
-        raise "database address or host and port required:" + database_type
+    if !@vars.has_key?("database_type") && (databases = source_package.pkg_file.databases)
+      if Database.supported?(database_type = databases.first.first)
+        raise "database password required: " + database_type if !@database_password
+        raise "database name required: " + database_type if !@vars.has_key?("database_name")
+        raise "database user required: " + database_type if !@vars.has_key?("database_user")
+        if !@vars.has_key?("database_address") || !(@vars.has_key?("database_host") && @vars.has_key?("database_port"))
+          raise "database address or host and port required:" + database_type
+        end
       end
     end
     raise "socket not supported by #{@app.pkg_file.name}" if @socket && !@vars.has_key? "socket"
@@ -242,6 +274,11 @@ struct Manager::Application::Add
         add_group_member = true
       end
       libcrown.add_group_member(@uid, @gid) if add_group_member
+
+      # Add the web server to the application group
+      if @app.website?.try(&.root) && (web_server_uid = @web_server_uid)
+        libcrown.add_group_member web_server_uid, @gid
+      end
 
       # Save the modifications to the disk
       libcrown.write

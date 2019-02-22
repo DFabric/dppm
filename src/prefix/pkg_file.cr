@@ -4,12 +4,14 @@ struct Prefix::PkgFile
   enum Type
     App
     Lib
+    HTML
 
     def self.new(type : String)
       case type
-      when "app" then App
-      when "lib" then Lib
-      else            raise "unknow package type: " + type
+      when "app"  then App
+      when "lib"  then Lib
+      when "html" then HTML
+      else             raise "unknow package type: " + type
       end
     end
   end

@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "../src/service"
+require "../src/prefix"
 require "file_utils"
 
 module Service
@@ -18,7 +19,7 @@ module Service
   end
 end
 
-def assert_service(service)
+def assert_service(service, file = __FILE__, line = __LINE__)
   Service.init = service
 
   user = group = TEST_APP_PACKAGE_NAME
@@ -29,23 +30,23 @@ def assert_service(service)
   service_config = test_app.service.config.class.new
   test_app.service.file = test_app.service_file
 
-  it "creates a service" do
+  it "creates a service", file, line do
     test_app.service_create user, group
   end
 
-  it "parses the service" do
+  it "parses the service", file, line do
     test_app.service.config
   end
 
-  it "gets user value" do
+  it "gets user value", file, line do
     test_app.service.config.user.should eq user
   end
 
-  it "checks service file building" do
+  it "checks service file building", file, line do
     File.read(test_app.service_file).should eq test_app.service.config_build
   end
 
-  it "verifies PATH environment variable" do
+  it "verifies PATH environment variable", file, line do
     test_app.service.config.env_vars["PATH"].should eq test_app.path_env_var
   end
 

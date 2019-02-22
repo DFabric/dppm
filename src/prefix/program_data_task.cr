@@ -223,10 +223,15 @@ struct Prefix::ProgramData::Task
     else
       # check if the command is available in `bin` of the package and dependencies
       if bin = executable?(command) || Process.find_executable(command)
+        success = false
         output, error = Exec.new bin, cmd[1..-1], error: Log.error, env: @vars do |process|
-          raise "execution returned an error: #{command} #{cmd.join ' '}" if !process.wait.success?
+          success = true if process.wait.success?
         end
-        output.to_s
+        if success
+          output.to_s
+        else
+          raise "execution returned an error: #{command} #{cmd.join ' '}\n#{output}"
+        end
       else
         raise "unknown command or variable: #{cmd}"
       end

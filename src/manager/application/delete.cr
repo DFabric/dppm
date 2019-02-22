@@ -4,20 +4,9 @@ struct Manager::Application::Delete
   getter app : Prefix::App
   @keep_user_group : Bool
   @preserve_database : Bool
-  @uid : UInt32
-  @gid : UInt32
-  @user : String
-  @group : String
 
-  def initialize(@name : String, prefix : Prefix, @keep_user_group : Bool = false, @preserve_database : Bool = false)
-    @app = prefix.new_app @name
-
-    file = File.info @app.path
-    @uid = file.owner
-    @gid = file.group
-    libcrown = Libcrown.new nil
-    @user = libcrown.users[@uid].name
-    @group = libcrown.groups[@gid].name
+  def initialize(name : String, prefix : Prefix, @keep_user_group : Bool = false, @preserve_database : Bool = false)
+    @app = prefix.new_app name
 
     begin
       if !@preserve_database && (database = @app.database)
@@ -30,21 +19,21 @@ struct Manager::Application::Delete
     # Checks
     if service = @app.service?
       if service.exists?
-        Log.info "a system service is found", @name
+        Log.info "a system service is found", @app.name
         service.check_delete
       else
-        Log.warn "no system service found", @name
+        Log.warn "no system service found", @app.name
       end
     end
   end
 
   def simulate(io = Log.output)
     io << "task: delete"
-    io << "\nname: " << @name
+    io << "\nname: " << @app.name
     io << "\npackage: " << @app.pkg_file.package
     io << "\nbasedir: " << @app.path
-    io << "\nuser: " << @user
-    io << "\ngroup: " << @group
+    io << "\nuser: " << @app.owner.user.name
+    io << "\ngroup: " << @app.owner.group.name
     @app.service?.try do |service|
       io << "\nservice: " << service.file
     end
@@ -52,27 +41,7 @@ struct Manager::Application::Delete
   end
 
   def run : Delete
-    Log.info "deleting", @app.path
-    if !@preserve_database && (database = @app.database)
-      Log.info "deleting database", database.user
-      database.delete
-    end
-    if service = @app.service?
-      if service.exists?
-        Log.info "deleting system service", service.name
-        service.delete
-      end
-    end
-
-    if !@keep_user_group && Process.root?
-      libcrown = Libcrown.new
-      libcrown.del_user @uid if @user.starts_with? '_' + @name
-      libcrown.del_group @gid if @group.starts_with? '_' + @name
-      libcrown.write
-    end
-
-    FileUtils.rm_r @app.path
-    Log.info "delete completed", @app.path
+    @app.delete @preserve_database, @keep_user_group
     self
   end
 end

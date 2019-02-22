@@ -42,4 +42,13 @@ module Prefix::ProgramData
 
     libs
   end
+
+  def exists!
+    raise "directory already exists: " + @path if exists?
+    self
+  end
+
+  def exists?
+    self if File.exists? @path
+  end
 end

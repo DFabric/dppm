@@ -29,8 +29,7 @@ module IntegrationSpec
         custom_vars: ["name=" + name],
         contained: false,
         noservice: true,
-        socket: false,
-        database: nil).not_nil!
+        socket: false).not_nil!
       add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     end
   end
