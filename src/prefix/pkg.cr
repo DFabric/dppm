@@ -7,12 +7,14 @@ struct Prefix::Pkg
 
   protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version
-      @version = version
-      @package = name
+      @package, @version = name, version
       @name = @package + '_' + @version
     elsif name.includes? '_'
       @name = name
       @package, @version = name.split '_', limit: 2
+    elsif name.includes? ':'
+      @name = name
+      @package, @version = name.split ':', limit: 2
     else
       raise "no version provided for #{name}"
     end
@@ -27,7 +29,9 @@ struct Prefix::Pkg
   end
 
   def self.create(prefix : Prefix, name : String, version : String?, tag : String?)
-    if name.includes? ':'
+    if name.includes? '_'
+      package, tag_or_version = name.split '_', limit: 2
+    elsif name.includes? ':'
       package, tag_or_version = name.split ':', limit: 2
     else
       package = name
@@ -131,6 +135,8 @@ struct Prefix::Pkg
     end
     FileUtils.rm_rf libs_dir.rchop
     @libs = @all_bin_paths = nil
+
+    Log.info "build completed", @path
   end
 
   private def move(path : String)
@@ -143,5 +149,10 @@ struct Prefix::Pkg
         File.rename src, dest
       end
     end
+  end
+
+  def delete
+    FileUtils.rm_rf @path
+    Log.info "package deleted", @path
   end
 end

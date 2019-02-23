@@ -28,9 +28,7 @@ struct Manager::Package::Delete
   end
 
   def run
-    Log.info "deleting", @pkg.path
-    FileUtils.rm_rf @pkg.path
-    Log.info "package deleted", @pkg.path
+    @pkg.delete
     self
   end
 end

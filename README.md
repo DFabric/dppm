@@ -69,9 +69,13 @@ Note that `add` will `build` the missing required packages.
 
 Root execution is needed to add a system service (systemd or OpenRC)
 
+To show the services status:
+
+`dppm service status`
+
 To follow last application logs:
 
-`dppm logs -f [application]`
+`dppm logs [application] -f`
 
 ## Development
 

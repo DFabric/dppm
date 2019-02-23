@@ -100,8 +100,8 @@ struct Manager::Application::Add
     if url
       @vars["url"] = url
       @vars["domain"] = URI.parse(url).hostname.to_s
-    else
-      @vars["domain"] = @vars["host"]
+    elsif host = @vars["host"]?
+      @vars["domain"] = host
       if set_url
         @vars["url"] = "http://" + @vars["host"] + '/' + @app.name
       end
@@ -216,83 +216,21 @@ struct Manager::Application::Add
       end
     end
 
-    # Set configuration variables
-    Log.info "setting configuration variables", @app.name
-    @app.each_config_key do |var|
-      if var == "socket"
-        next
-      elsif variable_value = @vars[var]?
-        @app.set_config var, variable_value
-      end
-    end
-    @app.write_configs
-    @app.set_permissions
-
-    if (app_database = @app.database?) && (database = @database) && (database_password = @database_password)
-      Log.info "configure database", database.name
-      app_database.ensure_root_password database
-      app_database.create database_password
-    end
-
-    # Running the add task
-    Log.info "running configuration tasks", @build.pkg.name
-    @app.add @vars
-
-    # Create system user and group for the application
-    if Process.root?
-      if @add_service
-        if database = @database
-          database_name = database.name
-        end
-        Log.info "creating system service", @app.service.name
-        @app.service_create @user, @group, database_name
-        @app.service_enable
-        Log.info @app.service.type + " system service added", @app.service.name
-      end
-
-      libcrown = Libcrown.new
-      add_group_member = false
-      # Add a new group
-      if !libcrown.groups.has_key? @gid
-        Log.info "system group created", @group
-        libcrown.add_group Libcrown::Group.new(@group), @gid
-        add_group_member = true
-      end
-
-      if !libcrown.users.has_key? @uid
-        # Add a new user with `new_group` as its main group
-        new_user = Libcrown::User.new(
-          name: @user,
-          gid: @gid,
-          gecos_comment: @app.pkg_file.description,
-          home_directory: @app.data_dir
-        )
-        libcrown.add_user new_user, @uid
-        Log.info "system user created", @user
-      else
-        !libcrown.user_group_member? @uid, @gid
-        add_group_member = true
-      end
-      libcrown.add_group_member(@uid, @gid) if add_group_member
-
-      # Add the web server to the application group
-      if @app.website?.try(&.root) && (web_server_uid = @web_server_uid)
-        libcrown.add_group_member web_server_uid, @gid
-      end
-
-      # Save the modifications to the disk
-      libcrown.write
-      Utils.chown_r @app.path, @uid, @gid
-    end
-
-    Log.info "add completed", @app.path
-    Log.info "application information", @app.pkg_file.info
+    @app.add(
+      vars: @vars,
+      uid: @uid,
+      gid: @gid,
+      user: @user,
+      group: @group,
+      add_service: @add_service,
+      app_database: @database,
+      database_password: @database_password,
+      web_server_uid: @web_server_uid,
+    )
     self
   rescue ex
-    FileUtils.rm_rf @app.path
     begin
-      @app.service.try &.delete
-      @app.database?.try &.delete
+      @app.delete
     ensure
       raise Exception.new "add failed - application deleted: #{@app.path}:\n#{ex}", ex
     end

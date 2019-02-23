@@ -233,32 +233,6 @@ struct Prefix::App
     end
   end
 
-  def real_app_path : String
-    File.dirname File.real_path(app_path)
-  end
-
-  def log_file(error : Bool = false)
-    error ? @log_file_error : @log_file_output
-  end
-
-  def set_permissions
-    File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
-    File.chmod(app_path, 0o750) if !File.symlink? app_path
-    File.chmod conf_dir, 0o700
-    File.chmod @path, 0o750
-    File.chmod logs_dir, 0o750
-    File.chmod data_dir, 0o750
-  end
-
-  def path_env_var : String
-    String.build do |str|
-      str << @bin_path
-      libs.each do |library|
-        str << ':' << library.pkg.bin_path
-      end
-    end
-  end
-
   # Import the readable configuration to the application
   private def config_import
     if full_command = pkg_file.config_import
@@ -313,6 +287,32 @@ struct Prefix::App
     end
   end
 
+  def real_app_path : String
+    File.dirname File.real_path(app_path)
+  end
+
+  def log_file(error : Bool = false)
+    error ? @log_file_error : @log_file_output
+  end
+
+  def set_permissions
+    File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
+    File.chmod(app_path, 0o750) if !File.symlink? app_path
+    File.chmod conf_dir, 0o700
+    File.chmod @path, 0o750
+    File.chmod logs_dir, 0o750
+    File.chmod data_dir, 0o750
+  end
+
+  def path_env_var : String
+    String.build do |str|
+      str << @bin_path
+      libs.each do |library|
+        str << ':' << library.pkg.bin_path
+      end
+    end
+  end
+
   getter web_site_file : String do
     conf_dir + "web-site"
   end
@@ -361,7 +361,39 @@ struct Prefix::App
     end
   end
 
-  def add(vars : Hash(String, String))
+  def add(
+    vars : Hash(String, String),
+    uid : UInt32,
+    gid : UInt32,
+    user : String,
+    group : String,
+    add_service : Bool = true,
+    app_database : Prefix::App? = nil,
+    database_password : String? = nil,
+    web_server_uid : UInt32? = nil
+  )
+    # Set configuration variables
+    Log.info "setting configuration variables", @name
+    each_config_key do |var|
+      if var == "socket"
+        next
+      elsif variable_value = vars[var]?
+        set_config var, variable_value
+      end
+    end
+
+    write_configs
+    set_permissions
+
+    if (real_database = database?) && app_database && database_password
+      Log.info "configure database", app_database.name
+      real_database.ensure_root_password app_database
+      real_database.create database_password
+    end
+
+    # Running the add task
+    Log.info "running configuration tasks", @name
+
     if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
       Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run add_task }
     end
@@ -389,6 +421,56 @@ struct Prefix::App
       website.write
       File.symlink website.file, web_site_file
     end
+
+    # Create system user and group for the application
+    if Process.root?
+      if add_service
+        if app_database
+          database_name = app_database.name
+        end
+        Log.info "creating system service", service.name
+        service_create user, group, database_name
+        service_enable
+        Log.info service.type + " system service added", service.name
+      end
+
+      libcrown = Libcrown.new
+      add_group_member = false
+      # Add a new group
+      if !libcrown.groups.has_key? gid
+        Log.info "system group created", group
+        libcrown.add_group Libcrown::Group.new(group), gid
+        add_group_member = true
+      end
+
+      if !libcrown.users.has_key? uid
+        # Add a new user with `new_group` as its main group
+        new_user = Libcrown::User.new(
+          name: user,
+          gid: gid,
+          gecos_comment: pkg_file.description,
+          home_directory: data_dir
+        )
+        libcrown.add_user new_user, uid
+        Log.info "system user created", user
+      else
+        !libcrown.user_group_member? uid, gid
+        add_group_member = true
+      end
+      libcrown.add_group_member(uid, gid) if add_group_member
+
+      # Add the web server to the application group
+      if web_server_uid && website?.try(&.root)
+        libcrown.add_group_member web_server_uid, gid
+      end
+
+      # Save the modifications to the disk
+      libcrown.write
+      Utils.chown_r path, uid, gid
+    end
+
+    Log.info "add completed", @path
+    Log.info "application information", pkg_file.info
   end
 
   def delete(preserve_database : Bool = false, keep_user_group : Bool = false)
@@ -432,9 +514,9 @@ struct Prefix::App
       end
       libcrown.write
     end
+    FileUtils.rm_rf @path
+
     Log.info "delete completed", @path
-  ensure
-    FileUtils.rm_r @path
   end
 
   def uri? : URI?

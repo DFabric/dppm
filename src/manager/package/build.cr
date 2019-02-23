@@ -102,10 +102,9 @@ struct Manager::Package::Build
     install_deps(@pkg, @vars.dup) { }
 
     @pkg.build @vars
-    Log.info "build completed", @pkg.path
     self
   rescue ex
-    FileUtils.rm_rf @pkg.path
-    raise Exception.new "build failed - package deleted: #{@pkg.path}:\n#{ex}", ex
+    @pkg.delete
+    raise Exception.new "build failed: #{@pkg.path}:\n#{ex}", ex
   end
 end
