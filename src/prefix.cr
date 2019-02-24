@@ -1,3 +1,6 @@
+require "file_utils"
+require "exec"
+require "../logger"
 require "./config"
 require "./database"
 require "./host"
@@ -46,6 +49,44 @@ struct Prefix
 
   def new_src(name : String) : Src
     Src.new self, name
+  end
+
+  def up_to_date?(source : String? = nil)
+    source ||= MainConfig.source
+    if Dir.exists?(@src) && HTTPHelper.url? source
+      HTTPHelper.get_string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
+      return $0.starts_with? File.info(@src.rchop).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
+    end
+    false
+  end
+
+  # Download a cache of package sources
+  def update(source : String? = nil, force : Bool = false)
+    source ||= MainConfig.source
+    # Update cache if older than 2 days
+    source_dir = @src.rchop
+    if force || (!File.symlink?(source_dir) && !up_to_date?)
+      if File.symlink? source_dir
+        File.delete source_dir
+      else
+        FileUtils.rm_rf @src
+      end
+      if HTTPHelper.url? source
+        Log.info "downloading packages source", source
+        file = @path + '/' + File.basename source
+        HTTPHelper.get_file source, file
+        Host.exec "/bin/tar", {"zxf", file, "-C", @path}
+        File.delete file
+        File.rename Dir[@path + "/*packages-source*"][0], @src
+        Log.info "cache updated", @src
+      else
+        FileUtils.mkdir_p @path
+        File.symlink File.real_path(source), source_dir
+        Log.info "symlink added from `#{File.real_path(source)}`", source_dir
+      end
+    else
+      Log.info "cache up-to-date", @src
+    end
   end
 end
 

@@ -1,17 +1,17 @@
 require "con"
 
 struct MainConfig
-  @@data : CON::Any? = nil
-
   class_property file : String = "./config.con"
 
+  class_getter data : CON::Any do
+    self.read
+  end
+
   class_getter mirror : String do
-    data = @@data || self.read
     data["mirror"].as_s
   end
 
   class_getter source : String do
-    data = @@data || self.read
     data["source"].as_s
   end
 

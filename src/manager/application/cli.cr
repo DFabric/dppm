@@ -19,7 +19,7 @@ module Manager::Application::CLI
 
     # Update cache
     root_prefix = Prefix.new prefix, true
-    Source::Cache.update(root_prefix, source || MainConfig.source)
+    root_prefix.update source
 
     # Create task
     vars.merge! Host.vars

@@ -263,7 +263,7 @@ module CLI
             cache: {
               alias:  'c',
               info:   "Update the source cache. `-y` to force update",
-              action: "Manager::Source::Cache.cli",
+              action: "update",
             },
             list: {
               alias:  'l',
@@ -274,7 +274,7 @@ module CLI
               alias:     'q',
               info:      "Query informations from a source package - `.` for the whole document",
               arguments: %w(package path),
-              action:    "puts Manager::Source::CLI.query",
+              action:    "puts query_src",
             },
           },
         },
@@ -290,7 +290,7 @@ module CLI
       }
     )
   rescue ex : Help
-    puts ex; exit 0
+    Log.output.puts ex
   rescue ex : ArgumentRequired | UnknownCommand | UnknownOption | UnknownVariable
     abort ex
   rescue ex
@@ -315,6 +315,19 @@ module CLI
 
   def service(service, **args)
     Service.init.new service
+  end
+
+  def update(config, source, prefix, no_confirm, **args)
+    prefix = Prefix.new prefix, create: true
+    if !source
+      MainConfig.file = config
+    end
+    prefix.update source, no_confirm
+  end
+
+  def query_src(prefix, package, path, **args)
+    pkg_file = Prefix.new(prefix).new_src(package).pkg_file
+    Manager::Query.new(pkg_file.any).pkg(path).to_pretty_con
   end
 end
 
