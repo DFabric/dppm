@@ -473,7 +473,39 @@ struct Prefix::App
     Log.info "application information", pkg_file.info
   end
 
-  def delete(preserve_database : Bool = false, keep_user_group : Bool = false)
+  def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block)
+    begin
+      if !preserve_database && (app_database = database)
+        app_database.check_connection
+      end
+    rescue ex
+      raise Exception.new "either start the database or use the preseve database option:\n#{ex}", ex
+    end
+
+    # Checks
+    if service = service?
+      if service.exists?
+        Log.info "a system service is found", @name
+        service.check_delete
+      else
+        Log.warn "no system service found", @name
+      end
+    end
+
+    if confirmation
+      Log.output << "task: delete"
+      Log.output << "\nname: " << @name
+      Log.output << "\npackage: " << pkg_file.package
+      Log.output << "\nbasedir: " << @path
+      Log.output << "\nuser: " << owner.user.name
+      Log.output << "\ngroup: " << owner.group.name
+      service?.try do |service|
+        Log.output << "\nservice: " << service.file
+      end
+      Log.output << '\n'
+      return if !yield
+    end
+
     Log.info "deleting", @path
 
     if service = service?
@@ -517,6 +549,7 @@ struct Prefix::App
     FileUtils.rm_rf @path
 
     Log.info "delete completed", @path
+    self
   end
 
   def uri? : URI?

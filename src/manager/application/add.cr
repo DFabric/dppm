@@ -230,7 +230,7 @@ struct Manager::Application::Add
     self
   rescue ex
     begin
-      @app.delete
+      @app.delete false { }
     ensure
       raise Exception.new "add failed - application deleted: #{@app.path}:\n#{ex}", ex
     end

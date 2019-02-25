@@ -1,13 +1,10 @@
 module Manager::Application::CLI
   extend self
 
-  def delete(no_confirm, config, mirror, source, prefix, application, custom_vars, keep_user_group, preserve_database, debug = nil)
-    Log.info "initializing", "delete"
-
-    task = Delete.new application, Prefix.new(prefix), keep_user_group, preserve_database
-
-    task.simulate
-    task.run if no_confirm || Manager.cli_confirm
+  def delete(no_confirm, prefix, application, keep_user_group, preserve_database, **args)
+    Prefix.new(prefix).new_app(application).delete !no_confirm, keep_user_group, preserve_database do
+      Manager.cli_confirm
+    end
   end
 
   def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database = nil, url = nil, web_server = nil, debug = nil)

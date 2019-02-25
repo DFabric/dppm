@@ -1,7 +1,7 @@
 module Manager::Package::CLI
   extend self
 
-  def delete(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
+  def delete(no_confirm, prefix, package, version, **args)
     Prefix.new(prefix).new_pkg(package, version).delete !no_confirm do
       Manager.cli_confirm
     end

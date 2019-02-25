@@ -38,16 +38,12 @@ module IntegrationSpec
     it "deletes an application" do
       delete = Manager::Application::CLI.delete(
         no_confirm: true,
-        config: DPPM_CONFIG_FILE,
-        mirror: nil,
-        source: SAMPLES_DIR,
         prefix: TEMP_DPPM_PREFIX,
         application: application,
-        custom_vars: nil,
         keep_user_group: false,
         preserve_database: false).not_nil!
-      delete.app.name.should eq TEST_APP_PACKAGE_NAME
-      Dir.exists?(delete.app.path).should be_false
+      delete.name.should eq TEST_APP_PACKAGE_NAME
+      Dir.exists?(delete.path).should be_false
     end
   end
 end
