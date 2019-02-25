@@ -14,46 +14,38 @@ struct Database::MySQL
       end
     end
     false
-  rescue ex : DB::Error
-    raise "can't connect to the database: #{@uri}"
   end
 
   def check_connection
-    DB.open @uri { }
-  rescue ex : DB::Error
-    raise "can't connect to the database: #{@uri}"
+    open { }
   end
 
   def check_user
-    DB.open @uri do |db|
+    open do |db|
       db.unprepared("SELECT User FROM mysql.user WHERE User = '#{@user}'").query do |rs|
-        database_exists_error if database_exists? db, @user
+        raise DatabasePresentException.new(@uri, @user) if database_exists? db, @user
         rs.each do
-          users_exists_error
+          raise UserPresentException.new(@uri, @user) if database_exists? db, @user
         end
       end
     end
-  rescue ex : DB::Error
-    raise "can't connect to the database: #{@uri}"
   end
 
   def set_root_password : String
     password = Database.gen_password
-    DB.open @uri do |db|
+    open do |db|
       db.unprepared("ALTER USER 'root'@'%' IDENTIFIED BY '#{password}'").exec
-      db.unprepared("FLUSH PRIVILEGES").exec
+      flush db
     end
     @uri.password = password
-  rescue ex : DB::Error
-    raise "can't connect to the database: #{@uri}"
   end
 
   def create(password : String)
-    DB.open @uri do |db|
+    open do |db|
       db.unprepared("CREATE DATABASE #{@user}").exec
       db.unprepared("GRANT USAGE ON *.* TO '#{@user}'@'#{@uri.hostname}' IDENTIFIED BY '#{password}'").exec
       db.unprepared("GRANT ALL PRIVILEGES ON #{@user}.* TO '#{@user}'@'#{@uri.hostname}'").exec
-      db.unprepared("FLUSH PRIVILEGES").exec
+      flush db
     rescue ex
       delete
       raise ex
@@ -61,7 +53,7 @@ struct Database::MySQL
   end
 
   def clean
-    DB.open @uri do |db|
+    open do |db|
       db.unprepared("SELECT user, host FROM mysql.user").query do |rs|
         rs.each do
           user = rs.read String
@@ -71,17 +63,25 @@ struct Database::MySQL
           end
         end
       end
-      db.unprepared("FLUSH PRIVILEGES").exec
+      flush db
     end
-  rescue ex : DB::Error
-    raise "can't connect to the database: #{@uri}"
   end
 
   def delete
-    DB.open @uri do |db|
+    open do |db|
       db.unprepared("DROP DATABASE IF EXISTS #{@user}").exec
     end
+  end
+
+  def open(&block : DB::Database ->)
+    DB.open @uri do |db|
+      yield db
+    end
   rescue ex : DB::Error
-    raise "can't connect to the database: #{@uri}"
+    raise ConnectionError.new @uri, ex
+  end
+
+  def flush(db : DB::Database)
+    db.unprepared("FLUSH PRIVILEGES").exec
   end
 end

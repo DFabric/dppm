@@ -45,7 +45,7 @@ struct Manager::Application::Add
       @database = database_app = @build.pkg.prefix.new_app database
       Log.info "initialize database", database
 
-      (@app.database = database_app).tap do |database|
+      (@app.database_create database_app).tap do |database|
         database.clean
         database.check_user
         @vars.merge! database.vars

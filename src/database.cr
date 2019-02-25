@@ -1,40 +1,35 @@
 require "uri"
 require "./database/*"
-require "./prefix"
-require "./main_config"
 
 module Database
   extend self
+
+  class ConnectionError < Exception
+    def self.new(uri : URI, cause : Exception)
+      new "can't connect to the database: #{uri}", cause
+    end
+  end
+
+  class DatabasePresentException < Exception
+    def self.new(uri : URI, user : String)
+      new "database already present in #{uri.scheme}: " + user
+    end
+  end
+
+  class UserPresentException < Exception
+    def self.new(uri : URI, user : String)
+      new "user already present in #{uri.scheme}: " + user
+    end
+  end
 
   def self.supported?(database : String) : Bool
     {"mysql"}.includes? database
   end
 
-  def create(prefix : Prefix, user : String, database_application : Prefix::App) : MySQL
-    user = '_' + user
-    host = database_application.get_config("host").to_s
-    port = database_application.get_config("port").to_s
-
-    uri = URI.new(
-      scheme: nil,
-      host: host,
-      port: port.to_i,
-      path: nil,
-      query: nil,
-      user: "root",
-      password: database_application.password,
-    )
-
-    case provide = database_application.pkg_file.provides
-    when "mysql" then MySQL.new uri, user
-    else              new_database uri, user, database_application.pkg_file.package
-    end
-  end
-
   def new_database(uri : URI, user : String, name : String) : MySQL
     case name
     when "mysql" then MySQL.new uri, user
-    else              raise "unsupported database: #{name}"
+    else              raise "unsupported database: " + name
     end
   end
 

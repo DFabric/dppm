@@ -147,8 +147,25 @@ struct Prefix::App
     end
   end
 
-  def database=(database_app : App)
-    @database = Database.create @prefix, @name, database_app
+  def database_create(database_app : App) : Database::MySQL
+    user = '_' + @name
+    host = database_app.get_config("host").to_s
+    port = database_app.get_config("port").to_s
+
+    uri = URI.new(
+      scheme: nil,
+      host: host,
+      port: port.to_i,
+      path: nil,
+      query: nil,
+      user: "root",
+      password: database_app.password,
+    )
+
+    @database = case provide = database_app.pkg_file.provides
+                when "mysql" then Database::MySQL.new uri, user
+                else              Database.new_database uri, user, database_app.pkg_file.package
+                end
   end
 
   private def config_from_libs(key : String, &block)

@@ -2,14 +2,6 @@ module Database::Base
   getter uri : URI,
     user : String
 
-  private def database_exists_error
-    raise "database already exists in #{@uri.scheme}: #{@user}"
-  end
-
-  private def users_exists_error
-    raise "user already exists in #{@uri.scheme}: #{@user}"
-  end
-
   def ensure_root_password(database_app : Prefix::App)
     if !@uri.password
       File.write database_app.password_file, set_root_password
