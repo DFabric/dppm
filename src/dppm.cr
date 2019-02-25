@@ -187,7 +187,7 @@ module CLI
             clean: {
               alias:  'c',
               info:   "Clean unused built packages by the applications",
-              action: "::Manager::Package::CLI.clean",
+              action: "clean_unused_packages",
             },
             delete: {
               alias:     'd',
@@ -328,6 +328,12 @@ module CLI
   def query_src(prefix, package, path, **args)
     pkg_file = Prefix.new(prefix).new_src(package).pkg_file
     Manager::Query.new(pkg_file.any).pkg(path).to_pretty_con
+  end
+
+  def clean_unused_packages(no_confirm, prefix, **args)
+    Prefix.new(prefix).clean_unused_packages !no_confirm do
+      Manager.cli_confirm
+    end
   end
 end
 

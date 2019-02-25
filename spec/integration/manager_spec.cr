@@ -50,16 +50,4 @@ module IntegrationSpec
       Dir.exists?(delete.app.path).should be_false
     end
   end
-
-  def clean_package
-    it "cleans the unused package" do
-      clean = Manager::Package::CLI.clean(
-        no_confirm: true,
-        config: DPPM_CONFIG_FILE,
-        mirror: nil,
-        source: nil,
-        prefix: TEMP_DPPM_PREFIX).not_nil!
-      Dir.children(clean.prefix.pkg).should be_empty
-    end
-  end
 end

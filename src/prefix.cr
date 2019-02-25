@@ -88,6 +88,43 @@ struct Prefix
       Log.info "cache up-to-date", @src
     end
   end
+
+  def clean_unused_packages(confirmation : Bool = true, &block) : Set(String)?
+    packages = Set(String).new
+    Log.info "retrieving available packages", @pkg
+    each_pkg { |pkg| packages << pkg.name }
+
+    Log.info "excluding used packages by applications", @pkg
+    each_app do |app|
+      packages.delete File.basename(app.real_app_path)
+      app.libs.each do |library|
+        packages.delete library.pkg.name
+      end
+    end
+
+    if packages.empty?
+      Log.info "No packages to clean", @path
+      return
+    elsif confirmation
+      Log.output << "task: clean"
+      Log.output << "\nbasedir: " << @pkg
+      Log.output << "\nunused packages: \n"
+      packages.each do |pkg|
+        Log.output << pkg << '\n'
+      end
+      return if !yield
+    end
+
+    Log.info "deleting packages", @pkg
+    packages.each do |pkg|
+      pkg_prefix = new_pkg pkg
+      FileUtils.rm_rf pkg_prefix.path
+      Log.info "package deleted", pkg
+    end
+
+    Log.info "packages cleaned", @pkg
+    packages
+  end
 end
 
 require "./prefix/*"

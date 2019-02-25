@@ -53,4 +53,13 @@ module IntegrationSpec
       end
     end
   end
+
+  def clean_unused_packages(prefix_path : String)
+    it "cleans unused packages" do
+      prefix = Prefix.new prefix_path
+      packages = prefix.clean_unused_packages(false) { }
+      packages.not_nil!.should_not be_empty
+      Dir.children(prefix.pkg).should be_empty
+    end
+  end
 end

@@ -15,7 +15,7 @@ describe IntegrationSpec do
   IntegrationSpec.test_prefix_app prefix, package
 
   IntegrationSpec.delete_application package
-  IntegrationSpec.clean_package
+  IntegrationSpec.clean_unused_packages TEMP_DPPM_PREFIX
 ensure
   FileUtils.rm_rf TEMP_DPPM_PREFIX
 end

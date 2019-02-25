@@ -1,18 +1,6 @@
 module Manager::Package::CLI
   extend self
 
-  def clean(no_confirm, prefix, **args)
-    Log.info "initializing", "clean"
-    task = Clean.new Prefix.new(prefix)
-    if task.packages.empty?
-      Log.info "No packages to clean", task.prefix.path
-    else
-      task.simulate
-      task.run if no_confirm || Manager.cli_confirm
-    end
-    task
-  end
-
   def delete(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
     Log.info "initializing", "delete"
     task = Delete.new Prefix.new(prefix), package, version
