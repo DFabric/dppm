@@ -144,12 +144,12 @@ module CLI
           },
         },
         list: {
-          alias:  'L',
+          alias:  'l',
           info:   "List all applications, packages and sources",
           action: "::Manager::ListCLI.all",
         },
         logs: {
-          alias:     'l',
+          alias:     'L',
           info:      "Logs of the application's service",
           arguments: %w(application),
           action:    "Logs.get() { |log| print log }",

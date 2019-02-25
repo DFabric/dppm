@@ -8,16 +8,14 @@ struct Prefix::Pkg
   protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version
       @package, @version = name, version
-      @name = @package + '_' + @version
     elsif name.includes? '_'
-      @name = name
       @package, @version = name.split '_', limit: 2
     elsif name.includes? ':'
-      @name = name
       @package, @version = name.split ':', limit: 2
     else
       raise "no version provided for #{name}"
     end
+    @name = @package + '_' + @version
 
     @path = @prefix.pkg + @name + '/'
     if pkg_file
@@ -151,8 +149,33 @@ struct Prefix::Pkg
     end
   end
 
-  def delete
+  def delete(confirmation : Bool = true, &block) : Pkg?
+    raise "package doesn't exist: " + @path if !File.exists? @path
+
+    # Check if the package is still in use by an application
+    Log.info "check packages in use", @path
+    prefix.each_app do |app|
+      if app.real_app_path + '/' == @path
+        raise "application package `#{package}` still in use by an application: " + app.name
+      end
+      app.libs.each do |library|
+        if @path == library.pkg.path
+          raise "library package `#{package}` still in use by an application: " + app.name
+        end
+      end
+    end
+
+    if confirmation
+      Log.output << "task: delete"
+      Log.output << "\npackage: " << @package
+      Log.output << "\nversion: " << @version
+      Log.output << "\nbasedir: " << @path
+      Log.output << '\n'
+      return if !yield
+    end
+
     FileUtils.rm_rf @path
     Log.info "package deleted", @path
+    self
   end
 end

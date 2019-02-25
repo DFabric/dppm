@@ -104,7 +104,7 @@ struct Manager::Package::Build
     @pkg.build @vars
     self
   rescue ex
-    @pkg.delete
+    @pkg.delete false { }
     raise Exception.new "build failed: #{@pkg.path}:\n#{ex}", ex
   end
 end

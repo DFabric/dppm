@@ -2,11 +2,9 @@ module Manager::Package::CLI
   extend self
 
   def delete(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
-    Log.info "initializing", "delete"
-    task = Delete.new Prefix.new(prefix), package, version
-
-    task.simulate
-    task.run if no_confirm || Manager.cli_confirm
+    Prefix.new(prefix).new_pkg(package, version).delete !no_confirm do
+      Manager.cli_confirm
+    end
   end
 
   def build(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
