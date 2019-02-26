@@ -143,7 +143,7 @@ struct Prefix::App
       uri.password = get_config("database_password").to_s
       uri.user = user = get_config("database_user").to_s
 
-      Database.new_database uri, user, type
+      Database.new uri, user, type
     end
   end
 
@@ -161,11 +161,8 @@ struct Prefix::App
       user: "root",
       password: database_app.password,
     )
-
-    @database = case provide = database_app.pkg_file.provides
-                when "mysql" then Database::MySQL.new uri, user
-                else              Database.new_database uri, user, database_app.pkg_file.package
-                end
+    db_type = database_app.pkg_file.provides || raise "no `provides` key set, that includes the database type"
+    @database = Database.new uri, user, db_type
   end
 
   private def config_from_libs(key : String, &block)
@@ -532,11 +529,6 @@ struct Prefix::App
       end
     end
 
-    if !preserve_database && (app_database = database)
-      Log.info "deleting database", app_database.user
-      app_database.delete
-    end
-
     if webserver = webserver?
       website = webserver.parse_site @name
       Log.info "deleting web site", website.file
@@ -554,19 +546,25 @@ struct Prefix::App
     if Process.root?
       libcrown = Libcrown.new
       # Delete the web server from the group of the user
-      if webserver
-        libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
-      end
       if !keep_user_group
         libcrown.del_user file_info.owner if owner.user.name.starts_with? '_' + @name
         libcrown.del_group file_info.group if owner.group.name.starts_with? '_' + @name
       end
+      if webserver
+        libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
+      end
       libcrown.write
     end
-    FileUtils.rm_rf @path
+
+    if !preserve_database && (app_database = database)
+      Log.info "deleting database", app_database.user
+      app_database.delete
+    end
 
     Log.info "delete completed", @path
     self
+  ensure
+    FileUtils.rm_rf @path
   end
 
   def uri? : URI?

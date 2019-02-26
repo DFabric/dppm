@@ -26,7 +26,7 @@ module Database
     {"mysql"}.includes? database
   end
 
-  def new_database(uri : URI, user : String, name : String) : MySQL
+  def self.new(uri : URI, user : String, name : String) : MySQL
     case name
     when "mysql" then MySQL.new uri, user
     else              raise "unsupported database: " + name

@@ -7,11 +7,9 @@ struct Database::MySQL
     @uri.scheme = "mysql"
   end
 
-  private def database_exists?(db : DB::Database, database : String)
-    db.unprepared("SHOW DATABASES LIKE '#{@user}'").query do |rs|
-      rs.each do
-        return true
-      end
+  private def database_exists?(db : DB::Database, database : String = @user)
+    db.unprepared("SHOW DATABASES LIKE '#{database}'").query &.each do
+      return true
     end
     false
   end
@@ -23,9 +21,9 @@ struct Database::MySQL
   def check_user
     open do |db|
       db.unprepared("SELECT User FROM mysql.user WHERE User = '#{@user}'").query do |rs|
-        raise DatabasePresentException.new(@uri, @user) if database_exists? db, @user
+        raise DatabasePresentException.new(@uri, @user) if database_exists? db
         rs.each do
-          raise UserPresentException.new(@uri, @user) if database_exists? db, @user
+          raise UserPresentException.new @uri, @user
         end
       end
     end
@@ -68,9 +66,7 @@ struct Database::MySQL
   end
 
   def delete
-    open do |db|
-      db.unprepared("DROP DATABASE IF EXISTS #{@user}").exec
-    end
+    open &.unprepared("DROP DATABASE IF EXISTS #{@user}").exec
   end
 
   def open(&block : DB::Database ->)
