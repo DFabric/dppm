@@ -16,7 +16,7 @@ In development - the API is stabilizing, but expect breaking changes.
 - support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
 - can use systemd or OpenRC for system services
 - independent of your system's package manager - self-contained, statically linked binaries
-- standalone installations bundled with all dependencies - DDPM can be safely removed
+- standalone installations bundled with all dependencies - DPPM can be safely removed
 
 ## Install
 

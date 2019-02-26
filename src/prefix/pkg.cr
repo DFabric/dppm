@@ -101,7 +101,65 @@ struct Prefix::Pkg
     deps_with_expr.each_key &.internal_each_config_key { |key| yield key }
   end
 
-  def build(vars : Hash(String, String))
+  # Used to install dependencies, avoiding recursive block expansions
+  def build(vars : Hash(String, String), deps : Set(Pkg) = Set(Pkg).new)
+    build vars, deps, false { }
+  end
+
+  # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
+  def build(vars : Hash(String, String), deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block)
+    arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
+                   version_alias
+                 else
+                   Host.arch
+                 end
+
+    # keep the latest ones for each dependency
+    Log.info "calculing package dependencies", @name
+    src.resolve_deps.each do |dep_name, versions|
+      dep_src = @prefix.new_src(dep_name)
+      version = if versions.includes?(latest = dep_src.pkg_file.version_from_tag "latest")
+                  latest
+                else
+                  versions[0].to_s
+                end
+      deps << dep_src.new_pkg dep_name, version
+    end
+    vars["prefix"] = @prefix.path
+    vars["version"] = @version
+    vars["package"] = @package
+    vars["basedir"] = @path
+    vars["arch_alias"] = arch_alias
+    if env = pkg_file.env
+      vars.merge! env
+    end
+
+    if File.exists? @path
+      Log.info "already present", @path
+      return self if confirmation
+      yield
+      return self
+    elsif confirmation
+      Log.output << "task: build"
+      vars.each do |var, value|
+        Log.output << '\n' << var << ": " << value
+      end
+      simulate_deps deps, Log.output
+      return if !yield
+    else
+      yield
+    end
+
+    if File.exists? @path
+      Log.info "package already present", @path
+      return self
+    end
+
+    # Copy the sources to the @pkg.name directory to build
+    FileUtils.cp_r src.path, @path
+
+    # Build dependencies
+    install_deps(deps, vars.dup) { }
     if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @name
       Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
@@ -135,6 +193,7 @@ struct Prefix::Pkg
     @libs = @all_bin_paths = nil
 
     Log.info "build completed", @path
+    self
   end
 
   private def move(path : String)

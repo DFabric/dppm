@@ -8,13 +8,16 @@ struct Manager::Application::Add
   @gid : UInt32
   @user : String
   @group : String
-  @build : Package::Build
+  @pkg : Prefix::Pkg
   @web_server_uid : UInt32? = nil
   @database : Prefix::App? = nil
   @database_password : String? = nil
+  @deps : Set(Prefix::Pkg)
 
   def initialize(
-    @build : Package::Build,
+    @pkg : Prefix::Pkg,
+    @vars : Hash(String, String),
+    @deps : Set(Prefix::Pkg),
     @shared : Bool = true,
     @add_service : Bool = true,
     @socket : Bool = false,
@@ -22,10 +25,8 @@ struct Manager::Application::Add
     url : String? = nil,
     web_server : String? = nil
   )
-    @vars = @build.vars.dup
-
-    Log.info "getting name", @build.pkg.name
-    @app = @build.pkg.new_app @vars["name"]?
+    Log.info "getting name", @pkg.name
+    @app = @pkg.new_app @vars["name"]?
 
     if @add_service
       @app.service?.try do |service|
@@ -42,7 +43,7 @@ struct Manager::Application::Add
     @uid, @gid, @user, @group = initialize_owner
 
     if database
-      @database = database_app = @build.pkg.prefix.new_app database
+      @database = database_app = @pkg.prefix.new_app database
       Log.info "initialize database", database
 
       (@app.database_create database_app).tap do |database|
@@ -60,7 +61,7 @@ struct Manager::Application::Add
       Host.tcp_port_available port.to_u16
     end
 
-    source_package = @build.pkg.exists? || @build.pkg.src
+    source_package = @pkg.exists? || @pkg.src
 
     if web_server
       webserver = @app.prefix.new_app web_server
@@ -121,8 +122,8 @@ struct Manager::Application::Add
     raise "socket not supported by #{@app.pkg_file.name}" if @socket && !@vars.has_key? "socket"
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
-    @vars["package"] = @build.pkg.package
-    @vars["version"] = @build.pkg.version
+    @vars["package"] = @pkg.package
+    @vars["version"] = @pkg.version
     @vars["basedir"] = @app.path
     @vars["name"] = @app.name
     @vars["uid"] = @uid.to_s
@@ -172,7 +173,7 @@ struct Manager::Application::Add
     @vars.each do |var, value|
       io << '\n' << var << ": " << value
     end
-    @build.simulate_deps io
+    @app.simulate_deps @deps, io
   end
 
   def run
@@ -181,7 +182,6 @@ struct Manager::Application::Add
 
     # Create the new application
     Dir.mkdir @app.path
-    @build.run
 
     app_shared = @shared
     if !@app.pkg_file.shared
@@ -190,24 +190,24 @@ struct Manager::Application::Add
     end
 
     if app_shared
-      Log.info "creating symlinks from " + @build.pkg.path, @app.path
-      File.symlink @build.pkg.app_path, @app.app_path
-      File.symlink @build.pkg.pkg_file.path, @app.pkg_file.path
+      Log.info "creating symlinks from " + @pkg.path, @app.path
+      File.symlink @pkg.app_path, @app.app_path
+      File.symlink @pkg.pkg_file.path, @app.pkg_file.path
     else
-      Log.info "copying from " + @build.pkg.path, @app.path
-      FileUtils.cp_r @build.pkg.app_path, @app.app_path
-      FileUtils.cp_r @build.pkg.pkg_file.path, @app.pkg_file.path
+      Log.info "copying from " + @pkg.path, @app.path
+      FileUtils.cp_r @pkg.app_path, @app.app_path
+      FileUtils.cp_r @pkg.pkg_file.path, @app.pkg_file.path
     end
 
     # Copy configurations and data
     Log.info "copying configurations and data", @app.name
 
-    copy_dir @build.pkg.conf_dir, @app.conf_dir
-    copy_dir @build.pkg.data_dir, @app.data_dir
+    copy_dir @pkg.conf_dir, @app.conf_dir
+    copy_dir @pkg.data_dir, @app.data_dir
     Dir.mkdir @app.logs_dir
 
     # Build and add missing dependencies and copy library configurations
-    @build.install_deps @app, @vars.dup, @shared do |dep_pkg|
+    @app.install_deps @deps, @vars.dup, @shared do |dep_pkg|
       if dep_config = dep_pkg.config
         Log.info "copying library configuration files", dep_pkg.name
         dep_conf_dir = @app.conf_dir + dep_pkg.package

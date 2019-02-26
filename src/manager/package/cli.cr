@@ -19,9 +19,11 @@ module Manager::Package::CLI
 
     # Create task
     vars.merge! Host.vars
-    task = Build.new vars, root_prefix, package, version
-    task.simulate
-    task.run if no_confirm || Manager.cli_confirm
+    pkg = Prefix::Pkg.create root_prefix, package, version, vars["tag"]?
+    pkg.build vars: vars, confirmation: !no_confirm do
+      no_confirm || Manager.cli_confirm
+    end
+    pkg
   end
 
   def self.query(prefix, config, package, path, **args)

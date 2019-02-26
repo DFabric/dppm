@@ -3,7 +3,7 @@ require "../../src/manager"
 module IntegrationSpec
   def build_package(package : String)
     it "builds an application" do
-      build = Manager::Package::CLI.build(
+      pkg = Manager::Package::CLI.build(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
         mirror: nil,
@@ -11,15 +11,15 @@ module IntegrationSpec
         prefix: TEMP_DPPM_PREFIX,
         package: package,
         custom_vars: Array(String).new,
-        version: nil).not_nil!
-      build.pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
-      Dir.exists?(build.pkg.path).should be_true
+        version: nil)
+      pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
+      Dir.exists?(pkg.path).should be_true
     end
   end
 
   def add_application(application : String, name : String)
     it "adds an application" do
-      add = Manager::Application::CLI.add(
+      app = Manager::Application::CLI.add(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
         mirror: nil,
@@ -29,8 +29,8 @@ module IntegrationSpec
         custom_vars: ["name=" + name],
         contained: false,
         noservice: true,
-        socket: false).not_nil!
-      add.app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
+        socket: false)
+      app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
     end
   end
 

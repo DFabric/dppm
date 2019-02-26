@@ -57,7 +57,7 @@ struct Prefix::PkgFile
 
   macro finished
   def initialize(@root_dir : String)
-    raise "package directory doesn't exists: " + @root_dir if !Dir.exists? @root_dir
+    raise "package directory doesn't exist: " + @root_dir if !Dir.exists? @root_dir
 
     # TODO: Replace CON::Any by CON::Serializable
     @any = CON.parse File.read(path)
