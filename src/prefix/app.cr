@@ -8,17 +8,20 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
-  protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
+  getter logs_dir : String { path + "log/" }
+  getter log_file_output : String { logs_dir + "output.log" }
+  getter log_file_error : String { logs_dir + "output.log" }
+
+  protected def initialize(@prefix : Prefix, @name : String, pkg : Pkg? = nil)
     @path = @prefix.app + @name + '/'
-    if pkg_file
-      pkg_file.path = nil
-      pkg_file.root_dir = @path
-      @pkg_file = pkg_file
-    end
-    @logs_dir = @path + "log/"
-    @log_file_output = @logs_dir + "output.log"
-    @log_file_error = @logs_dir + "error.log"
     @bin_path = app_path + "/bin"
+    if pkg
+      @pkg = pkg
+      pkg_pkg_file = pkg.pkg_file
+      pkg_pkg_file.path = nil
+      pkg_pkg_file.root_dir = @path
+      @pkg_file = pkg_pkg_file
+    end
   end
 
   getter password : String? do
@@ -305,8 +308,8 @@ struct Prefix::App
     File.dirname File.real_path(app_path)
   end
 
-  def log_file(error : Bool = false)
-    error ? @log_file_error : @log_file_output
+  def log_file(error : Bool = false) : String
+    error ? log_file_error : log_file_output
   end
 
   def set_permissions
@@ -377,15 +380,202 @@ struct Prefix::App
 
   def add(
     vars : Hash(String, String),
-    uid : UInt32,
-    gid : UInt32,
-    user : String,
-    group : String,
+    shared : Bool = true,
     add_service : Bool = true,
-    app_database : Prefix::App? = nil,
-    database_password : String? = nil,
-    web_server_uid : UInt32? = nil
+    socket : Bool = false,
+    database : String? = nil,
+    url : String? = nil,
+    web_server : String? = nil,
+    confirmation : Bool = true,
+    &block
   )
+    if add_service
+      service?.try do |service|
+        if !service.creatable?
+          Log.warn "service creation not available - root permissions missing?", service.file
+          add_service = false
+        elsif service.exists?
+          raise "system service already exist: " + service.name
+        end
+      end
+    end
+    exists!
+
+    database_app = nil
+    if database
+      database_app = @prefix.new_app database
+      Log.info "initialize database", database
+
+      (database_create database_app).tap do |database|
+        database.clean
+        database.check_user
+        vars.merge! database.vars
+      end
+    end
+
+    # Default variables
+    unset_vars = Set(String).new
+
+    if !socket && (port = vars["port"]?)
+      Log.info "checking port availability", port
+      Host.tcp_port_available port.to_u16
+    end
+    source_package = pkg.exists? || pkg.src
+
+    if web_server
+      webserver = @prefix.new_app web_server
+      web_server_uid = webserver.file_info.owner
+      website = webserver.new_website @name, source_package.conf_dir
+      vars["web_server"] = web_server
+    end
+
+    set_url = false
+    database_password = nil
+    source_package.each_config_key do |var|
+      if !vars.has_key? var
+        # Skip if a socket is used
+        if var == "port" && socket
+          next
+        elsif var == "database_password" && database? && !vars.has_key? "database_password"
+          database_password = vars["database_password"] = Database.gen_password
+          next
+        elsif var == "url"
+          set_url = true
+          next
+        end
+
+        key = source_package.get_config(var).to_s
+        if key.empty?
+          unset_vars << var
+        else
+          if var == "port"
+            vars["port"] = Host.available_port(key.to_u16).to_s
+          else
+            vars[var] = key
+          end
+          Log.info "default value set '#{var}'", key
+        end
+      end
+    end
+
+    if url
+      vars["url"] = url
+      vars["domain"] = URI.parse(url).hostname.to_s
+    elsif host = vars["host"]?
+      vars["domain"] = host
+      if set_url
+        vars["url"] = "http://" + vars["host"] + '/' + @name
+      end
+    end
+
+    # Database required
+    if !vars.has_key?("database_type") && (databases = source_package.pkg_file.databases)
+      if Database.supported?(database_type = databases.first.first)
+        raise "database password required: " + database_type if !database_password
+        raise "database name required: " + database_type if !vars.has_key?("database_name")
+        raise "database user required: " + database_type if !vars.has_key?("database_user")
+        if !vars.has_key?("database_address") || !(vars.has_key?("database_host") && vars.has_key?("database_port"))
+          raise "database address or host and port required:" + database_type
+        end
+      end
+    end
+    raise "socket not supported by #{pkg_file.name}" if socket && !vars.has_key? "socket"
+    Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
+
+    Log.info "setting system user and group", @name
+    # Take an user uid and a group gid is required
+    if Process.root?
+      libcrown = Libcrown.new
+      uid = gid = libcrown.available_id 9000
+      if uid_string = vars["uid"]?
+        uid = uid_string.to_u32
+        user = libcrown.users[uid].name
+      elsif user = vars["user"]?
+        uid = libcrown.to_uid user
+      else
+        user = '_' + @name
+      end
+      if gid_string = vars["gid"]?
+        gid = gid_string.to_u32
+        group = libcrown.groups[gid].name
+      elsif group = vars["group"]?
+        gid = libcrown.to_gid group
+      else
+        group = '_' + @name
+      end
+    else
+      libcrown = Libcrown.new nil
+      uid = Process.uid
+      gid = Process.gid
+      user = libcrown.users[uid].name
+      group = libcrown.users[gid].name
+    end
+
+    vars["uid"] = uid.to_s
+    vars["gid"] = gid.to_s
+    vars["user"] = user
+    vars["group"] = group
+    vars["package"] = pkg.package
+    vars["version"] = pkg.version
+    vars["basedir"] = @path
+    vars["name"] = @name
+    if env = pkg_file.env
+      vars.merge! env
+    end
+
+    deps = Set(Prefix::Pkg).new
+    pkg.build vars.dup, deps, false do
+      if confirmation
+        Log.output << "task: add"
+        vars.each do |var, value|
+          Log.output << '\n' << var << ": " << value
+        end
+        simulate_deps deps, Log.output
+        return if !yield
+      else
+        yield
+      end
+    end
+
+    Log.info "adding to the system", @name
+    raise "application directory already exists: " + @path if File.exists? @path
+
+    # Create the new application
+    Dir.mkdir @path
+
+    app_shared = shared
+    if !pkg_file.shared
+      Log.warn "can't be shared, must be self-contained", pkg_file.package
+      app_shared = false
+    end
+
+    if app_shared
+      Log.info "creating symlinks from " + pkg.path, @path
+      File.symlink pkg.app_path, app_path
+      File.symlink pkg.pkg_file.path, pkg_file.path
+    else
+      Log.info "copying from " + pkg.path, @path
+      FileUtils.cp_r pkg.app_path, app_path
+      FileUtils.cp_r pkg.pkg_file.path, pkg_file.path
+    end
+
+    # Copy configurations and data
+    Log.info "copying configurations and data", @name
+
+    copy_dir pkg.conf_dir, conf_dir
+    copy_dir pkg.data_dir, data_dir
+    Dir.mkdir logs_dir
+
+    # Build and add missing dependencies and copy library configurations
+    install_deps deps, vars.dup, shared do |dep_pkg|
+      if dep_config = dep_pkg.config
+        Log.info "copying library configuration files", dep_pkg.name
+        dep_conf_dir = conf_dir + dep_pkg.package
+        Dir.mkdir_p dep_conf_dir
+        FileUtils.cp dep_pkg.config_file!.path, dep_conf_dir + '/' + File.basename(dep_pkg.config_file!.path)
+      end
+    end
+
     # Set configuration variables
     Log.info "setting configuration variables", @name
     each_config_key do |var|
@@ -399,9 +589,9 @@ struct Prefix::App
     write_configs
     set_permissions
 
-    if (real_database = database?) && app_database && database_password
-      Log.info "configure database", app_database.name
-      real_database.ensure_root_password app_database
+    if (real_database = database?) && database_app && database_password
+      Log.info "configure database", database_app.name
+      real_database.ensure_root_password database_app
       real_database.create database_password
     end
 
@@ -439,8 +629,8 @@ struct Prefix::App
     # Create system user and group for the application
     if Process.root?
       if add_service
-        if app_database
-          database_name = app_database.name
+        if database_app
+          database_name = database_app.name
         end
         Log.info "creating system service", service.name
         service_create user, group, database_name
@@ -485,6 +675,22 @@ struct Prefix::App
 
     Log.info "add completed", @path
     Log.info "application information", pkg_file.info
+  rescue ex
+    begin
+      delete false { }
+    ensure
+      raise Exception.new "add failed - application deleted: #{@path}:\n#{ex}", ex
+    end
+  end
+
+  private def copy_dir(src : String, dest : String)
+    if !File.exists? dest
+      if File.exists? src
+        FileUtils.cp_r src, dest
+      else
+        Dir.mkdir dest
+      end
+    end
   end
 
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block)

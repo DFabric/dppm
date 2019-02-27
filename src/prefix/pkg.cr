@@ -79,7 +79,7 @@ struct Prefix::Pkg
       # lib and others
       raise "only applications can be added to the system: #{pkg_file.type}"
     end
-    App.new @prefix, app_name, pkg_file
+    App.new @prefix, app_name, self
   end
 
   def src : Src
@@ -108,6 +108,7 @@ struct Prefix::Pkg
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
   def build(vars : Hash(String, String), deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block)
+    vars.merge! Host.vars
     arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                    version_alias
                  else

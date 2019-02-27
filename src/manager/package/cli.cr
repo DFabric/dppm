@@ -18,7 +18,6 @@ module Manager::Package::CLI
     root_prefix.update source
 
     # Create task
-    vars.merge! Host.vars
     pkg = Prefix::Pkg.create root_prefix, package, version, vars["tag"]?
     pkg.build vars: vars, confirmation: !no_confirm do
       no_confirm || Manager.cli_confirm

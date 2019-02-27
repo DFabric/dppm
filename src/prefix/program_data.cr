@@ -16,13 +16,9 @@ module Prefix::ProgramData
     paths
   end
 
-  getter data_dir : String do
-    @path + "data/"
-  end
+  getter data_dir : String { @path + "data/" }
 
-  getter app_path : String do
-    @path + "app"
-  end
+  getter app_path : String { @path + "app" }
 
   getter libs : Array(Lib) do
     libs = Array(Lib).new

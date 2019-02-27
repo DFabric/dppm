@@ -7,17 +7,9 @@ module Prefix::Base
     prefix : Prefix,
     config_file : File?
 
-  getter libs_dir : String do
-    @path + "libs/"
-  end
-
-  getter conf_dir : String do
-    @path + "conf/"
-  end
-
-  getter pkg_file : PkgFile do
-    PkgFile.new @path
-  end
+  getter libs_dir : String { @path + "libs/" }
+  getter conf_dir : String { @path + "conf/" }
+  getter pkg_file : PkgFile { PkgFile.new @path }
 
   @config : Config::Types?
   @config_initialized = false

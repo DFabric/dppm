@@ -19,30 +19,21 @@ module Manager::Application::CLI
     root_prefix.update source
 
     # Create task
-    vars.merge! Host.vars
     pkg = Prefix::Pkg.create root_prefix, application, vars["version"]?, vars["tag"]?
-    deps = Set(Prefix::Pkg).new
-    task = nil
-    run = false
-    pkg.build vars, deps, false do
-      task = Add.new(
-        pkg: pkg,
-        vars: vars.dup,
-        deps: deps,
-        shared: !contained,
-        add_service: !noservice,
-        socket: socket,
-        database: database,
-        url: url,
-        web_server: web_server
-      )
-      task.simulate
-      if no_confirm || Manager.cli_confirm
-        run = true
-      end
+    app = pkg.new_app(vars["name"]?)
+    app.add(
+      vars: vars,
+      shared: !contained,
+      add_service: !noservice,
+      socket: socket,
+      database: database,
+      url: url,
+      web_server: web_server,
+      confirmation: !no_confirm
+    ) do
+      no_confirm || Manager.cli_confirm
     end
-    task.not_nil!.run if run
-    task.not_nil!.app
+    app
   end
 
   def vars_parser(custom_vars : Array(String), vars : Hash(String, String))

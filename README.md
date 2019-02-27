@@ -17,6 +17,7 @@ In development - the API is stabilizing, but expect breaking changes.
 - can use systemd or OpenRC for system services
 - independent of your system's package manager - self-contained, statically linked binaries
 - standalone installations bundled with all dependencies - DPPM can be safely removed
+- compatible with classic system administration (like modifications "by hand" on the file system)
 
 ## Install
 
