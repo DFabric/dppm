@@ -1,6 +1,6 @@
 require "file_utils"
 require "exec"
-require "../logger"
+require "./logger"
 require "./config"
 require "./database"
 require "./host"
@@ -9,12 +9,22 @@ require "./web_site"
 require "./http_helper"
 
 struct Prefix
+  DEFAULT_PATH = begin
+    if Process.root? && Dir.exists? "/srv"
+      "/srv/dppm"
+    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
+      xdg_data_home + "/dppm"
+    else
+      ENV["HOME"] + "/.dppm"
+    end
+  end
+
   getter path : String,
     app : String,
     pkg : String,
     src : String
 
-  def initialize(@path : String, create : Bool = false)
+  def initialize(@path : String = DEFAULT_PATH, create : Bool = false)
     @app = @path + "/app/"
     @pkg = @path + "/pkg/"
     @src = @path + "/src/"
@@ -51,8 +61,7 @@ struct Prefix
     Src.new self, name
   end
 
-  def up_to_date?(source : String? = nil)
-    source ||= MainConfig.source
+  def up_to_date?(source : String)
     if Dir.exists?(@src) && HTTPHelper.url? source
       HTTPHelper.get_string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
       return $0.starts_with? File.info(@src.rchop).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
@@ -61,11 +70,10 @@ struct Prefix
   end
 
   # Download a cache of package sources
-  def update(source : String? = nil, force : Bool = false)
-    source ||= MainConfig.source
+  def update(source : String, force : Bool = false)
     # Update cache if older than 2 days
     source_dir = @src.rchop
-    if force || (!File.symlink?(source_dir) && !up_to_date?)
+    if force || (!File.symlink?(source_dir) && !up_to_date? source)
       if File.symlink? source_dir
         File.delete source_dir
       else

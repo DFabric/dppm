@@ -1,11 +1,15 @@
-module Manager::ServiceCLI
+module CLI::Service
   extend self
 
-  def boot(service : String, state : String, **args) : Bool
-    Service.init.new(service).boot Utils.to_b(state)
+  def self.new(service, **args)
+    ::Service.init.new service
   end
 
-  private def get_status(prefix : String, all : Bool, &block : Service::OpenRC | Service::Systemd -> Nil)
+  def boot(service : String, state : String, **args) : Bool
+    ::Service.init.new(service).boot Utils.to_b(state)
+  end
+
+  private def get_status(prefix : String, all : Bool, &block : ::Service::OpenRC | ::Service::Systemd -> Nil)
     if all
       all_status &block
     else
@@ -34,7 +38,7 @@ module Manager::ServiceCLI
     end
   end
 
-  private def print_run_state(service : Service::OpenRC | Service::Systemd)
+  private def print_run_state(service : ::Service::OpenRC | ::Service::Systemd)
     if run = service.run?
       Log.output << run.colorize.green << "  "
     else
@@ -42,7 +46,7 @@ module Manager::ServiceCLI
     end
   end
 
-  private def print_boot_state(service : Service::OpenRC | Service::Systemd)
+  private def print_boot_state(service : ::Service::OpenRC | ::Service::Systemd)
     if boot = service.boot?
       Log.output << boot.colorize.green << "  "
     else
@@ -51,8 +55,8 @@ module Manager::ServiceCLI
   end
 
   def all_status
-    Service.init.each do |service_name|
-      yield Service.init.new service_name
+    ::Service.init.each do |service_name|
+      yield ::Service.init.new service_name
     end
   end
 

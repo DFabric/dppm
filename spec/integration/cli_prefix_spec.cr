@@ -1,9 +1,9 @@
-require "../../src/manager"
+require "../../src/dppm"
 
 module IntegrationSpec
   def build_package(package : String)
     it "builds an application" do
-      pkg = Manager::Package::CLI.build(
+      pkg = CLI::Pkg.build(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
         mirror: nil,
@@ -19,7 +19,7 @@ module IntegrationSpec
 
   def add_application(application : String, name : String)
     it "adds an application" do
-      app = Manager::Application::CLI.add(
+      app = CLI::App.add(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
         mirror: nil,
@@ -36,7 +36,7 @@ module IntegrationSpec
 
   def delete_application(application : String)
     it "deletes an application" do
-      delete = Manager::Application::CLI.delete(
+      delete = CLI::App.delete(
         no_confirm: true,
         prefix: TEMP_DPPM_PREFIX,
         application: application,

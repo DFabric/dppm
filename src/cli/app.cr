@@ -1,22 +1,27 @@
-module Manager::Application::CLI
+module CLI::App
   extend self
+
+  def query(prefix, application, path, **args) : String
+    pkg_file = Prefix.new(prefix).new_app(application).pkg_file
+    CLI.query(pkg_file.any, path).to_pretty_con
+  end
 
   def delete(no_confirm, prefix, application, keep_user_group, preserve_database, **args)
     Prefix.new(prefix).new_app(application).delete !no_confirm, keep_user_group, preserve_database do
-      Manager.cli_confirm
+      CLI.confirm_prompt
     end
   end
 
   def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database = nil, url = nil, web_server = nil, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
-    MainConfig.file = config
-    vars["mirror"] = mirror || MainConfig.mirror
+    DPPM::Config.file = config
+    vars["mirror"] = mirror || DPPM::Config.mirror
     vars_parser custom_vars, vars
 
     # Update cache
     root_prefix = Prefix.new prefix, true
-    root_prefix.update source
+    root_prefix.update(source || DPPM::Config.source)
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, application, vars["version"]?, vars["tag"]?
@@ -31,7 +36,7 @@ module Manager::Application::CLI
       web_server: web_server,
       confirmation: !no_confirm
     ) do
-      no_confirm || Manager.cli_confirm
+      no_confirm || CLI.confirm_prompt
     end
     app
   end
@@ -47,11 +52,6 @@ module Manager::Application::CLI
         raise "invalid variable: #{arg}"
       end
     end
-  end
-
-  def query(prefix, application, path, **args) : String
-    pkg_file = Prefix.new(prefix).new_app(application).pkg_file
-    Query.new(pkg_file.any).pkg(path).to_pretty_con
   end
 
   def version(prefix, application, **args) : String
@@ -75,5 +75,40 @@ module Manager::Application::CLI
       output: Log.output,
       error: Log.error,
       chdir: app.path, &.wait
+  end
+
+  def config_get(prefix, nopkg : Bool, application, path, **args)
+    app = Prefix.new(prefix).new_app application
+    if nopkg
+      if nopkg && path == "."
+        Log.output.puts app.config!.data
+      else
+        Log.output.puts app.config!.get path
+      end
+    elsif path == "."
+      app.each_config_key do |key|
+        Log.output << key << ": " << app.get_config(key) << '\n'
+      end
+    else
+      Log.output.puts app.get_config path
+    end
+  end
+
+  def config_set(prefix, nopkg : Bool, application, path, value, **args)
+    app = Prefix.new(prefix).new_app application
+    if nopkg
+      app.config!.set path, value
+    else
+      app.set_config path, value
+    end
+  end
+
+  def config_del(prefix, nopkg : Bool, application, path, **args)
+    app = Prefix.new(prefix).new_app application
+    if nopkg
+      app.config!.del path
+    else
+      app.del_config path
+    end
   end
 end
