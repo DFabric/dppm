@@ -14,7 +14,7 @@ module CLI
       variables: {
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
-          default: Prefix::DEFAULT_PATH,
+          default: DPPM::DEFAULT_PATH,
         },
         config: {
           info:    "Configuration file path",
@@ -326,5 +326,3 @@ module CLI
     end
   end
 end
-
-CLI.run

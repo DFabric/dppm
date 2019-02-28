@@ -29,7 +29,7 @@ For Rapberry Pi 3, a 64-bit OS like [Armbian](https://www.armbian.com/) is recom
 
 Still, [an issue is open](https://github.com/crystal-lang/crystal/issues/5467) for `armhf`.
 
-## Automatic
+### Automatic
 
 Download `dppm` with the helper:
 
@@ -39,9 +39,17 @@ The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/us
 
 `wget -qO-` can be replaced by `curl -s`
 
-## Manual
+### Manual
 
 Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
+
+## Configuration
+
+DPPM needs a `mirror` to retrieve package sources and a `source` to download packaged compiled application.
+
+They can be defined with variables, or in the [config.con configuration file](https://raw.githubusercontent.com/DFabric/dppm/master/config.con) present in `$XDG_CONFIG_HOME/dppm/config.con`
+
+The file will be generated if it doesn't exist.
 
 ## Usage
 
@@ -57,11 +65,11 @@ A typical installation can be:
 
 ```sh
 # add a new application to the system
-dppm app add [application]
+sudo dppm app add [application]
 
-# start the service and  auto start the service at boot
-dppm service start [application]
-dppm service boot [application] true
+# start the service and auto start the service at boot
+sudo dppm service start [application]
+sudo dppm service boot [application] true
 ```
 
 If not specified, an user, group and application name will be created.
@@ -72,11 +80,11 @@ Root execution is needed to add a system service (systemd or OpenRC)
 
 To show the services status:
 
-`dppm service status`
+`sudo dppm service status`
 
 To follow last application logs:
 
-`dppm logs [application] -f`
+`sudo dppm logs [application] -f`
 
 ## Development
 

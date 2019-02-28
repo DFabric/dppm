@@ -9,22 +9,12 @@ require "./web_site"
 require "./http_helper"
 
 struct Prefix
-  DEFAULT_PATH = begin
-    if Process.root? && Dir.exists? "/srv"
-      "/srv/dppm"
-    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
-      xdg_data_home + "/dppm"
-    else
-      ENV["HOME"] + "/.dppm"
-    end
-  end
-
   getter path : String,
     app : String,
     pkg : String,
     src : String
 
-  def initialize(@path : String = DEFAULT_PATH, create : Bool = false)
+  def initialize(@path : String, create : Bool = false)
     @app = @path + "/app/"
     @pkg = @path + "/pkg/"
     @src = @path + "/src/"
