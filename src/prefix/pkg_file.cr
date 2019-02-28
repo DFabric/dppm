@@ -146,8 +146,12 @@ struct Prefix::PkgFile
               else
                 @tags["self"]["regex"]
               end.as_s
-      /(#{regex})/ =~ HTTPHelper.get_string src
-      $1
+
+      if version = /(#{regex})/.match(HTTPHelper.get_string src).try &.[1]?
+        version
+      else
+        raise "can't match the regex `#{regex}` with the data from the url `#{src}`"
+      end
     else
       src
     end
