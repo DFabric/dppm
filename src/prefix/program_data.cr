@@ -4,7 +4,7 @@ require "./program_data_task"
 module Prefix::ProgramData
   include Base
 
-  record Lib, relative_path : String, pkg : Prefix::Pkg, config : Config::Types?
+  record Lib, relative_path : String, pkg : Prefix::Pkg, config : ::Config::Types?
 
   getter bin_path : String
 
@@ -30,7 +30,7 @@ module Prefix::ProgramData
       config_file = nil
       if Dir.exists?(conf_libs_dir = conf_dir + lib_pkg.package)
         Dir.each_child conf_libs_dir do |file|
-          config_file = Config.new? File.new(conf_libs_dir + '/' + file)
+          config_file = ::Config.new? File.new(conf_libs_dir + '/' + file)
         end
       end
       libs << Lib.new relative_path, lib_pkg, config_file

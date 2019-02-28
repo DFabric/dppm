@@ -279,7 +279,7 @@ struct Prefix::App
         end
         File.write config_file!.path, output.to_s
         config_file!.rewind
-        @config = Config.new config_file!
+        @config = ::Config.new config_file!
       end
     end
   end

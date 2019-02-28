@@ -9,6 +9,16 @@ require "./web_site"
 require "./http_helper"
 
 struct Prefix
+  DEFAULT_PATH = begin
+    if Process.root? && Dir.exists? "/srv"
+      "/srv/dppm"
+    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
+      xdg_data_home + "/dppm"
+    else
+      ENV["HOME"] + "/.dppm"
+    end
+  end
+
   getter path : String,
     app : String,
     pkg : String,
@@ -60,7 +70,8 @@ struct Prefix
   end
 
   # Download a cache of package sources
-  def update(source : String, force : Bool = false)
+  def update(source : String? = nil, force : Bool = false)
+    source ||= Config.source
     # Update cache if older than 2 days
     source_dir = @src.rchop
     if force || (!File.symlink?(source_dir) && !up_to_date? source)

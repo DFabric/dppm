@@ -21,12 +21,12 @@ module CLI::Pkg
   def build(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "build"
-    DPPM::Config.file = config
-    vars["mirror"] = mirror || DPPM::Config.mirror
+    Prefix::Config.file = config
+    vars["mirror"] = mirror || Prefix::Config.mirror
 
     # Update cache
     root_prefix = Prefix.new prefix, true
-    root_prefix.update(source || DPPM::Config.source)
+    root_prefix.update source
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, package, version, vars["tag"]?

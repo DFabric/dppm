@@ -1,4 +1,4 @@
-require "../../src/dppm"
+require "../../src/cli"
 
 module IntegrationSpec
   def build_package(package : String)

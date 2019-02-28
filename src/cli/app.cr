@@ -15,13 +15,13 @@ module CLI::App
   def add(no_confirm, config, mirror, source, prefix, application, custom_vars, contained, noservice, socket, database = nil, url = nil, web_server = nil, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
-    DPPM::Config.file = config
-    vars["mirror"] = mirror || DPPM::Config.mirror
+    Prefix::Config.file = config
+    vars["mirror"] = mirror || Prefix::Config.mirror
     vars_parser custom_vars, vars
 
     # Update cache
     root_prefix = Prefix.new prefix, true
-    root_prefix.update(source || DPPM::Config.source)
+    root_prefix.update source
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, application, vars["version"]?, vars["tag"]?

@@ -187,16 +187,16 @@ struct Prefix::ProgramData::Task
     when "ls"
       directory = cmd[1]? || Dir.current
       Dir.entries(directory).join '\n'
-    when "get" then Config.new(File.new cmd[1]).get(cmd[2]).to_s
+    when "get" then ::Config.new(File.new cmd[1]).get(cmd[2]).to_s
     when "del"
       config_file = File.new cmd[1]
-      config = Config.new config_file
+      config = ::Config.new config_file
       result = config.del(cmd[2]).to_s
       File.write config_file.path, config.build
       result
     when "set"
       config_file = File.new cmd[1]
-      config = Config.new config_file
+      config = ::Config.new config_file
       result = config.set(cmd[2], cmd[3..-1].join(' ')).to_s
       File.write config_file.path, config.build
       result

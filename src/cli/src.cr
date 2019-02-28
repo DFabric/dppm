@@ -9,8 +9,8 @@ module CLI::Src
   def update(config, source, prefix, no_confirm, **args)
     prefix = Prefix.new prefix, create: true
     if !source
-      DPPM::Config.file = config
+      Prefix::Config.file = config
     end
-    prefix.update(source || DPPM::Config.source, no_confirm)
+    prefix.update source, no_confirm
   end
 end

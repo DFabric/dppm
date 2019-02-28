@@ -14,17 +14,17 @@ module CLI
       variables: {
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
-          default: DPPM::DEFAULT_PATH,
+          default: Prefix::DEFAULT_PATH,
         },
         config: {
           info:    "Configuration file path",
-          default: "#{DPPM::Config.file}",
+          default: "#{Prefix::Config.file}",
         },
         mirror: {
-          info: "Mirror of precompiled applications (default in #{DPPM::Config.file})",
+          info: "Mirror of precompiled applications (default in #{Prefix::Config.file})",
         },
         source: {
-          info: "Source path/url of the packages and configurations (default in #{DPPM::Config.file})",
+          info: "Source path/url of the packages and configurations (default in #{Prefix::Config.file})",
         },
       },
       options: {
