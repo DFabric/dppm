@@ -18,19 +18,17 @@ module CLI::Pkg
     end
   end
 
-  def build(no_confirm, config, mirror, source, prefix, package, custom_vars, version, debug = nil)
-    vars = Hash(String, String).new
+  def build(no_confirm, config, source, prefix, package, custom_vars, mirror = nil, version = nil, tag = nil, debug = nil)
     Log.info "initializing", "build"
     Prefix::Config.file = config
-    vars["mirror"] = mirror || Prefix::Config.mirror
 
     # Update cache
     root_prefix = Prefix.new prefix, true
     root_prefix.update source
 
     # Create task
-    pkg = Prefix::Pkg.create root_prefix, package, version, vars["tag"]?
-    pkg.build vars: vars, confirmation: !no_confirm do
+    pkg = Prefix::Pkg.create root_prefix, package, version, tag
+    pkg.build mirror: mirror, confirmation: !no_confirm do
       no_confirm || CLI.confirm_prompt
     end
     pkg

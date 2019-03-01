@@ -44,7 +44,7 @@ module CLI
           commands: {
             add: {
               alias:     'a',
-              info:      "Add a new application package (and build its missing dependencies)",
+              info:      "Add a new application (builds its missing dependencies)",
               arguments: %w(application custom_vars...),
               action:    "App.add",
               options:   {
@@ -63,13 +63,16 @@ module CLI
               },
               variables: {
                 database: {
-                  info: "Database application to use",
+                  info: "Application name of the database to use",
                 },
-                web_server: {
-                  info: "Web server serving the application as a public website",
+                name: {
+                  info: "Name of the application to install",
                 },
                 url: {
                   info: "URL address (like https://myapp.example.net or http://[::1]/myapp), usually used with a web server",
+                },
+                web_server: {
+                  info: "Application name of the web server serving this application as a public website",
                 },
               },
             },
@@ -127,6 +130,27 @@ module CLI
               info:   "List applications",
               action: "List.app",
             },
+            logs: {
+              alias:     'L',
+              info:      "Logs of the application's service",
+              arguments: %w(application),
+              action:    "App.logs() { |log| print log }",
+              options:   {
+                error: {
+                  short: 'e',
+                  info:  "Print error logs instead of output logs",
+                },
+                follow: {
+                  short: 'f',
+                  info:  "Follow new lines, starting to the last 10 lines by default",
+                },
+              },
+              variables: {
+                lines: {
+                  info: "Number of last lines to print. All lines when no set",
+                },
+              },
+            },
             query: {
               alias:     'q',
               info:      "Query informations from an application - `.` for the whole document",
@@ -146,27 +170,6 @@ module CLI
           info:   "List all applications, packages and sources",
           action: "List.all",
         },
-        logs: {
-          alias:     'L',
-          info:      "Logs of the application's service",
-          arguments: %w(application),
-          action:    "Logs.get() { |log| print log }",
-          options:   {
-            error: {
-              short: 'e',
-              info:  "Print error logs instead of output logs",
-            },
-            follow: {
-              short: 'f',
-              info:  "Follow new lines, starting to the last 10 lines by default",
-            },
-          },
-          variables: {
-            lines: {
-              info: "Number of last lines to print. All lines when no set",
-            },
-          },
-        },
         package: {
           alias:     'p',
           info:      "Manage built packages",
@@ -174,16 +177,19 @@ module CLI
             version: {
               info: "Package version",
             },
+            tag: {
+              info: "Package version's tag (e.g: latest)",
+            },
           },
           commands: {
             build: {
               alias:     'b',
-              info:      "Build a package",
+              info:      "Build a new a package",
               arguments: %w(package custom_vars...),
               action:    "Pkg.build",
             },
             clean: {
-              alias:  'c',
+              alias:  'C',
               info:   "Clean unused built packages by the applications",
               action: "Pkg.clean_unused_packages",
             },

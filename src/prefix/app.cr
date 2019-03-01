@@ -1,5 +1,6 @@
 require "./program_data"
 require "libcrown"
+require "tail"
 
 struct Prefix::App
   include ProgramData
@@ -13,6 +14,7 @@ struct Prefix::App
   getter log_file_error : String { logs_dir + "output.log" }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg : Pkg? = nil)
+    Utils.ascii_alphanumeric_dash? name
     @path = @prefix.app + @name + '/'
     @bin_path = app_path + "/bin"
     if pkg
@@ -308,8 +310,15 @@ struct Prefix::App
     File.dirname File.real_path(app_path)
   end
 
-  def log_file(error : Bool = false) : String
-    error ? log_file_error : log_file_output
+  def get_logs(error : Bool = false, follow : Bool = true, lines : Int32? = nil, &block : String ->)
+    log_file = error ? log_file_error : log_file_output
+    if follow
+      Tail::File.new(log_file).follow(lines: (lines || 10), &block)
+    elsif lines
+      yield Tail::File.new(log_file).last_lines(lines: lines.to_i).join '\n'
+    else
+      yield File.read log_file
+    end
   end
 
   def set_permissions
@@ -380,6 +389,7 @@ struct Prefix::App
 
   def add(
     vars : Hash(String, String),
+    mirror : String? = nil,
     shared : Bool = true,
     add_service : Bool = true,
     socket : Bool = false,
@@ -389,6 +399,7 @@ struct Prefix::App
     confirmation : Bool = true,
     &block
   )
+    mirror ||= Prefix::Config.mirror
     if add_service
       service?.try do |service|
         if !service.creatable?
@@ -519,12 +530,14 @@ struct Prefix::App
     vars["version"] = pkg.version
     vars["basedir"] = @path
     vars["name"] = @name
+    vars["mirror"] = mirror
+
     if env = pkg_file.env
       vars.merge! env
     end
 
     deps = Set(Prefix::Pkg).new
-    pkg.build vars.dup, deps, false do
+    pkg.build deps, mirror, false do
       if confirmation
         Log.output << "task: add"
         vars.each do |var, value|
@@ -567,7 +580,7 @@ struct Prefix::App
     Dir.mkdir logs_dir
 
     # Build and add missing dependencies and copy library configurations
-    install_deps deps, vars.dup, shared do |dep_pkg|
+    install_deps deps, mirror, shared do |dep_pkg|
       if dep_config = dep_pkg.config
         Log.info "copying library configuration files", dep_pkg.name
         dep_conf_dir = conf_dir + dep_pkg.package

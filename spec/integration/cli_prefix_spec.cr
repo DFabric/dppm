@@ -6,12 +6,10 @@ module IntegrationSpec
       pkg = CLI::Pkg.build(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        mirror: nil,
         source: SAMPLES_DIR,
         prefix: TEMP_DPPM_PREFIX,
         package: package,
-        custom_vars: Array(String).new,
-        version: nil)
+        custom_vars: Array(String).new)
       pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
       Dir.exists?(pkg.path).should be_true
     end
@@ -22,11 +20,10 @@ module IntegrationSpec
       app = CLI::App.add(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        mirror: nil,
         source: SAMPLES_DIR,
         prefix: TEMP_DPPM_PREFIX,
         application: application,
-        custom_vars: ["name=" + name],
+        name: name,
         contained: false,
         noservice: true,
         socket: false)

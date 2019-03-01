@@ -102,13 +102,14 @@ struct Prefix::Pkg
   end
 
   # Used to install dependencies, avoiding recursive block expansions
-  def build(vars : Hash(String, String), deps : Set(Pkg) = Set(Pkg).new)
-    build vars, deps, false { }
+  def build(mirror : String)
+    build mirror: mirror, confirmation: false { }
   end
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
-  def build(vars : Hash(String, String), deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block)
-    vars.merge! Host.vars
+  def build(deps : Set(Pkg) = Set(Pkg).new, mirror : String? = nil, confirmation : Bool = true, &block)
+    mirror ||= Prefix::Config.mirror
+    vars = Host.vars.dup
     arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                    version_alias
                  else
@@ -131,6 +132,7 @@ struct Prefix::Pkg
     vars["package"] = @package
     vars["basedir"] = @path
     vars["arch_alias"] = arch_alias
+    vars["mirror"] = mirror
     if env = pkg_file.env
       vars.merge! env
     end
@@ -160,7 +162,7 @@ struct Prefix::Pkg
     FileUtils.cp_r src.path, @path
 
     # Build dependencies
-    install_deps(deps, vars.dup) { }
+    install_deps(deps, mirror) { }
     if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
       Log.info "building", @name
       Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
@@ -177,7 +179,7 @@ struct Prefix::Pkg
       Dir.cd working_directory do
         package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
         package_archive = package_full_name + ".tar.xz"
-        package_mirror = vars["mirror"] + '/' + package_archive
+        package_mirror = mirror + '/' + package_archive
         Log.info "downloading", package_mirror
         HTTPHelper.get_file package_mirror
         Log.info "extracting", package_mirror
@@ -195,6 +197,12 @@ struct Prefix::Pkg
 
     Log.info "build completed", @path
     self
+  rescue ex
+    begin
+      delete false { }
+    ensure
+      raise Exception.new "build failed - package deleted: #{@path}:\n#{ex}", ex
+    end
   end
 
   private def move(path : String)
