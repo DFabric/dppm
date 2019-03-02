@@ -7,15 +7,17 @@ end
 
 describe IntegrationSpec do
   package = TEST_APP_PACKAGE_NAME
-  prefix = IntegrationSpec.create_prefix TEMP_DPPM_PREFIX
+  prefix = IntegrationSpec.create_prefix File.tempname("_temp_dppm_prefix")
 
-  IntegrationSpec.build_package package
-  IntegrationSpec.add_application application: package, name: package
+  begin
+    IntegrationSpec.build_package prefix.path, package
+    IntegrationSpec.add_application prefix_path: prefix.path, application: package, name: package
 
-  IntegrationSpec.test_prefix_app prefix, package
+    IntegrationSpec.test_prefix_app prefix, package
 
-  IntegrationSpec.delete_application package
-  IntegrationSpec.clean_unused_packages TEMP_DPPM_PREFIX
-ensure
-  FileUtils.rm_rf TEMP_DPPM_PREFIX
+    IntegrationSpec.delete_application prefix.path, package
+    IntegrationSpec.clean_unused_packages prefix.path
+  ensure
+    FileUtils.rm_rf prefix.path
+  end
 end

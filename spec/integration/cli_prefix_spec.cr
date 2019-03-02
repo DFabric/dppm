@@ -1,13 +1,13 @@
 require "../../src/cli"
 
 module IntegrationSpec
-  def build_package(package : String)
+  def build_package(prefix_path : String, package : String)
     it "builds an application" do
       pkg = CLI::Pkg.build(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
         source: SAMPLES_DIR,
-        prefix: TEMP_DPPM_PREFIX,
+        prefix: prefix_path,
         package: package,
         custom_vars: Array(String).new)
       pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
@@ -15,13 +15,13 @@ module IntegrationSpec
     end
   end
 
-  def add_application(application : String, name : String)
+  def add_application(prefix_path : String, application : String, name : String)
     it "adds an application" do
       app = CLI::App.add(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
         source: SAMPLES_DIR,
-        prefix: TEMP_DPPM_PREFIX,
+        prefix: prefix_path,
         application: application,
         name: name,
         contained: false,
@@ -31,11 +31,11 @@ module IntegrationSpec
     end
   end
 
-  def delete_application(application : String)
+  def delete_application(prefix_path : String, application : String)
     it "deletes an application" do
       delete = CLI::App.delete(
         no_confirm: true,
-        prefix: TEMP_DPPM_PREFIX,
+        prefix: prefix_path,
         application: application,
         keep_user_group: false,
         preserve_database: false).not_nil!

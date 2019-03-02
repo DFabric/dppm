@@ -23,7 +23,7 @@ def assert_service(service, file = __FILE__, line = __LINE__)
   Service.init = service
 
   user = group = TEST_APP_PACKAGE_NAME
-  test_prefix = Prefix.new(__DIR__ + "/service_test", create: true)
+  test_prefix = Prefix.new File.tempname("_dppm_service_test"), create: true
   test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
   FileUtils.cp_r SAMPLES_DIR + '/' + TEST_APP_PACKAGE_NAME, test_app.path
 
