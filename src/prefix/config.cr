@@ -1,24 +1,18 @@
 module Prefix::Config
-  class_property file : String = DEFAULT_PATH + "/config.con"
+  class_property file : String = "./config.con"
 
-  class_getter data : CON::Any do
-    self.read
-  end
-
-  class_getter mirror : String do
-    data["mirror"].as_s
-  end
-
-  class_getter source : String do
-    data["source"].as_s
-  end
+  class_getter data : CON::Any { self.read }
+  class_getter mirror : String { data["mirror"].as_s }
+  class_getter source : String { data["source"].as_s }
+  class_getter host : String { data["host"].as_s }
+  class_getter port : String { data["port"].as_s }
 
   def self.read
-    if !File.exists? @@file
-      FileUtils.mkdir_p DEFAULT_PATH
-      File.write(@@file, {{ read_file "./config.con" }})
-    end
-    @@data = CON.parse File.read(@@file)
+    @@data = if File.exists? @@file
+               CON.parse File.read(@@file)
+             else
+               CON.parse {{ read_file "./config.con" }}
+             end
   end
 
   def self.write

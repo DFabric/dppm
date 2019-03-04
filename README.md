@@ -21,15 +21,11 @@ In development - the API is stabilizing, but expect breaking changes.
 
 ## Install
 
-Supported architectures are `x86-64` and `arm64` (thanks to [@jirutka](https://github.com/jirutka)).
+### 1. Get the `dppm` binary
 
-32-bit architectures are partially supported, but discouraged since nowadays more and more applications are designed for 64-bit, particularly databases ([TiDB](https://github.com/pingcap/tidb/issues/5224), [MongoDB](https://www.mongodb.com/blog/post/32-bit-limitations)...)
+There are 3 methods:
 
-For Rapberry Pi 3, a 64-bit OS like [Armbian](https://www.armbian.com/) is recommended, and needed to run DPPM, instead of a 32-bit Raspbian.
-
-Still, [an issue is open](https://github.com/crystal-lang/crystal/issues/5467) for `armhf`.
-
-### Automatic
+- Automatic
 
 Download `dppm` with the helper:
 
@@ -39,17 +35,19 @@ The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/us
 
 `wget -qO-` can be replaced by `curl -s`
 
-### Manual
+- Manual
 
 Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
 
-## Configuration
+- Clone the repository
 
-DPPM needs a `mirror` to retrieve package sources and a `source` to download packaged compiled application.
+See the `Development` section
 
-They can be defined with variables, or in the [config.con configuration file](https://raw.githubusercontent.com/DFabric/dppm/master/config.con) present in `$XDG_CONFIG_HOME/dppm/config.con`
+### 2. Run the installation command
 
-The file will be generated if it doesn't exist.
+`sudo bin/dppm install`
+
+You don't *need* to install it as root, but no system services nor dedicated users will be available. You will have to rely on `dppm exec`
 
 ## Usage
 
@@ -86,11 +84,27 @@ To follow last application logs:
 
 `sudo dppm logs [application] -f`
 
+## Uninstall
+
+`sudo dppm uninstall`
+
+## Supported environments
+
+Supported architectures are `x86-64` and `arm64` (thanks to [@jirutka](https://github.com/jirutka)).
+
+32-bit architectures are partially supported, but discouraged since nowadays more and more applications are designed for 64-bit, particularly databases ([TiDB](https://github.com/pingcap/tidb/issues/5224), [MongoDB](https://www.mongodb.com/blog/post/32-bit-limitations)...)
+
+For Rapberry Pi 3, a 64-bit OS like [Armbian](https://www.armbian.com/) is recommended, and needed to run DPPM, instead of a 32-bit Raspbian.
+
+Still, [an issue is open](https://github.com/crystal-lang/crystal/issues/5467) for `armhf`.
+
 ## Development
 
 You will need a [Crystal](https://crystal-lang.org) development environment
 
 You can either [install it](https://crystal-lang.org/docs/installation) or use a [Docker image](https://hub.docker.com/r/jrei/crystal-alpine)
+
+You may also find useful this variables `config=./config.con` and `source=../packages-source`
 
 ### How to build
 

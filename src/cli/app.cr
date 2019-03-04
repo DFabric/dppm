@@ -19,7 +19,7 @@ module CLI::App
     vars_parser custom_vars, vars
 
     # Update cache
-    root_prefix = Prefix.new prefix, true
+    root_prefix = Prefix.new prefix, check: true
     root_prefix.update source
 
     # Create task

@@ -23,7 +23,7 @@ module CLI::Pkg
     Prefix::Config.file = config
 
     # Update cache
-    root_prefix = Prefix.new prefix, true
+    root_prefix = Prefix.new prefix, check: true
     root_prefix.update source
 
     # Create task

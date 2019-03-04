@@ -86,6 +86,11 @@ struct Prefix::Pkg
     @src ||= Src.new @prefix, @package, @pkg_file
   end
 
+  # Copy the source to this package directory path
+  def copy_src_to_path
+    FileUtils.cp_r src.path, @path
+  end
+
   def get_config(key : String)
     config_from_pkg_file key do |config_file, config_key|
       return config_file.get config_key
@@ -153,55 +158,55 @@ struct Prefix::Pkg
       yield
     end
 
-    if File.exists? @path
-      Log.info "package already present", @path
-      return self
-    end
-
-    # Copy the sources to the @pkg.name directory to build
-    FileUtils.cp_r src.path, @path
-
-    # Build dependencies
-    install_deps(deps, mirror) { }
-    if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
-      Log.info "building", @name
-      Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
-      # Standard package build
-    else
-      Log.info "standard building", @name
-
-      working_directory = if pkg_file.type.app?
-                            Dir.mkdir app_path
-                            app_path
-                          else
-                            @path
-                          end
-      Dir.cd working_directory do
-        package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
-        package_archive = package_full_name + ".tar.xz"
-        package_mirror = mirror + '/' + package_archive
-        Log.info "downloading", package_mirror
-        HTTPHelper.get_file package_mirror
-        Log.info "extracting", package_mirror
-        Host.exec "/bin/tar", {"Jxf", package_archive}
-
-        # Move out files from the archive folder
-        Dir.cd package_full_name do
-          move "./"
-        end
-        FileUtils.rm_r({package_archive, package_full_name})
-      end
-    end
-    FileUtils.rm_rf libs_dir.rchop
-    @libs = @all_bin_paths = nil
-
-    Log.info "build completed", @path
-    self
-  rescue ex
     begin
-      delete false { }
-    ensure
-      raise Exception.new "build failed - package deleted: #{@path}:\n#{ex}", ex
+      if File.exists? @path
+        Log.info "package already present", @path
+        return self
+      end
+      copy_src_to_path
+
+      # Build dependencies
+      install_deps(deps, mirror) { }
+      if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
+        Log.info "building", @name
+        Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
+        # Standard package build
+      else
+        Log.info "standard building", @name
+
+        working_directory = if pkg_file.type.app?
+                              Dir.mkdir app_path
+                              app_path
+                            else
+                              @path
+                            end
+        Dir.cd working_directory do
+          package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
+          package_archive = package_full_name + ".tar.xz"
+          package_mirror = mirror + '/' + package_archive
+          Log.info "downloading", package_mirror
+          HTTPHelper.get_file package_mirror
+          Log.info "extracting", package_mirror
+          Host.exec "/bin/tar", {"Jxf", package_archive}
+
+          # Move out files from the archive folder
+          Dir.cd package_full_name do
+            move "./"
+          end
+          FileUtils.rm_r({package_archive, package_full_name})
+        end
+      end
+      FileUtils.rm_rf libs_dir.rchop
+      @libs = @all_bin_paths = nil
+
+      Log.info "build completed", @path
+      self
+    rescue ex
+      begin
+        delete false { }
+      ensure
+        raise Exception.new "build failed - package deleted: #{@path}:\n#{ex}", ex
+      end
     end
   end
 

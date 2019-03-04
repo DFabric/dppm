@@ -3,7 +3,10 @@ require "../../src/prefix"
 
 module IntegrationSpec
   def create_prefix(prefix_path : String) : Prefix
-    Prefix.new prefix_path, create: true
+    prefix = Prefix.new prefix_path
+    prefix.create
+    FileUtils.mkdir_p prefix.app + "dppm"
+    prefix
   end
 
   def test_prefix_app(prefix : Prefix, application : String)
@@ -57,6 +60,7 @@ module IntegrationSpec
   def clean_unused_packages(prefix_path : String)
     it "cleans unused packages" do
       prefix = Prefix.new prefix_path
+      Dir.rmdir prefix.app + "dppm"
       packages = prefix.clean_unused_packages(false) { }
       packages.not_nil!.should_not be_empty
       Dir.children(prefix.pkg).should be_empty

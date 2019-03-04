@@ -7,7 +7,7 @@ module CLI::Src
   end
 
   def update(config, source, prefix, no_confirm, **args)
-    prefix = Prefix.new prefix, create: true
+    prefix = Prefix.new prefix, check: true
     if !source
       Prefix::Config.file = config
     end

@@ -10,7 +10,11 @@ require "./http_helper"
 
 struct Prefix
   DEFAULT_PATH = begin
-    if Process.root? && Dir.exists? "/srv"
+    if (current_dir = Dir.current).ends_with? "/app/dppm"
+      File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
+    elsif File.exists? "/usr/local/bin/dppm"
+      File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm")))))
+    elsif Process.root? && Dir.exists? "/srv"
       "/srv/dppm"
     elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
       xdg_data_home + "/dppm"
@@ -24,11 +28,23 @@ struct Prefix
     pkg : String,
     src : String
 
-  def initialize(@path : String, create : Bool = false)
+  def initialize(@path : String = DEFAULT_PATH, check : Bool = false)
     @app = @path + "/app/"
     @pkg = @path + "/pkg/"
     @src = @path + "/src/"
-    FileUtils.mkdir_p({@app, @pkg}) if create
+    if check && !installed?
+      raise "DPPM isn't installed in #{@path}. Run `dppm install`"
+    end
+  end
+
+  def create
+    Dir.mkdir @path
+    Dir.mkdir @app
+    Dir.mkdir @pkg
+  end
+
+  def installed?
+    new_app("dppm").exists?
   end
 
   def each_app(&block : App ->)
@@ -61,12 +77,13 @@ struct Prefix
     Src.new self, name
   end
 
-  def up_to_date?(source : String)
-    if Dir.exists?(@src) && HTTPHelper.url? source
-      HTTPHelper.get_string(source.gsub("tarball", "commits")) =~ /(?<=datetime=").*T[0-9][0-9]:/
-      return $0.starts_with? File.info(@src.rchop).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
+  def delete_src
+    source_path = @src.rchop
+    if File.symlink? source_path
+      File.delete source_path
+    else
+      FileUtils.rm_rf @src
     end
-    false
   end
 
   # Download a cache of package sources
@@ -74,19 +91,34 @@ struct Prefix
     source ||= Config.source
     # Update cache if older than 2 days
     source_dir = @src.rchop
-    if force || (!File.symlink?(source_dir) && !up_to_date? source)
-      if File.symlink? source_dir
-        File.delete source_dir
-      else
-        FileUtils.rm_rf @src
+    packages_source_date = nil
+    update = true
+    if force
+      update = true
+    elsif File.symlink?(source_dir)
+      update = false
+    elsif HTTPHelper.url? source
+      if packages_source_date = HTTPHelper.get_string(source.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?
+        if Dir.exists? @src
+          update = !packages_source_date.starts_with? File.info(@src.rchop).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
+        else
+          update = true
+        end
       end
-      if HTTPHelper.url? source
+    else
+      update = true
+    end
+
+    if update
+      delete_src
+      if packages_source_date
         Log.info "downloading packages source", source
         file = @path + '/' + File.basename source
         HTTPHelper.get_file source, file
         Host.exec "/bin/tar", {"zxf", file, "-C", @path}
         File.delete file
         File.rename Dir[@path + "/*packages-source*"][0], @src
+        File.touch source_dir, Time.parse_utc(packages_source_date, "%Y-%m-%dT%H:")
         Log.info "cache updated", @src
       else
         FileUtils.mkdir_p @path

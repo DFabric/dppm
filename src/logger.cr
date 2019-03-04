@@ -1,16 +1,17 @@
 require "colorize"
 
-struct Log
+module Log
+  extend self
   class_property output : IO::FileDescriptor = STDOUT
   class_property error : IO::FileDescriptor = STDERR
   @@colorize = true
   @@date = false
 
-  def self.print_date(io)
+  def print_date(io)
     Time.now.to_s("%F %T%z ", io) if @@date
   end
 
-  def self.info(title : String, message : String)
+  def info(title : String, message : String)
     print_date @@output
     if colorize
       @@output << "INFO".colorize.blue.mode(:bold) << ' ' << title.colorize.white << ": " << message << '\n'
@@ -19,7 +20,7 @@ struct Log
     end
   end
 
-  def self.warn(title : String, message : String)
+  def warn(title : String, message : String)
     print_date @@error
     if colorize
       @@error << "WARN".colorize.yellow.mode(:bold) << ' ' << title.colorize.white.mode(:bold) << ": " << message << '\n'
@@ -28,7 +29,7 @@ struct Log
     end
   end
 
-  def self.error(message : String)
+  def error(message : String)
     print_date @@error
     if colorize
       @@error << "ERR!".colorize.red.mode(:bold) << ' ' << message.colorize.light_magenta << '\n'

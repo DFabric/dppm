@@ -388,7 +388,7 @@ struct Prefix::App
   end
 
   def add(
-    vars : Hash(String, String),
+    vars : Hash(String, String) = Hash(String, String).new,
     mirror : String? = nil,
     shared : Bool = true,
     add_service : Bool = true,
@@ -549,150 +549,151 @@ struct Prefix::App
         yield
       end
     end
-
-    Log.info "adding to the system", @name
-    raise "application directory already exists: " + @path if File.exists? @path
-
-    # Create the new application
-    Dir.mkdir @path
-
-    app_shared = shared
-    if !pkg_file.shared
-      Log.warn "can't be shared, must be self-contained", pkg_file.package
-      app_shared = false
-    end
-
-    if app_shared
-      Log.info "creating symlinks from " + pkg.path, @path
-      File.symlink pkg.app_path, app_path
-      File.symlink pkg.pkg_file.path, pkg_file.path
-    else
-      Log.info "copying from " + pkg.path, @path
-      FileUtils.cp_r pkg.app_path, app_path
-      FileUtils.cp_r pkg.pkg_file.path, pkg_file.path
-    end
-
-    # Copy configurations and data
-    Log.info "copying configurations and data", @name
-
-    copy_dir pkg.conf_dir, conf_dir
-    copy_dir pkg.data_dir, data_dir
-    Dir.mkdir logs_dir
-
-    # Build and add missing dependencies and copy library configurations
-    install_deps deps, mirror, shared do |dep_pkg|
-      if dep_config = dep_pkg.config
-        Log.info "copying library configuration files", dep_pkg.name
-        dep_conf_dir = conf_dir + dep_pkg.package
-        Dir.mkdir_p dep_conf_dir
-        FileUtils.cp dep_pkg.config_file!.path, dep_conf_dir + '/' + File.basename(dep_pkg.config_file!.path)
-      end
-    end
-
-    # Set configuration variables
-    Log.info "setting configuration variables", @name
-    each_config_key do |var|
-      if var == "socket"
-        next
-      elsif variable_value = vars[var]?
-        set_config var, variable_value
-      end
-    end
-
-    write_configs
-    set_permissions
-
-    if (real_database = database?) && database_app && database_password
-      Log.info "configure database", database_app.name
-      real_database.ensure_root_password database_app
-      real_database.create database_password
-    end
-
-    # Running the add task
-    Log.info "running configuration tasks", @name
-
-    if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
-      Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run add_task }
-    end
-
-    if website = @website
-      Log.info "adding web site", website.file
-      dir = File.dirname website.file
-      Dir.mkdir dir if !File.exists? dir
-
-      app_uri = uri?
-      if File.exists? conf_dir + "php"
-        website.root = app_path
-        website.fastcgi = @path + "socket"
-      else
-        website.proxy = app_uri.dup
-      end
-
-      website.hosts.clear
-      if url = vars["url"]?
-        website.hosts << URI.parse url
-      else
-        raise "no url address available for the web site"
-      end
-      @website = website
-      website.write
-      File.symlink website.file, web_site_file
-    end
-
-    # Create system user and group for the application
-    if Process.root?
-      if add_service
-        if database_app
-          database_name = database_app.name
-        end
-        Log.info "creating system service", service.name
-        service_create user, group, database_name
-        service_enable
-        Log.info service.type + " system service added", service.name
-      end
-
-      libcrown = Libcrown.new
-      add_group_member = false
-      # Add a new group
-      if !libcrown.groups.has_key? gid
-        Log.info "system group created", group
-        libcrown.add_group Libcrown::Group.new(group), gid
-        add_group_member = true
-      end
-
-      if !libcrown.users.has_key? uid
-        # Add a new user with `new_group` as its main group
-        new_user = Libcrown::User.new(
-          name: user,
-          gid: gid,
-          gecos_comment: pkg_file.description,
-          home_directory: data_dir
-        )
-        libcrown.add_user new_user, uid
-        Log.info "system user created", user
-      else
-        !libcrown.user_group_member? uid, gid
-        add_group_member = true
-      end
-      libcrown.add_group_member(uid, gid) if add_group_member
-
-      # Add the web server to the application group
-      if web_server_uid && website?.try(&.root)
-        libcrown.add_group_member web_server_uid, gid
-      end
-
-      # Save the modifications to the disk
-      libcrown.write
-      Utils.chown_r path, uid, gid
-    end
-
-    Log.info "add completed", @path
-    Log.info "application information", pkg_file.info
-  rescue ex
     begin
-      delete false { }
-    ensure
-      raise Exception.new "add failed - application deleted: #{@path}:\n#{ex}", ex
+      Log.info "adding to the system", @name
+      raise "application directory already exists: " + @path if File.exists? @path
+
+      # Create the new application
+      Dir.mkdir @path
+
+      app_shared = shared
+      if !pkg_file.shared
+        Log.warn "can't be shared, must be self-contained", pkg_file.package
+        app_shared = false
+      end
+
+      if app_shared
+        Log.info "creating symlinks from " + pkg.path, @path
+        File.symlink pkg.app_path, app_path
+        File.symlink pkg.pkg_file.path, pkg_file.path
+      else
+        Log.info "copying from " + pkg.path, @path
+        FileUtils.cp_r pkg.app_path, app_path
+        FileUtils.cp_r pkg.pkg_file.path, pkg_file.path
+      end
+
+      # Copy configurations and data
+      Log.info "copying configurations and data", @name
+
+      copy_dir pkg.conf_dir, conf_dir
+      copy_dir pkg.data_dir, data_dir
+      Dir.mkdir logs_dir
+
+      # Build and add missing dependencies and copy library configurations
+      install_deps deps, mirror, shared do |dep_pkg|
+        if dep_config = dep_pkg.config
+          Log.info "copying library configuration files", dep_pkg.name
+          dep_conf_dir = conf_dir + dep_pkg.package
+          Dir.mkdir_p dep_conf_dir
+          FileUtils.cp dep_pkg.config_file!.path, dep_conf_dir + '/' + File.basename(dep_pkg.config_file!.path)
+        end
+      end
+
+      # Set configuration variables
+      Log.info "setting configuration variables", @name
+      each_config_key do |var|
+        if var == "socket"
+          next
+        elsif variable_value = vars[var]?
+          set_config var, variable_value
+        end
+      end
+
+      write_configs
+      set_permissions
+
+      if (real_database = database?) && database_app && database_password
+        Log.info "configure database", database_app.name
+        real_database.ensure_root_password database_app
+        real_database.create database_password
+      end
+
+      # Running the add task
+      Log.info "running configuration tasks", @name
+
+      if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
+        Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run add_task }
+      end
+
+      if website = @website
+        Log.info "adding web site", website.file
+        dir = File.dirname website.file
+        Dir.mkdir dir if !File.exists? dir
+
+        app_uri = uri?
+        if File.exists? conf_dir + "php"
+          website.root = app_path
+          website.fastcgi = @path + "socket"
+        else
+          website.proxy = app_uri.dup
+        end
+
+        website.hosts.clear
+        if url = vars["url"]?
+          website.hosts << URI.parse url
+        else
+          raise "no url address available for the web site"
+        end
+        @website = website
+        website.write
+        File.symlink website.file, web_site_file
+      end
+
+      # Create system user and group for the application
+      if Process.root?
+        if add_service
+          if database_app
+            database_name = database_app.name
+          end
+          Log.info "creating system service", service.name
+          service_create user, group, database_name
+          service_enable
+          Log.info service.type + " system service added", service.name
+        end
+
+        libcrown = Libcrown.new
+        add_group_member = false
+        # Add a new group
+        if !libcrown.groups.has_key? gid
+          Log.info "system group created", group
+          libcrown.add_group Libcrown::Group.new(group), gid
+          add_group_member = true
+        end
+
+        if !libcrown.users.has_key? uid
+          # Add a new user with `new_group` as its main group
+          new_user = Libcrown::User.new(
+            name: user,
+            gid: gid,
+            gecos_comment: pkg_file.description,
+            home_directory: data_dir
+          )
+          libcrown.add_user new_user, uid
+          Log.info "system user created", user
+        else
+          !libcrown.user_group_member? uid, gid
+          add_group_member = true
+        end
+        libcrown.add_group_member(uid, gid) if add_group_member
+
+        # Add the web server to the application group
+        if web_server_uid && website?.try(&.root)
+          libcrown.add_group_member web_server_uid, gid
+        end
+
+        # Save the modifications to the disk
+        libcrown.write
+        Utils.chown_r path, uid, gid
+      end
+
+      Log.info "add completed", @path
+      Log.info "application information", pkg_file.info
+    rescue ex
+      begin
+        delete false { }
+      ensure
+        raise Exception.new "add failed - application deleted: #{@path}:\n#{ex}", ex
+      end
     end
   end
 
@@ -763,6 +764,8 @@ struct Prefix::App
     end
 
     if Process.root?
+      delete_global_bin_symlinks
+
       libcrown = Libcrown.new
       # Delete the web server from the group of the user
       if !keep_user_group

@@ -20,6 +20,28 @@ module Prefix::ProgramData
 
   getter app_path : String { @path + "app" }
 
+  # Create symlinks to a globally reachable path
+  def create_global_bin_symlinks(force : Bool = false)
+    if Dir.exists? @bin_path
+      Dir.each_child @bin_path do |binary|
+        global_bin = "/usr/local/bin/" + binary
+        File.delete global_bin if File.exists? global_bin
+        File.symlink @bin_path + '/' + binary, global_bin
+      end
+    end
+  end
+
+  def delete_global_bin_symlinks
+    if Dir.exists? @bin_path
+      Dir.each_child @bin_path do |binary|
+        global_bin = "/usr/local/bin/" + binary
+        if File.exists?(global_bin) && File.real_path(global_bin) == @bin_path + '/' + binary
+          File.delete global_bin
+        end
+      end
+    end
+  end
+
   getter libs : Array(Lib) do
     libs = Array(Lib).new
     return libs if !Dir.exists? libs_dir

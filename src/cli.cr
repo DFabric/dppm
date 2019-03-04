@@ -165,6 +165,11 @@ module CLI
             },
           },
         },
+        install: {
+          alias:  'i',
+          info:   "Install DPPM to a new defined prefix",
+          action: "install_dppm",
+        },
         list: {
           alias:  'l',
           info:   "List all applications, packages and sources",
@@ -284,7 +289,12 @@ module CLI
         },
         server: {
           info:   "Start the dppm API server",
-          action: "Log.output.puts server",
+          action: "server",
+        },
+        uninstall: {
+          alias:  'u',
+          info:   "Uninstall DPPM with all its applications",
+          action: "uninstall_dppm",
         },
         version: {
           alias:  'v',
@@ -307,20 +317,87 @@ module CLI
   end
 
   def version(**args)
-    Log.output.puts {{"DPPM build: " + `date "+%Y-%m-%d"`.stringify.chomp + " [" + `git describe --tags --long --always`.stringify.chomp + "]\n\n"}}
-    Host.vars.each do |k, v|
-      Log.output.puts k + ": " + v
+    Log.output << "DPPM version: " << DPPM.version << '\n'
+    Log.output << "DPPM build commit: " << DPPM.build_commit << '\n'
+    Log.output << "DPPM build date: " << DPPM.build_date << '\n'
+    Host.vars.each do |variable, value|
+      Log.output << variable << ": " << value << '\n'
     end
   end
 
   def server(**args)
-    "available soon!"
+    Log.output.puts "available soon! (press CTRL+C)"
+    sleep
   end
 
   def query(any : CON::Any, path : String) : CON::Any
     case path
     when "." then any
     else          any[Utils.to_array path]
+    end
+  end
+
+  def install_dppm(no_confirm, config, source, prefix, mirror = nil, debug = nil)
+    root_prefix = Prefix.new prefix
+
+    if root_prefix.installed?
+      Log.info "DPPM already installed", root_prefix.path
+      return root_prefix
+    end
+    root_prefix.create
+
+    begin
+      root_prefix.update
+
+      dppm_package = root_prefix.new_pkg "dppm", DPPM.version
+      dppm_package.copy_src_to_path
+
+      Dir.mkdir dppm_package.app_path
+      Dir.mkdir dppm_package.app_path + "/bin"
+      dppm_bin_path = dppm_package.app_path + "/bin/dppm"
+      FileUtils.cp PROGRAM_NAME, dppm_bin_path
+      app = dppm_package.new_app "dppm"
+
+      app.add(
+        vars: {"uid" => "0", "gid" => "0", "user" => "root", "group" => "root"},
+        shared: true,
+        mirror: mirror,
+        confirmation: !no_confirm
+      ) do
+        if no_confirm || CLI.confirm_prompt
+          true
+        else
+          raise "DPPM installation canceled."
+        end
+      end
+    rescue ex
+      FileUtils.rm_rf root_prefix.path
+      raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted:\n#{ex}", ex
+    end
+    app.create_global_bin_symlinks(force: true) if Process.root?
+    Log.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
+    File.delete PROGRAM_NAME
+  end
+
+  def uninstall_dppm(no_confirm, config, source, prefix, mirror = nil, debug = nil)
+    root_prefix = Prefix.new prefix
+
+    raise "DPPM not installed in " + root_prefix.path if !root_prefix.installed?
+    raise "DPPM path not removable - root permission needed" + root_prefix.path if !File.writable? root_prefix.path
+
+    # Delete each installed app
+    root_prefix.each_app do |app|
+      app.delete(confirmation: !no_confirm, preserve_database: false, keep_user_group: false) do
+        no_confirm || CLI.confirm_prompt
+      end
+    end
+
+    if (apps = Dir.children(root_prefix.app).join ", ").empty?
+      root_prefix.delete_src
+      FileUtils.rm_r root_prefix.path
+      Log.info "DPPM uninstallation complete", root_prefix.path
+    else
+      Log.warn "DPPM uninstallation not complete, there are remaining applications", apps
     end
   end
 
