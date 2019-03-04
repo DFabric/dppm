@@ -4,40 +4,45 @@ require "semantic_compare"
 module Prefix::Base
   getter path : String,
     name : String,
-    prefix : Prefix,
-    config_file : File?
+    prefix : Prefix
 
   getter libs_dir : String { @path + "libs/" }
   getter conf_dir : String { @path + "conf/" }
   getter pkg_file : PkgFile { PkgFile.new @path }
 
   @config : ::Config::Types?
+  @config_file_initialized = false
   @config_initialized = false
 
-  def config! : ::Config::Types
-    config || raise "no valid config file: #{conf_dir}config.*"
-  end
-
-  def config_file! : File
-    @config_initialized || config
-    @config_file || raise "config file not available"
-  end
-
-  def config : ::Config::Types?
-    if !@config_initialized
+  def config_file : File?
+    if !@config_file_initialized
       if Dir.exists? conf_dir.rchop
         Dir.each_child conf_dir do |file|
           file_path = conf_dir + file
           if file.starts_with? "config."
-            config_file = File.new file_path
-            @config = ::Config.new? config_file
-            @config_file = config_file
+            @config_file = File.new file_path
           end
         end
       end
+      @config_file_initialized = true
+    end
+    @config_file
+  end
+
+  def config : ::Config::Types?
+    if !@config_initialized && config_file
+      @config = ::Config.new? config_file!
       @config_initialized = true
     end
     @config
+  end
+
+  def config_file!
+    config_file || raise "config file not available"
+  end
+
+  def config! : ::Config::Types
+    config || raise "no valid config file: #{conf_dir}config.*"
   end
 
   abstract def get_config(key : String)

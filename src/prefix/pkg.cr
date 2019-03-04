@@ -112,8 +112,8 @@ struct Prefix::Pkg
   end
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
-  def build(deps : Set(Pkg) = Set(Pkg).new, mirror : String? = nil, confirmation : Bool = true, &block)
-    mirror ||= Prefix::Config.mirror
+  def build(deps : Set(Pkg) = Set(Pkg).new, mirror : String? = @prefix.dppm_config.mirror, confirmation : Bool = true, &block)
+    mirror ||= @prefix.dppm_config.mirror
     vars = Host.vars.dup
     arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                    version_alias

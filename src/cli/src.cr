@@ -7,10 +7,10 @@ module CLI::Src
   end
 
   def update(config, source, prefix, no_confirm, **args)
-    prefix = Prefix.new prefix, check: true
-    if !source
-      Prefix::Config.file = config
+    root_prefix = Prefix.new prefix, check: true
+    if config
+      root_prefix.dppm_config = Prefix::Config.new File.read config
     end
-    prefix.update source, no_confirm
+    root_prefix.update source, no_confirm
   end
 end

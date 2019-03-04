@@ -389,7 +389,7 @@ struct Prefix::App
 
   def add(
     vars : Hash(String, String) = Hash(String, String).new,
-    mirror : String? = nil,
+    mirror : String? = @prefix.dppm_config.mirror,
     shared : Bool = true,
     add_service : Bool = true,
     socket : Bool = false,
@@ -399,7 +399,7 @@ struct Prefix::App
     confirmation : Bool = true,
     &block
   )
-    mirror ||= Prefix::Config.mirror
+    mirror ||= @prefix.dppm_config.mirror
     if add_service
       service?.try do |service|
         if !service.creatable?

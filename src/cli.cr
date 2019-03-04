@@ -8,23 +8,33 @@ module CLI
 
   def run
     __debug = false
+    prefix = if (current_dir = Dir.current).ends_with? "/app/dppm"
+               File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
+             elsif File.exists? "/usr/local/bin/dppm"
+               File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm")))))
+             elsif Process.root? && Dir.exists? "/srv"
+               "/srv/dppm"
+             elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
+               xdg_data_home + "/dppm"
+             else
+               ENV["HOME"] + "/.dppm"
+             end
     create(
       name: "dppm",
       info: "The DPlatform Package Manager",
       variables: {
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
-          default: Prefix::DEFAULT_PATH,
+          default: prefix,
         },
         config: {
-          info:    "Configuration file path",
-          default: "#{Prefix::Config.file}",
+          info: "Configuration file path",
         },
         mirror: {
-          info: "Mirror of precompiled applications (default in #{Prefix::Config.file})",
+          info: "Mirror of precompiled applications (default in the config file)",
         },
         source: {
-          info: "Source path/url of the packages and configurations (default in #{Prefix::Config.file})",
+          info: "Source path/url of the packages and configurations (default in the config file)",
         },
       },
       options: {
@@ -340,14 +350,14 @@ module CLI
   def install_dppm(no_confirm, config, source, prefix, mirror = nil, debug = nil)
     root_prefix = Prefix.new prefix
 
-    if root_prefix.installed?
+    if root_prefix.dppm.exists?
       Log.info "DPPM already installed", root_prefix.path
       return root_prefix
     end
     root_prefix.create
 
     begin
-      root_prefix.update
+      root_prefix.update source
 
       dppm_package = root_prefix.new_pkg "dppm", DPPM.version
       dppm_package.copy_src_to_path
@@ -382,7 +392,7 @@ module CLI
   def uninstall_dppm(no_confirm, config, source, prefix, mirror = nil, debug = nil)
     root_prefix = Prefix.new prefix
 
-    raise "DPPM not installed in " + root_prefix.path if !root_prefix.installed?
+    raise "DPPM not installed in " + root_prefix.path if !root_prefix.dppm.exists?
     raise "DPPM path not removable - root permission needed" + root_prefix.path if !File.writable? root_prefix.path
 
     # Delete each installed app

@@ -20,11 +20,13 @@ module CLI::Pkg
 
   def build(no_confirm, config, source, prefix, package, custom_vars, mirror = nil, version = nil, tag = nil, debug = nil)
     Log.info "initializing", "build"
-    Prefix::Config.file = config
 
     # Update cache
     root_prefix = Prefix.new prefix, check: true
     root_prefix.update source
+    if config
+      root_prefix.dppm_config = Prefix::Config.new File.read config
+    end
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, package, version, tag

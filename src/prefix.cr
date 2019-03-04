@@ -9,30 +9,18 @@ require "./web_site"
 require "./http_helper"
 
 struct Prefix
-  DEFAULT_PATH = begin
-    if (current_dir = Dir.current).ends_with? "/app/dppm"
-      File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
-    elsif File.exists? "/usr/local/bin/dppm"
-      File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm")))))
-    elsif Process.root? && Dir.exists? "/srv"
-      "/srv/dppm"
-    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
-      xdg_data_home + "/dppm"
-    else
-      ENV["HOME"] + "/.dppm"
-    end
-  end
+  class_getter default_dppm_config = Config.new {{ read_file "./config.con" }}
 
   getter path : String,
     app : String,
     pkg : String,
     src : String
 
-  def initialize(@path : String = DEFAULT_PATH, check : Bool = false)
+  def initialize(@path : String, check : Bool = false)
     @app = @path + "/app/"
     @pkg = @path + "/pkg/"
     @src = @path + "/src/"
-    if check && !installed?
+    if check && !dppm.exists?
       raise "DPPM isn't installed in #{@path}. Run `dppm install`"
     end
   end
@@ -43,8 +31,16 @@ struct Prefix
     Dir.mkdir @pkg
   end
 
-  def installed?
-    new_app("dppm").exists?
+  def dppm : App
+    new_app "dppm"
+  end
+
+  property dppm_config : Config do
+    if config_file = dppm.config_file
+      Config.new config_file.gets_to_end
+    else
+      @@default_dppm_config
+    end
   end
 
   def each_app(&block : App ->)
@@ -87,15 +83,14 @@ struct Prefix
   end
 
   # Download a cache of package sources
-  def update(source : String? = nil, force : Bool = false)
-    source ||= Config.source
+  def update(source : String? = dppm_config.source, force : Bool = false)
+    source ||= dppm_config.source
+
     # Update cache if older than 2 days
     source_dir = @src.rchop
     packages_source_date = nil
     update = true
-    if force
-      update = true
-    elsif File.symlink?(source_dir)
+    if File.symlink?(source_dir)
       update = false
     elsif HTTPHelper.url? source
       if packages_source_date = HTTPHelper.get_string(source.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?
@@ -109,7 +104,7 @@ struct Prefix
       update = true
     end
 
-    if update
+    if force || update
       delete_src
       if packages_source_date
         Log.info "downloading packages source", source

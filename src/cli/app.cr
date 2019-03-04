@@ -15,12 +15,14 @@ module CLI::App
   def add(no_confirm, config, source, prefix, application, contained, noservice, socket, custom_vars = Array(String).new, name = nil, mirror = nil, database = nil, url = nil, web_server = nil, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
-    Prefix::Config.file = config
     vars_parser custom_vars, vars
 
     # Update cache
     root_prefix = Prefix.new prefix, check: true
     root_prefix.update source
+    if config
+      root_prefix.dppm_config = Prefix::Config.new File.read config
+    end
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, application, vars["version"]?, vars["tag"]?
