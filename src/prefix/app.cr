@@ -436,7 +436,7 @@ struct Prefix::App
     if web_server
       webserver = @prefix.new_app web_server
       web_server_uid = webserver.file_info.owner
-      website = webserver.new_website @name, source_package.conf_dir
+      @website = webserver.new_website @name, source_package.conf_dir
       vars["web_server"] = web_server
     end
 
@@ -768,12 +768,12 @@ struct Prefix::App
 
       libcrown = Libcrown.new
       # Delete the web server from the group of the user
+      if webserver
+        libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
+      end
       if !keep_user_group
         libcrown.del_user file_info.owner if owner.user.name.starts_with? '_' + @name
         libcrown.del_group file_info.group if owner.group.name.starts_with? '_' + @name
-      end
-      if webserver
-        libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
       end
       libcrown.write
     end
