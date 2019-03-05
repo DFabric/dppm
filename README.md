@@ -5,19 +5,17 @@
 
 # DPPM
 
-Dedicated Platform Package Manager
-
-In development - the API is stabilizing, but expect breaking changes.
+Dedicated Platform Package Manager - an easy way to install and manage server applications.
 
 ## Features
 
 - choice among [dozens of applications](https://github.com/DFabric/packages-source)
-- easy install, backup and modification of configurations
+- unified interface for easy install, backup and modification of configurations
 - support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
-- can use systemd or OpenRC for system services
-- independent of your system's package manager - self-contained, statically linked binaries
+- can use systemd or OpenRC system services with dedicated users/groups
+- independent of the OS package manager - self-contained, statically linked binaries
 - standalone installations bundled with all dependencies - DPPM can be safely removed
-- compatible with classic system administration (like modifications "by hand" on the file system)
+- compatible with manual system administration (like editions "by hand" on the file system)
 
 ## Install
 
@@ -33,7 +31,7 @@ Download `dppm` with the helper:
 
 (`wget -qO-` can be replaced by `curl -s`)
 
-The binary is `bin/dppm` on the directory.
+The binary is `bin/dppm` in the directory.
 
 - Manual
 
