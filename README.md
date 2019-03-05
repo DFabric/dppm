@@ -31,15 +31,15 @@ Download `dppm` with the helper:
 
 `sh -c "APP=dppm-static $(wget -qO- https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh)"`
 
-The binary is `bin/dppm` on the directory. Place it wherever you want (e.g. `/usr/local/bin`)
+(`wget -qO-` can be replaced by `curl -s`)
 
-`wget -qO-` can be replaced by `curl -s`
+The binary is `bin/dppm` on the directory.
 
 - Manual
 
 Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
 
-- Clone the repository
+- Clone the repository and compile the project
 
 See the `Development` section
 
@@ -114,7 +114,7 @@ Install dependencies and build `dppm`:
 
 Run it
 
-`./bin/dppm --help`
+`bin/dppm --help`
 
 For more informations, see the [official docs](https://crystal-lang.org/docs/using_the_compiler/)
 

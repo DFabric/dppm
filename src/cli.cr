@@ -374,14 +374,11 @@ module CLI
         mirror: mirror,
         confirmation: !no_confirm
       ) do
-        if no_confirm || CLI.confirm_prompt
-          true
-        else
-          raise "DPPM installation canceled."
-        end
+        no_confirm || CLI.confirm_prompt { raise "DPPM installation canceled." }
       end
     rescue ex
-      FileUtils.rm_rf root_prefix.path
+      root_prefix.delete_src
+      FileUtils.rm_r root_prefix.path
       raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted:\n#{ex}", ex
     end
     app.create_global_bin_symlinks(force: true) if Process.root?
@@ -411,11 +408,15 @@ module CLI
     end
   end
 
-  def confirm_prompt
+  def confirm_prompt(&block)
     Log.output.puts "\nContinue? [N/y]"
     case gets
     when "Y", "y" then true
-    else               abort "cancelled."
+    else               yield
     end
+  end
+
+  def confirm_prompt
+    confirm_prompt { abort "cancelled." }
   end
 end
