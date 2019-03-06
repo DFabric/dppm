@@ -764,8 +764,6 @@ struct Prefix::App
     end
 
     if Process.root?
-      delete_global_bin_symlinks
-
       libcrown = Libcrown.new
       # Delete the web server from the group of the user
       if webserver

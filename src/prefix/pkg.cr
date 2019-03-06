@@ -5,6 +5,8 @@ struct Prefix::Pkg
   getter package : String,
     version : String
 
+  getter app_bin_path : String { @path + "app/bin" }
+
   protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version
       @package, @version = name, version
@@ -104,6 +106,34 @@ struct Prefix::Pkg
   def each_config_key(&block : String ->)
     internal_each_config_key { |key| yield key }
     deps_with_expr.each_key &.internal_each_config_key { |key| yield key }
+  end
+
+  def each_binary_with_path(&block : String, String ->)
+    {@bin_path, app_bin_path}.each do |path|
+      if Dir.exists? path
+        Dir.each_child path do |binary|
+          yield path, binary
+        end
+      end
+    end
+  end
+
+  # Create symlinks to a globally reachable path
+  def create_global_bin_symlinks(force : Bool = false)
+    each_binary_with_path do |path, binary|
+      global_bin = "/usr/local/bin/" + binary
+      File.delete global_bin if File.exists? global_bin
+      File.symlink path + '/' + binary, global_bin
+    end
+  end
+
+  def delete_global_bin_symlinks
+    each_binary_with_path do |path, binary|
+      global_bin = "/usr/local/bin/" + binary
+      if File.exists?(global_bin) && File.real_path(global_bin) == path + '/' + binary
+        File.delete global_bin
+      end
+    end
   end
 
   # Used to install dependencies, avoiding recursive block expansions
@@ -247,6 +277,7 @@ struct Prefix::Pkg
       return if !yield
     end
 
+    delete_global_bin_symlinks if Process.root?
     FileUtils.rm_rf @path
     Log.info "package deleted", @path
     self

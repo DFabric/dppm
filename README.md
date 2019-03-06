@@ -9,13 +9,13 @@ Dedicated Platform Package Manager - an easy way to install and manage server ap
 
 ## Features
 
-- choice among [dozens of applications](https://github.com/DFabric/packages-source)
-- unified interface for easy install, backup and modification of configurations
-- support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
-- can use systemd or OpenRC system services with dedicated users/groups
-- independent of the OS package manager - self-contained, statically linked binaries
-- standalone installations bundled with all dependencies - DPPM can be safely removed
-- compatible with manual system administration (like editions "by hand" on the file system)
+- Choice among [dozens of applications](https://github.com/DFabric/packages-source)
+- Unified interface for easy install, backup and modification of configurations
+- Support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic
+- Can use systemd or OpenRC system services with dedicated users/groups
+- Independent of the OS package manager - self-contained, statically linked binaries
+- Standalone installations bundled with all dependencies - DPPM can be safely removed
+- Compatible with manual system administration (like editions "by hand" on the file system)
 
 ## Install
 
@@ -45,7 +45,7 @@ See the `Development` section
 
 `sudo bin/dppm install`
 
-You don't *need* to install it as root, but no system services nor dedicated users will be available. You will have to rely on `dppm exec`
+You don't *need* to install it as root, but no system services nor dedicated users will be available. You will have to rely on `sudo dppm app exec`
 
 ## Usage
 
@@ -76,7 +76,7 @@ Root execution is needed to add a system service (systemd or OpenRC)
 
 To show the services status:
 
-`sudo dppm service status`
+`dppm service status`
 
 To follow last application logs:
 

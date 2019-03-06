@@ -381,7 +381,7 @@ module CLI
       FileUtils.rm_r root_prefix.path
       raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted:\n#{ex}", ex
     end
-    app.create_global_bin_symlinks(force: true) if Process.root?
+    dppm_package.create_global_bin_symlinks(force: true) if Process.root?
     Log.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
     File.delete PROGRAM_NAME
   end
