@@ -324,9 +324,9 @@ struct Prefix::App
   def set_permissions
     File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
     File.chmod(app_path, 0o750) if !File.symlink? app_path
-    File.chmod conf_dir, 0o700
+    File.chmod conf_dir, 0o710
     File.chmod @path, 0o750
-    File.chmod logs_dir, 0o750
+    File.chmod logs_dir, 0o700
     File.chmod data_dir, 0o750
   end
 
@@ -400,13 +400,16 @@ struct Prefix::App
     &block
   )
     mirror ||= @prefix.dppm_config.mirror
+
     if add_service
-      service?.try do |service|
-        if !service.creatable?
-          Log.warn "service creation not available - root permissions missing?", service.file
+      if pkg_file.type.html?
+        add_service = false
+      elsif app_service = service?
+        if !app_service.creatable?
+          Log.warn "service creation not available - root permissions missing?", app_service.file
           add_service = false
-        elsif service.exists?
-          raise "system service already exist: " + service.name
+        elsif app_service.exists?
+          raise "system service already exist: " + app_service.name
         end
       end
     end
@@ -472,10 +475,17 @@ struct Prefix::App
     if url
       vars["url"] = url
       vars["domain"] = URI.parse(url).hostname.to_s
-    elsif host = vars["host"]?
-      vars["domain"] = host
-      if set_url
-        vars["url"] = "http://" + vars["host"] + '/' + @name
+      # A web server needs an url
+    elsif set_url || web_server
+      if !(domain = vars["domain"]?)
+        if domain = vars["host"]?
+          vars["domain"] = domain
+        end
+      end
+      if domain
+        vars["url"] = "http://" + domain + '/' + @name
+      else
+        raise "a domain or an url must be defined for " + pkg_file.package
       end
     end
 
@@ -621,7 +631,9 @@ struct Prefix::App
         Dir.mkdir dir if !File.exists? dir
 
         app_uri = uri?
-        if File.exists? conf_dir + "php"
+        if pkg_file.type.html?
+          website.root = app_path
+        elsif File.exists? conf_dir + "php"
           website.root = app_path
           website.fastcgi = @path + "socket"
         else
