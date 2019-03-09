@@ -10,11 +10,9 @@ module Prefix::Base
   getter conf_dir : String { @path + "conf/" }
   getter pkg_file : PkgFile { PkgFile.new @path }
 
-  @config : ::Config::Types?
   @config_file_initialized = false
-  @config_initialized = false
 
-  def config_file : File?
+  getter config_file : File? do
     if !@config_file_initialized
       if Dir.exists? conf_dir.rchop
         Dir.each_child conf_dir do |file|
@@ -29,16 +27,18 @@ module Prefix::Base
     @config_file
   end
 
-  def config : ::Config::Types?
+  def config_file!
+    config_file || raise "config file not available"
+  end
+
+  @config_initialized = false
+
+  getter config : ::Config::Types? do
     if !@config_initialized && config_file
       @config = ::Config.new? config_file!
       @config_initialized = true
     end
     @config
-  end
-
-  def config_file!
-    config_file || raise "config file not available"
   end
 
   def config! : ::Config::Types
@@ -105,6 +105,6 @@ module Prefix::Base
   end
 
   def finalize
-    @file.try &.close
+    @config_file.try &.close
   end
 end

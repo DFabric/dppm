@@ -276,10 +276,11 @@ struct Prefix::App
         command = splitted_command[0]
         args = splitted_command[1..-1]
 
-        output, error = Exec.new command, args, error: Log.error, chdir: @path, env: pkg_file.env do |process|
-          raise "can't export configuration: " + full_command if !process.wait.success?
+        File.open config_file!.path, "w" do |io|
+          Exec.new command, args, output: io, error: Log.error, chdir: @path, env: pkg_file.env do |process|
+            raise "can't export configuration: " + full_command if !process.wait.success?
+          end
         end
-        File.write config_file!.path, output.to_s
         config_file!.rewind
         @config = ::Config.new config_file!
       end
