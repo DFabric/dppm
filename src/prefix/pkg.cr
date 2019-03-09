@@ -73,13 +73,12 @@ struct Prefix::Pkg
 
   def new_app(app_name : String? = nil) : App
     case pkg_file.type
-    when .app?, .html?
+    when .lib?
+      raise "only applications can be added to the system: #{pkg_file.type}"
+    else
       # Generate a name if none is set
       app_name ||= package + '-' + Random::Secure.hex(8)
       Utils.ascii_alphanumeric_dash? app_name
-    else
-      # lib and others
-      raise "only applications can be added to the system: #{pkg_file.type}"
     end
     App.new @prefix, app_name, self
   end

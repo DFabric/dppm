@@ -5,14 +5,29 @@ struct Prefix::PkgFile
     App
     Lib
     HTML
+    PHP
 
     def self.new(type : String)
       case type
       when "app"  then App
       when "lib"  then Lib
       when "html" then HTML
+      when "php"  then PHP
       else             raise "unknow package type: " + type
       end
+    end
+
+    def to_s : String
+      {% begin %}
+      case value
+      {% for member in @type.constants %}
+      when {{member}}.value
+        {{member.stringify.downcase}}
+      {% end %}
+      else
+        value.to_s
+      end
+      {% end %}
     end
   end
 
@@ -123,7 +138,7 @@ struct Prefix::PkgFile
     end
 
     if src
-      if (src_array = src.as_a?)
+      if src_array = src.as_a?
         src_array.each do |version|
           yield version.as_s
         end

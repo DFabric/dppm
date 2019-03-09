@@ -631,9 +631,10 @@ struct Prefix::App
         Dir.mkdir dir if !File.exists? dir
 
         app_uri = uri?
-        if pkg_file.type.html?
+        case pkg_file.type
+        when .html?
           website.root = app_path
-        elsif File.exists? conf_dir + "php"
+        when .php?
           website.root = app_path
           website.fastcgi = @path + "socket"
         else
@@ -721,9 +722,7 @@ struct Prefix::App
 
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block)
     begin
-      if !preserve_database && (app_database = database)
-        app_database.check_connection
-      end
+      database.try(&.check_connection) if !preserve_database
     rescue ex
       raise Exception.new "either start the database or use the preseve database option:\n#{ex}", ex
     end
