@@ -73,12 +73,12 @@ module Prefix::Base
     deps
   end
 
-  def resolve_deps(dependencies : Hash(String, Array(SemanticVersion)) = Hash(String, Array(SemanticVersion)).new) : Hash(String, Array(SemanticVersion))
+  def resolve_deps(dependencies : Hash(String, Set(SemanticVersion)) = Hash(String, Set(SemanticVersion)).new) : Hash(String, Set(SemanticVersion))
     # No need to parse if the deps list is empty
     deps_with_expr.each do |dep_src, version_expr|
       if !File.exists? libs_dir + dep_src.name
         Log.info "calculing dependency", dep_src.name
-        newvers = Array(SemanticVersion).new
+        newvers = Set(SemanticVersion).new
 
         # If an array of versions is already provided by a dependency
         if dep_vers = dependencies[dep_src.name]?
@@ -87,14 +87,14 @@ module Prefix::Base
           end
         else
           # HTTPget all versions, parse and test if the versions available match
-          dependencies[dep_src.name] = Array(SemanticVersion).new
+          dependencies[dep_src.name] = Set(SemanticVersion).new
           dep_src.pkg_file.each_version do |ver|
             semantic_version = SemanticVersion.parse ver
             newvers << semantic_version if SemanticCompare.expression semantic_version, version_expr
           end
         end
         # Raise an error if two packages require different versions of a same dependency
-        raise "dependency problem for `#{dep_src.pkg_file.package}`: no versions match `#{version_expr}`" if !newvers[0]?
+        raise "dependency problem for `#{dep_src.pkg_file.package}`: no versions match `#{version_expr}`" if !newvers.first?
         dependencies[dep_src.name] = newvers
 
         # Loops inside dependencies of dependencies

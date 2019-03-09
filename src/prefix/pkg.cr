@@ -157,7 +157,7 @@ struct Prefix::Pkg
       version = if versions.includes?(latest = dep_src.pkg_file.version_from_tag "latest")
                   latest
                 else
-                  versions[0].to_s
+                  versions.first.to_s
                 end
       deps << dep_src.new_pkg dep_name, version
     end
