@@ -38,19 +38,9 @@ struct Prefix::Pkg
     end
     src = Src.new prefix, package
 
-    if !version && !tag
-      if tag_or_version
-        if tag_or_version =~ /^([0-9]+\.[0-9]+\.[0-9]+)/
-          version = tag_or_version
-        else
-          tag = tag_or_version
-        end
-      else
-        # Set a default tag if not set
-        tag = "latest"
-      end
+    if tag_or_version && tag_or_version =~ /^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/
+      version = tag_or_version
     end
-
     if version
       # Check if the version number is available
       available_version = false
@@ -60,11 +50,9 @@ struct Prefix::Pkg
           break
         end
       end
-      raise "not available version number: " + version if !available_version
-    elsif tag
-      version = src.pkg_file.version_from_tag tag
+      raise "no available version number: " + version if !available_version
     else
-      raise "fail to get a version"
+      version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
     end
     new prefix, package, version, src.pkg_file, src
   rescue ex
