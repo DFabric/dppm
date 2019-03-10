@@ -114,7 +114,31 @@ module CLI::App
     end
   end
 
-  def self.logs(prefix : String, lines : String?, error : Bool, follow : Bool, application : String, **args, &block : String ->)
-    Prefix.new(prefix).new_app(application).get_logs error, follow, lines.try(&.to_i), &block
+  def self.logs(prefix : String, log_names : Array(String), lines : String?, follow : Bool, application : String, **args, &block : String ->)
+    app = Prefix.new(prefix).new_app application
+    if log_names.empty?
+      Log.output << "LOG NAMES\n"
+      app.each_log_file do |log_file|
+        Log.output << log_file.rchop(".log") << '\n'
+      end
+    else
+      channel = Channel(String).new
+      log_names.each do |log_name|
+        spawn do
+          app.get_logs log_name + ".log", follow, lines.try(&.to_i) do |line|
+            channel.send line
+          end
+        end
+      end
+      if follow
+        while true
+          yield channel.receive
+        end
+      else
+        log_names.size.times do
+          yield channel.receive
+        end
+      end
+    end
   end
 end

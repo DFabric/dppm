@@ -80,7 +80,7 @@ To show the services status:
 
 To follow last application logs:
 
-`sudo dppm logs [application] -f`
+`sudo dppm logs [application] output`
 
 ## Uninstall
 

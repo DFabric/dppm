@@ -9,7 +9,7 @@ struct Prefix::App
     log_file_output : String,
     log_file_error : String
 
-  getter logs_dir : String { path + "log/" }
+  getter logs_dir : String { path + "logs/" }
   getter log_file_output : String { logs_dir + "output.log" }
   getter log_file_error : String { logs_dir + "output.log" }
 
@@ -237,7 +237,7 @@ struct Prefix::App
       config_export
       yield key
     end
-    keys_from_libs { |key| yield key }
+    keys_from_libs &block
   end
 
   def write_configs
@@ -311,14 +311,17 @@ struct Prefix::App
     File.dirname File.real_path(app_path)
   end
 
-  def get_logs(error : Bool = false, follow : Bool = true, lines : Int32? = nil, &block : String ->)
-    log_file = error ? log_file_error : log_file_output
+  def each_log_file(&block : String ->)
+    Dir.each_child logs_dir, &block
+  end
+
+  def get_logs(file_name : String, follow : Bool = true, lines : Int32? = nil, &block : String ->)
     if follow
-      Tail::File.new(log_file).follow(lines: (lines || 10), &block)
+      Tail::File.new(logs_dir + file_name).follow(lines: (lines || 10), &block)
     elsif lines
-      yield Tail::File.new(log_file).last_lines(lines: lines.to_i).join '\n'
+      yield Tail::File.new(logs_dir + file_name).last_lines(lines: lines.to_i).join '\n'
     else
-      yield File.read log_file
+      yield File.read logs_dir + file_name
     end
   end
 

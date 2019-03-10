@@ -142,14 +142,10 @@ module CLI
             },
             logs: {
               alias:     'L',
-              info:      "Logs of the application's service",
-              arguments: %w(application),
-              action:    "App.logs() { |log| print log }",
+              info:      "Read logs of the application's service - list log names if empty",
+              arguments: %w(application log_names...),
+              action:    "App.logs() { |log| Log.output << log }",
               options:   {
-                error: {
-                  short: 'e',
-                  info:  "Print error logs instead of output logs",
-                },
                 follow: {
                   short: 'f',
                   info:  "Follow new lines, starting to the last 10 lines by default",
