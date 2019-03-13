@@ -18,7 +18,7 @@ module IntegrationSpec
       end
 
       it "has libraries" do
-        app.libs.each &.pkg.package.should eq TEST_LIB_PACKAGE_NAME
+        app.libs.each &.package.should eq TEST_LIB_PACKAGE_NAME
       end
 
       describe "get config" do

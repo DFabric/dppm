@@ -2,7 +2,7 @@ require "./program_data"
 require "libcrown"
 require "tail"
 
-struct Prefix::App
+class Prefix::App
   include ProgramData
 
   getter logs_dir : String,
@@ -43,7 +43,7 @@ struct Prefix::App
   getter exec : Hash(String, String) do
     if !(exec = pkg_file.exec)
       libs.each do |library|
-        exec ||= library.pkg.pkg_file.exec
+        exec ||= library.pkg_file.exec
       end
     end
     exec || raise "exec key not present in #{pkg_file.path}"
@@ -172,9 +172,9 @@ struct Prefix::App
 
   private def config_from_libs(key : String, &block)
     libs.each do |library|
-      if library_pkg_config_vars = library.pkg.pkg_file.config_vars
+      if library_pkg_config_vars = library.pkg_file.config_vars
         if config_key = library_pkg_config_vars[key]?
-          library.config.try do |lib_config|
+          library.app_config.try do |lib_config|
             yield lib_config, config_key
           end
         end
@@ -184,7 +184,7 @@ struct Prefix::App
 
   private def keys_from_libs(&block)
     libs.each do |library|
-      library.pkg.pkg_file.config_vars.try &.each_key do |key|
+      library.pkg_file.config_vars.try &.each_key do |key|
         yield key
       end
     end
@@ -200,9 +200,9 @@ struct Prefix::App
 
   # Get the config key. If not found, returns the block.
   def get_config(key : String, &block)
-    config_from_pkg_file key do |config_file, config_key|
+    config_from_pkg_file key do |app_config, config_key|
       config_export
-      return config_file.get config_key
+      return app_config.get config_key
     end
     config_from_libs key do |lib_config, config_key|
       return lib_config.get config_key
@@ -211,9 +211,9 @@ struct Prefix::App
   end
 
   def del_config(key : String)
-    config_from_pkg_file key do |config_file, config_key|
+    config_from_pkg_file key do |app_config, config_key|
       config_export
-      return config_file.del config_key
+      return app_config.del config_key
     end
     config_from_libs key do |lib_config, config_key|
       return lib_config.del config_key
@@ -222,9 +222,9 @@ struct Prefix::App
   end
 
   def set_config(key : String, value)
-    config_from_pkg_file key do |config_file, config_key|
+    config_from_pkg_file key do |app_config, config_key|
       config_export
-      return config_file.set config_key, value
+      return app_config.set config_key, value
     end
     config_from_libs key do |lib_config, config_key|
       return lib_config.set config_key, value
@@ -241,13 +241,13 @@ struct Prefix::App
   end
 
   def write_configs
-    if app_config = config
+    if app_config = @config
       File.write config_file!.path, app_config.build
     end
     config_import
     libs.each do |library|
-      if pkg_config = library.config
-        File.write library.pkg.config_file!.path, pkg_config.build
+      if (lib_config_file = library.app_config_file) && (lib_config = library.app_config)
+        File.write lib_config_file.path, lib_config.build
       end
     end
   end
@@ -338,7 +338,7 @@ struct Prefix::App
     String.build do |str|
       str << @bin_path
       libs.each do |library|
-        str << ':' << library.pkg.bin_path
+        str << ':' << library.bin_path
       end
     end
   end
@@ -448,33 +448,36 @@ struct Prefix::App
     end
 
     set_url = false
+    has_socket = false
     database_password = nil
     source_package.each_config_key do |var|
-      if !vars.has_key? var
-        # Skip if a socket is used
-        if var == "port" && socket
-          next
-        elsif var == "database_password" && database? && !vars.has_key? "database_password"
+      # Skip if the var is set, or port if a socket is used
+      if var == "socket"
+        if !vars.has_key? "socket"
+          vars["socket"] = @path + "socket"
+        end
+        has_socket = true
+      elsif !vars.has_key?(var) && !(var == "port" && socket)
+        if var == "database_password" && database? && !vars.has_key? "database_password"
           database_password = vars["database_password"] = Database.gen_password
-          next
         elsif var == "url"
           set_url = true
-          next
-        end
-
-        key = source_package.get_config(var).to_s
-        if key.empty?
-          unset_vars << var
         else
-          if var == "port"
-            vars["port"] = Host.available_port(key.to_u16).to_s
+          key = source_package.get_config(var).to_s
+          if key.empty?
+            unset_vars << var
           else
-            vars[var] = key
+            if var == "port"
+              vars["port"] = Host.available_port(key.to_u16).to_s
+            else
+              vars[var] = key
+            end
+            Log.info "default value set '#{var}'", key
           end
-          Log.info "default value set '#{var}'", key
         end
       end
     end
+    raise "socket not supported by #{pkg_file.name}" if socket && !has_socket
 
     if url
       vars["url"] = url
@@ -482,15 +485,11 @@ struct Prefix::App
       # A web server needs an url
     elsif set_url || web_server
       if !(domain = vars["domain"]?)
-        if domain = vars["host"]?
-          vars["domain"] = domain
-        end
+        domain = vars["host"]?
       end
-      if domain
-        vars["url"] = "http://" + domain + '/' + @name
-      else
-        raise "a domain or an url must be defined for " + pkg_file.package
-      end
+      domain ||= "[::1]"
+      vars["url"] = "http://" + domain + '/' + @name
+      vars["domain"] = domain
     end
 
     # Database required
@@ -504,7 +503,6 @@ struct Prefix::App
         end
       end
     end
-    raise "socket not supported by #{pkg_file.name}" if socket && !vars.has_key? "socket"
     Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
     Log.info "setting system user and group", @name
@@ -606,10 +604,8 @@ struct Prefix::App
       # Set configuration variables
       Log.info "setting configuration variables", @name
       each_config_key do |var|
-        if var == "socket"
-          next
-        elsif variable_value = vars[var]?
-          set_config var, variable_value
+        if var_value = vars[var]?
+          set_config var, var_value
         end
       end
 
@@ -640,7 +636,7 @@ struct Prefix::App
           website.root = app_path
         when .php?
           website.root = app_path
-          website.fastcgi = @path + "socket"
+          website.fastcgi = vars["socket"]
         else
           website.proxy = app_uri.dup
         end
@@ -725,6 +721,8 @@ struct Prefix::App
   end
 
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block)
+    raise "application doesn't exist: " + @path if !File.exists? @path
+
     begin
       database.try(&.check_connection) if !preserve_database
     rescue ex

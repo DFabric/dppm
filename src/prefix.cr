@@ -134,7 +134,7 @@ struct Prefix
     each_app do |app|
       packages.delete File.basename(app.real_app_path)
       app.libs.each do |library|
-        packages.delete library.pkg.name
+        packages.delete library.name
       end
     end
 

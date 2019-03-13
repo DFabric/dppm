@@ -4,14 +4,12 @@ require "./program_data_task"
 module Prefix::ProgramData
   include Base
 
-  record Lib, relative_path : String, pkg : Prefix::Pkg, config : ::Config::Types?
-
   getter bin_path : String
 
   getter all_bin_paths : Array(String) do
     paths = [bin_path]
     libs.each do |library|
-      paths << library.pkg.bin_path
+      paths << library.bin_path
     end
     paths
   end
@@ -20,20 +18,22 @@ module Prefix::ProgramData
 
   getter app_path : String { @path + "app" }
 
-  getter libs : Array(Lib) do
-    libs = Array(Lib).new
+  getter libs : Array(Pkg) do
+    libs = Array(Pkg).new
     return libs if !Dir.exists? libs_dir
 
     Dir.each_child libs_dir do |lib_package|
-      relative_path = libs_dir + lib_package
-      lib_pkg = @prefix.new_pkg File.basename(File.real_path(relative_path))
-      config_file = nil
+      lib_path = libs_dir + lib_package
+      lib_pkg = @prefix.new_pkg File.basename(File.real_path(lib_path))
+      app_config_file = nil
       if Dir.exists?(conf_libs_dir = conf_dir + lib_pkg.package)
         Dir.each_child conf_libs_dir do |file|
-          config_file = ::Config.new? File.new(conf_libs_dir + '/' + file)
+          app_config_file = File.new conf_libs_dir + '/' + file
+          lib_pkg.app_config = ::Config.new? app_config_file
         end
       end
-      libs << Lib.new relative_path, lib_pkg, config_file
+      lib_pkg.app_config_file = app_config_file
+      libs << lib_pkg
     end
 
     libs

@@ -1,11 +1,14 @@
 require "./program_data"
 
-struct Prefix::Pkg
+class Prefix::Pkg
   include ProgramData
+
   getter package : String,
     version : String
 
   getter app_bin_path : String { @path + "app/bin" }
+
+  protected property app_config_file : File? = nil, app_config : ::Config::Types? = nil
 
   protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version
@@ -81,11 +84,11 @@ struct Prefix::Pkg
   end
 
   def get_config(key : String)
-    config_from_pkg_file key do |config_file, config_key|
-      return config_file.get config_key
+    config_from_pkg_file key do |package_config, config_key|
+      return package_config.get config_key
     end
-    deps_with_expr.each_key &.config_from_pkg_file key do |config_file, config_key|
-      return config_file.get config_key
+    deps_with_expr.each_key &.config_from_pkg_file key do |package_config, config_key|
+      return package_config.get config_key
     end
     raise "config key not found: " + key
   end
@@ -249,7 +252,7 @@ struct Prefix::Pkg
         raise "application package `#{package}` still in use by an application: " + app.name
       end
       app.libs.each do |library|
-        if @path == library.pkg.path
+        if @path == library.path
           raise "library package `#{package}` still in use by an application: " + app.name
         end
       end

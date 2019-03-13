@@ -48,10 +48,10 @@ module Prefix::Base
   abstract def get_config(key : String)
 
   protected def config_from_pkg_file(key : String, &block)
-    config.try do |config|
+    if app_config = config
       if config_vars = pkg_file.config_vars
         if config_key = config_vars[key]?
-          yield config, config_key
+          yield app_config, config_key
         end
       end
     end
