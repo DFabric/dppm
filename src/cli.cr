@@ -275,11 +275,6 @@ module CLI
           alias:    's',
           info:     "Manage packages source mirrors",
           commands: {
-            cache: {
-              alias:  'c',
-              info:   "Update the source cache. `-y` to force update",
-              action: "Src.update",
-            },
             list: {
               alias:  'l',
               info:   "List source packages",
@@ -290,6 +285,11 @@ module CLI
               info:      "Query informations from a source package - `.` for the whole document",
               arguments: %w(package path),
               action:    "Log.output.puts Src.query",
+            },
+            update: {
+              alias:  'u',
+              info:   "Check for packages source updates. `-y` to force update",
+              action: "Src.update",
             },
           },
         },
