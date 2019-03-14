@@ -90,7 +90,7 @@ struct Prefix
     source_dir = @src.rchop
     packages_source_date = nil
     update = true
-    if File.symlink?(source_dir)
+    if File.exists?(source_dir) && File.symlink?(source_dir)
       update = false
     elsif HTTPHelper.url? source
       if packages_source_date = HTTPHelper.get_string(source.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?

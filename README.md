@@ -35,7 +35,7 @@ The binary is `bin/dppm` in the directory.
 
 - Manual
 
-Get [the pre-compiled binary](https://bitbucket.org/dfabric/packages/downloads/) called `dppm-static_*`, and extract it.
+Get [the pre-compiled binary](https://bintray.com/dfabric/apps-static/builds#files) called `dppm-static_*`, and extract it.
 
 - Clone the repository and compile the project
 

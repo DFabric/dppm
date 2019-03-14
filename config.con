@@ -1,4 +1,4 @@
-mirror "https://bitbucket.org/dfabric/packages/downloads"
+mirror "https://bintray.com/dfabric/apps-static/download_file?file_path="
 source "https://github.com/DFabric/packages-source/tarball/master"
 host "[::1]"
 port 8994
