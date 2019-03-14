@@ -8,7 +8,7 @@ class Prefix::Pkg
 
   getter app_bin_path : String { @path + "app/bin" }
 
-  protected property app_config_file : File? = nil, app_config : ::Config::Types? = nil
+  protected property app_config_file : String? = nil, app_config : ::Config::Types? = nil
 
   protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version

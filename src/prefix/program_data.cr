@@ -28,8 +28,8 @@ module Prefix::ProgramData
       app_config_file = nil
       if Dir.exists?(conf_libs_dir = conf_dir + lib_pkg.package)
         Dir.each_child conf_libs_dir do |file|
-          app_config_file = File.new conf_libs_dir + '/' + file
-          lib_pkg.app_config = ::Config.new? app_config_file
+          app_config_file = conf_libs_dir + '/' + file
+          lib_pkg.app_config = ::Config.new? File.new(app_config_file)
         end
       end
       lib_pkg.app_config_file = app_config_file

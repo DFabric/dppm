@@ -2,7 +2,7 @@ require "./program_data"
 require "libcrown"
 require "tail"
 
-class Prefix::App
+struct Prefix::App
   include ProgramData
 
   getter logs_dir : String,
@@ -182,7 +182,7 @@ class Prefix::App
     end
   end
 
-  private def keys_from_libs(&block)
+  private def keys_from_libs(&block : String ->)
     libs.each do |library|
       library.pkg_file.config_vars.try &.each_key do |key|
         yield key
@@ -233,11 +233,13 @@ class Prefix::App
   end
 
   def each_config_key(&block : String ->)
+    config_export
     internal_each_config_key do |key|
-      config_export
       yield key
     end
-    keys_from_libs &block
+    keys_from_libs do |key|
+      yield key
+    end
   end
 
   def write_configs
@@ -247,7 +249,7 @@ class Prefix::App
     config_import
     libs.each do |library|
       if (lib_config_file = library.app_config_file) && (lib_config = library.app_config)
-        File.write lib_config_file.path, lib_config.build
+        File.write lib_config_file, lib_config.build
       end
     end
   end
@@ -438,8 +440,8 @@ class Prefix::App
       Log.info "checking port availability", port
       Host.tcp_port_available port.to_u16
     end
-    source_package = pkg.exists? || pkg.src
 
+    source_package = pkg.exists? || pkg.src
     if web_server
       webserver = @prefix.new_app web_server
       web_server_uid = webserver.file_info.owner
@@ -458,7 +460,7 @@ class Prefix::App
         end
         has_socket = true
       elsif !vars.has_key?(var) && !(var == "port" && socket)
-        if var == "database_password" && database? && !vars.has_key? "database_password"
+        if var == "database_password" && database?
           database_password = vars["database_password"] = Database.gen_password
         elsif var == "url"
           set_url = true
