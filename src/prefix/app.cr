@@ -443,6 +443,9 @@ struct Prefix::App
 
     source_package = pkg.exists? || pkg.src
     if web_server
+      if !(pkg_file.type.html? || pkg_file.type.http? || pkg_file.type.php?)
+        raise "only HTML, HTTP and PHP applications can be serverd behind a web server: #{pkg_file.type}"
+      end
       webserver = @prefix.new_app web_server
       web_server_uid = webserver.file_info.owner
       @website = webserver.new_website @name, source_package.conf_dir

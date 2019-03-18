@@ -194,7 +194,7 @@ class Prefix::Pkg
       else
         Log.info "standard building", @name
 
-        working_directory = if pkg_file.type.app?
+        working_directory = if pkg_file.type.http?
                               Dir.mkdir app_path
                               app_path
                             else

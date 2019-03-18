@@ -2,32 +2,29 @@ require "con"
 
 struct Prefix::PkgFile
   enum Type
-    App
-    Lib
     HTML
+    HTTP
+    Lib
     PHP
+    TCP
 
     def self.new(type : String)
       case type
-      when "app"  then App
+      when "HTML" then HTML
+      when "HTTP" then HTTP
       when "lib"  then Lib
-      when "html" then HTML
-      when "php"  then PHP
+      when "PHP"  then PHP
+      when "TCP"  then TCP
       else             raise "unknow package type: " + type
       end
     end
 
     def to_s : String
-      {% begin %}
-      case value
-      {% for member in @type.constants %}
-      when {{member}}.value
-        {{member.stringify.downcase}}
-      {% end %}
+      if self == Lib
+        "lib"
       else
         value.to_s
       end
-      {% end %}
     end
   end
 

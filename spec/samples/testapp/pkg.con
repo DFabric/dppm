@@ -1,6 +1,6 @@
 package     "testapp"
 name        "Test App"
-type        "app"
+type        "HTTP"
 license     "ISC"
 docs        "http://localhost/docs"
 url         "http://localhost"
