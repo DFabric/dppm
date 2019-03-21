@@ -18,7 +18,7 @@ module CLI::Pkg
     end
   end
 
-  def build(no_confirm, config, source, prefix, package, custom_vars, mirror = nil, version = nil, tag = nil, debug = nil)
+  def build(no_confirm, config, source, prefix, package, custom_vars, version = nil, tag = nil, debug = nil)
     Log.info "initializing", "build"
 
     # Update cache
@@ -30,7 +30,7 @@ module CLI::Pkg
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, package, version, tag
-    pkg.build mirror: mirror, confirmation: !no_confirm do
+    pkg.build confirmation: !no_confirm do
       no_confirm || CLI.confirm_prompt
     end
     pkg

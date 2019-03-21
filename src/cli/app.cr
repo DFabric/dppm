@@ -12,7 +12,7 @@ module CLI::App
     end
   end
 
-  def add(no_confirm, config, source, prefix, application, contained, noservice, socket, custom_vars = Array(String).new, name = nil, mirror = nil, database = nil, url = nil, web_server = nil, debug = nil)
+  def add(no_confirm, config, source, prefix, application, contained, noservice, socket, custom_vars = Array(String).new, name = nil, database = nil, url = nil, web_server = nil, debug = nil)
     vars = Hash(String, String).new
     Log.info "initializing", "add"
     vars_parser custom_vars, vars
@@ -29,7 +29,6 @@ module CLI::App
     app = pkg.new_app name
     app.add(
       vars: vars,
-      mirror: mirror,
       shared: !contained,
       add_service: !noservice,
       socket: socket,

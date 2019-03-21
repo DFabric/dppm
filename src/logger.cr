@@ -37,4 +37,9 @@ module Log
       @@error << "ERR! \"" << message << "\"\n"
     end
   end
+
+  def finalize
+    output.close
+    error.close
+  end
 end

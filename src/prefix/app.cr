@@ -395,7 +395,6 @@ struct Prefix::App
 
   def add(
     vars : Hash(String, String) = Hash(String, String).new,
-    mirror : String? = @prefix.dppm_config.mirror,
     shared : Bool = true,
     add_service : Bool = true,
     socket : Bool = false,
@@ -405,8 +404,6 @@ struct Prefix::App
     confirmation : Bool = true,
     &block
   )
-    mirror ||= @prefix.dppm_config.mirror
-
     if add_service
       if pkg_file.type.html?
         add_service = false
@@ -547,14 +544,13 @@ struct Prefix::App
     vars["version"] = pkg.version
     vars["basedir"] = @path
     vars["name"] = @name
-    vars["mirror"] = mirror
 
     if env = pkg_file.env
       vars.merge! env
     end
 
     deps = Set(Prefix::Pkg).new
-    pkg.build deps, mirror, false do
+    pkg.build deps, false do
       if confirmation
         Log.output << "task: add"
         vars.each do |var, value|
@@ -597,7 +593,7 @@ struct Prefix::App
       Dir.mkdir logs_dir
 
       # Build and add missing dependencies and copy library configurations
-      install_deps deps, mirror, shared do |dep_pkg|
+      install_deps deps, shared do |dep_pkg|
         if dep_config = dep_pkg.config
           Log.info "copying library configuration files", dep_pkg.name
           dep_conf_dir = conf_dir + dep_pkg.package

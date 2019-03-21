@@ -30,9 +30,6 @@ module CLI
         config: {
           info: "Configuration file path",
         },
-        mirror: {
-          info: "Mirror of precompiled applications (default in the config file)",
-        },
         source: {
           info: "Source path/url of the packages and configurations (default in the config file)",
         },
@@ -273,7 +270,7 @@ module CLI
         },
         source: {
           alias:    's',
-          info:     "Manage packages source mirrors",
+          info:     "Manage packages sources",
           commands: {
             list: {
               alias:  'l',
@@ -343,7 +340,7 @@ module CLI
     end
   end
 
-  def install_dppm(no_confirm, config, source, prefix, mirror = nil, debug = nil)
+  def install_dppm(no_confirm, config, source, prefix, debug = nil)
     root_prefix = Prefix.new prefix
 
     if root_prefix.dppm.exists?
@@ -367,7 +364,6 @@ module CLI
       app.add(
         vars: {"uid" => "0", "gid" => "0", "user" => "root", "group" => "root"},
         shared: true,
-        mirror: mirror,
         confirmation: !no_confirm
       ) do
         no_confirm || CLI.confirm_prompt { raise "DPPM installation canceled." }
@@ -382,7 +378,7 @@ module CLI
     File.delete PROGRAM_NAME
   end
 
-  def uninstall_dppm(no_confirm, config, source, prefix, mirror = nil, debug = nil)
+  def uninstall_dppm(no_confirm, config, source, prefix, debug = nil)
     root_prefix = Prefix.new prefix
 
     raise "DPPM not installed in " + root_prefix.path if !root_prefix.dppm.exists?

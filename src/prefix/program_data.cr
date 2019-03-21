@@ -48,7 +48,7 @@ module Prefix::ProgramData
     self if File.exists? @path
   end
 
-  def install_deps(deps : Set(Pkg), mirror : String, shared : Bool = true, &block)
+  def install_deps(deps : Set(Pkg), shared : Bool = true, &block)
     Log.info "bulding dependencies", libs_dir
     Dir.mkdir_p libs_dir
 
@@ -57,7 +57,7 @@ module Prefix::ProgramData
       dest_pkg_dep_dir = libs_dir + dep_pkg.package
       if !Dir.exists? dep_pkg.path
         Log.info "building dependency", dep_pkg.path
-        dep_pkg.build mirror: mirror
+        dep_pkg.build
       end
       if !File.exists? dest_pkg_dep_dir
         if shared

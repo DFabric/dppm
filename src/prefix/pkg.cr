@@ -127,13 +127,12 @@ class Prefix::Pkg
   end
 
   # Used to install dependencies, avoiding recursive block expansions
-  def build(mirror : String)
-    build mirror: mirror, confirmation: false { }
+  def build
+    build confirmation: false { }
   end
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
-  def build(deps : Set(Pkg) = Set(Pkg).new, mirror : String? = @prefix.dppm_config.mirror, confirmation : Bool = true, &block)
-    mirror ||= @prefix.dppm_config.mirror
+  def build(deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block)
     vars = Host.vars.dup
     arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                    version_alias
@@ -157,7 +156,6 @@ class Prefix::Pkg
     vars["package"] = @package
     vars["basedir"] = @path
     vars["arch_alias"] = arch_alias
-    vars["mirror"] = mirror
     if env = pkg_file.env
       vars.merge! env
     end
@@ -186,35 +184,12 @@ class Prefix::Pkg
       copy_src_to_path
 
       # Build dependencies
-      install_deps(deps, mirror) { }
+      install_deps(deps) { }
       if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
         Log.info "building", @name
         Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
-        # Standard package build
       else
-        Log.info "standard building", @name
-
-        working_directory = if pkg_file.type.http?
-                              Dir.mkdir app_path
-                              app_path
-                            else
-                              @path
-                            end
-        Dir.cd working_directory do
-          package_full_name = "#{@package}-static_#{@version}_#{Host.kernel}_#{Host.arch}"
-          package_archive = package_full_name + ".tar.xz"
-          package_mirror = mirror + '/' + package_archive
-          Log.info "downloading", package_mirror
-          HTTPHelper.get_file package_mirror
-          Log.info "extracting", package_mirror
-          Host.exec "/bin/tar", {"Jxf", package_archive}
-
-          # Move out files from the archive folder
-          Dir.cd package_full_name do
-            move "./"
-          end
-          FileUtils.rm_r({package_archive, package_full_name})
-        end
+        raise "missing tasks.build key in " + pkg_file.path
       end
       FileUtils.rm_rf libs_dir.rchop
       @libs = @all_bin_paths = nil

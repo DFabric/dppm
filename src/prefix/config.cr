@@ -1,5 +1,4 @@
 struct Prefix::Config
-  getter mirror : String { data["mirror"].as_s }
   getter source : String { data["source"].as_s }
   getter host : String { data["host"].as_s }
   getter port : String { data["port"].as_s }
