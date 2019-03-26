@@ -6,7 +6,8 @@ module CLI
   extend self
   include Clicr
 
-  def run
+  macro run(**additional_commands)
+  def CLI.internal_run
     __debug = false
     prefix = if (current_dir = Dir.current).ends_with? "/app/dppm"
                File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
@@ -19,7 +20,7 @@ module CLI
              else
                ENV["HOME"] + "/.dppm"
              end
-    create(
+    Clicr.create(
       name: "dppm",
       info: "The DPlatform Package Manager",
       variables: {
@@ -52,7 +53,7 @@ module CLI
             add: {
               alias:     'a',
               info:      "Add a new application (builds its missing dependencies)",
-              arguments: %w(application custom_vars...),
+              arguments: \%w(application custom_vars...),
               action:    "App.add",
               options:   {
                 contained: {
@@ -95,25 +96,25 @@ module CLI
               commands: {
                 get: {
                   info:      "Get a value. Single dot path `.` for all keys",
-                  arguments: %w(application path),
+                  arguments: \%w(application path),
                   action:    "App.config_get",
                 },
                 set: {
                   info:      "Set a value",
-                  arguments: %w(application path value),
-                  action:    "App.config_set() && Log.output.puts %(done)",
+                  arguments: \%w(application path value),
+                  action:    \%(App.config_set() && Log.output.puts "done"),
                 },
                 del: {
                   info:      "Delete a path",
-                  arguments: %w(application path),
-                  action:    "App.config_del() && Log.output.puts %(done)",
+                  arguments: \%w(application path),
+                  action:    \%(App.config_del() && Log.output.puts "done"),
                 },
               },
             },
             delete: {
               alias:     'd',
               info:      "Delete an added application",
-              arguments: %w(application custom_vars...),
+              arguments: \%w(application custom_vars...),
               action:    "App.delete",
               options:   {
                 keep_user_group: {
@@ -129,7 +130,7 @@ module CLI
             exec: {
               alias:     'e',
               info:      "Execute an application in the foreground",
-              arguments: %w(application),
+              arguments: \%w(application),
               action:    "App.exec",
             },
             list: {
@@ -140,7 +141,7 @@ module CLI
             logs: {
               alias:     'L',
               info:      "Read logs of the application's service - list log names if empty",
-              arguments: %w(application log_names...),
+              arguments: \%w(application log_names...),
               action:    "App.logs() { |log| Log.output << log }",
               options:   {
                 follow: {
@@ -157,13 +158,13 @@ module CLI
             query: {
               alias:     'q',
               info:      "Query informations from an application - `.` for the whole document",
-              arguments: %w(application path),
+              arguments: \%w(application path),
               action:    "Log.output.puts App.query",
             },
             version: {
               alias:     'v',
               info:      "Returns application's version",
-              arguments: %w(application),
+              arguments: \%w(application),
               action:    "Log.output.puts App.version",
             },
           },
@@ -193,7 +194,7 @@ module CLI
             build: {
               alias:     'b',
               info:      "Build a new a package",
-              arguments: %w(package custom_vars...),
+              arguments: \%w(package custom_vars...),
               action:    "Pkg.build",
             },
             clean: {
@@ -204,7 +205,7 @@ module CLI
             delete: {
               alias:     'd',
               info:      "Delete a built package",
-              arguments: %w(package custom_vars...),
+              arguments: \%w(package custom_vars...),
               action:    "Pkg.delete",
             },
             list: {
@@ -215,7 +216,7 @@ module CLI
             query: {
               alias:     'q',
               info:      "Query informations from a package - `.` for the whole document.",
-              arguments: %w(package path),
+              arguments: \%w(package path),
               action:    "Log.output.puts Pkg.query",
             },
           },
@@ -226,27 +227,27 @@ module CLI
           commands: {
             boot: {
               info:      "Auto-start the service at boot",
-              arguments: %w(service state),
+              arguments: \%w(service state),
               action:    "Service.boot",
             },
             reload: {
               info:      "Reload the service",
-              arguments: %w(service),
+              arguments: \%w(service),
               action:    "Service.new().reload || exit 1",
             },
             restart: {
               info:      "Restart the service",
-              arguments: %w(service),
+              arguments: \%w(service),
               action:    "Service.new().restart || exit 1",
             },
             start: {
               info:      "Start the service",
-              arguments: %w(service),
+              arguments: \%w(service),
               action:    "Service.new().start || exit 1",
             },
             status: {
               info:      "Status for specified services or all services if none set",
-              arguments: %w(services...),
+              arguments: \%w(services...),
               action:    "Service.status",
               options:   {
                 all: {
@@ -263,7 +264,7 @@ module CLI
             },
             stop: {
               info:      "Stop the service",
-              arguments: %w(service),
+              arguments: \%w(service),
               action:    "Service.new().stop || exit 1",
             },
           },
@@ -280,7 +281,7 @@ module CLI
             query: {
               alias:     'q',
               info:      "Query informations from a source package - `.` for the whole document",
-              arguments: %w(package path),
+              arguments: \%w(package path),
               action:    "Log.output.puts Src.query",
             },
             update: {
@@ -289,10 +290,6 @@ module CLI
               action: "Src.update",
             },
           },
-        },
-        server: {
-          info:   "Start the dppm API server",
-          action: "server",
         },
         uninstall: {
           alias:  'u',
@@ -304,6 +301,7 @@ module CLI
           info:   "Version with general system information",
           action: "version",
         },
+        {{**additional_commands}}
       }
     )
   rescue ex : Help
@@ -318,6 +316,8 @@ module CLI
     end
     exit 1
   end
+  CLI.internal_run
+  end
 
   def version(**args)
     Log.output << "DPPM version: " << DPPM.version << '\n'
@@ -326,11 +326,6 @@ module CLI
     Host.vars.each do |variable, value|
       Log.output << variable << ": " << value << '\n'
     end
-  end
-
-  def server(**args)
-    Log.output.puts "available soon! (press CTRL+C)"
-    sleep
   end
 
   def query(any : CON::Any, path : String) : CON::Any

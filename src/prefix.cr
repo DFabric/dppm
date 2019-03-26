@@ -26,9 +26,9 @@ struct Prefix
   end
 
   def create
-    Dir.mkdir @path
-    Dir.mkdir @app
-    Dir.mkdir @pkg
+    {@path, @app, @pkg}.each do |dir|
+      Dir.mkdir dir if !Dir.exists? dir
+    end
   end
 
   def dppm : App

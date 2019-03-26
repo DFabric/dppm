@@ -1,5 +1,4 @@
 require "con"
-require "file_utils"
 
 module DPPM
   extend self
@@ -18,4 +17,17 @@ module DPPM
 end
 
 require "./cli"
-CLI.run
+
+# TODO: integrate the DPPM API repository
+def server(**args)
+  Log.output.puts "available soon! (press CTRL+C)"
+  sleep
+end
+
+# TODO: change to `dppm api`
+CLI.run(
+  server: {
+    info:   "Start the dppm API server",
+    action: "server",
+  }
+)

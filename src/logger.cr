@@ -8,7 +8,7 @@ module Log
   @@date = false
 
   def print_date(io)
-    Time.now.to_s("%F %T%z ", io) if @@date
+    Time.utc_now.to_s("%F %T%z ", io) if @@date
   end
 
   def info(title : String, message : String)
