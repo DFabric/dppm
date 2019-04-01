@@ -6,27 +6,30 @@ module CLI
   extend self
   include Clicr
 
+  def default_prefix
+    if (current_dir = Dir.current).ends_with? "/app/dppm"
+      File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
+    elsif File.exists? "/usr/local/bin/dppm"
+      File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm")))))
+    elsif Process.root? && Dir.exists? "/srv"
+      "/srv/dppm"
+    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
+      xdg_data_home + "/dppm"
+    else
+      ENV["HOME"] + "/.dppm"
+    end
+  end
+
   macro run(**additional_commands)
   def CLI.internal_run
     __debug = false
-    prefix = if (current_dir = Dir.current).ends_with? "/app/dppm"
-               File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
-             elsif File.exists? "/usr/local/bin/dppm"
-               File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm")))))
-             elsif Process.root? && Dir.exists? "/srv"
-               "/srv/dppm"
-             elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
-               xdg_data_home + "/dppm"
-             else
-               ENV["HOME"] + "/.dppm"
-             end
     Clicr.create(
       name: "dppm",
       info: "The DPlatform Package Manager",
       variables: {
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
-          default: prefix,
+          default: default_prefix,
         },
         config: {
           info: "Configuration file path",
