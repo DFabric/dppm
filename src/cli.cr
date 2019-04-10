@@ -6,22 +6,8 @@ module CLI
   extend self
   include Clicr
 
-  def default_prefix
-    if (current_dir = Dir.current).ends_with? "/app/dppm"
-      File.dirname(File.dirname(File.dirname(File.dirname current_dir)))
-    elsif File.exists? "/usr/local/bin/dppm"
-      File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm")))))
-    elsif Process.root? && Dir.exists? "/srv"
-      "/srv/dppm"
-    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
-      xdg_data_home + "/dppm"
-    else
-      ENV["HOME"] + "/.dppm"
-    end
-  end
-
   macro run(**additional_commands)
-  def CLI.internal_run
+  def CLI.internal_run(**additional_commands)
     __debug = false
     Clicr.create(
       name: "dppm",
@@ -29,12 +15,16 @@ module CLI
       variables: {
         prefix: {
           info:    "Base path for dppm packages, sources and apps",
-          default: default_prefix,
+          default: DPPM.default_prefix,
         },
         config: {
           info: "Configuration file path",
         },
-        source: {
+        source_name: {
+          info:    "Name of the source to get packages and configuration",
+          default: DPPM.default_source_name,
+        },
+        source_path: {
           info: "Source path/url of the packages and configurations (default in the config file)",
         },
       },
@@ -52,6 +42,12 @@ module CLI
         app: {
           alias:    'a',
           info:     "Manage applications",
+          variables: {
+            group: {
+              info:    "Group namespace where installing applications",
+              default: DPPM.default_group,
+            },
+          },
           commands: {
             add: {
               alias:     'a',
@@ -136,6 +132,11 @@ module CLI
               arguments: \%w(application),
               action:    "App.exec",
             },
+            install: {
+              alias:  'i',
+              info:   "Install DPPM to a new defined prefix",
+              action: "install_dppm",
+            },
             list: {
               alias:  'l',
               info:   "List applications",
@@ -164,6 +165,11 @@ module CLI
               arguments: \%w(application path),
               action:    "Log.output.puts App.query",
             },
+            uninstall: {
+              alias:  'u',
+              info:   "Uninstall DPPM with all its applications",
+              action: "uninstall_dppm",
+            },
             version: {
               alias:     'v',
               info:      "Returns application's version",
@@ -171,11 +177,6 @@ module CLI
               action:    "Log.output.puts App.version",
             },
           },
-        },
-        install: {
-          alias:  'i',
-          info:   "Install DPPM to a new defined prefix",
-          action: "install_dppm",
         },
         list: {
           alias:  'l',
@@ -294,11 +295,6 @@ module CLI
             },
           },
         },
-        uninstall: {
-          alias:  'u',
-          info:   "Uninstall DPPM with all its applications",
-          action: "uninstall_dppm",
-        },
         version: {
           alias:  'v',
           info:   "Version with general system information",
@@ -338,8 +334,8 @@ module CLI
     end
   end
 
-  def install_dppm(no_confirm, config, source, prefix, debug = nil)
-    root_prefix = Prefix.new prefix
+  def install_dppm(no_confirm, config, prefix, group, source_name, source_path, debug = nil)
+    root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
     if root_prefix.dppm.exists?
       Log.info "DPPM already installed", root_prefix.path
@@ -348,7 +344,7 @@ module CLI
     root_prefix.create
 
     begin
-      root_prefix.update source
+      root_prefix.update
 
       dppm_package = root_prefix.new_pkg "dppm", DPPM.version
       dppm_package.copy_src_to_path
@@ -360,7 +356,7 @@ module CLI
       app = dppm_package.new_app "dppm"
 
       app.add(
-        vars: {"uid" => "0", "gid" => "0", "user" => "root", "group" => "root"},
+        vars: {"uid" => "0", "gid" => "0"},
         shared: true,
         confirmation: !no_confirm
       ) do
@@ -376,8 +372,8 @@ module CLI
     File.delete PROGRAM_NAME
   end
 
-  def uninstall_dppm(no_confirm, config, source, prefix, debug = nil)
-    root_prefix = Prefix.new prefix
+  def uninstall_dppm(no_confirm, config, prefix, group, source_name, source_path, debug = nil)
+    root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
     raise "DPPM not installed in " + root_prefix.path if !root_prefix.dppm.exists?
     raise "DPPM path not removable - root permission needed" + root_prefix.path if !File.writable? root_prefix.path
@@ -385,7 +381,10 @@ module CLI
     # Delete each installed app
     root_prefix.each_app do |app|
       app.delete(confirmation: !no_confirm, preserve_database: false, keep_user_group: false) do
-        no_confirm || CLI.confirm_prompt
+        if no_confirm || CLI.confirm_prompt
+          app.pkg.delete_global_bin_symlinks
+          true
+        end
       end
     end
 
@@ -410,3 +409,17 @@ module CLI
     confirm_prompt { abort "cancelled." }
   end
 end
+
+# TODO: integrate the DPPM API repository
+def server(**args)
+  Log.output.puts "available soon! (press CTRL+C)"
+  sleep
+end
+
+# TODO: change to `dppm api`
+CLI.run(
+  server: {
+    info:   "Start the dppm API server",
+    action: "server",
+  }
+)

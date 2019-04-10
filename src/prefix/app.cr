@@ -26,12 +26,14 @@ struct Prefix::App
     end
   end
 
+  # Password content, typically used for the database user.
   getter password : String? do
     if File.exists? password_file
       File.read password_file
     end
   end
 
+  # Password path, typically used for the database user.
   getter password_file : String do
     conf_dir + ".password"
   end
@@ -490,7 +492,8 @@ struct Prefix::App
         domain = vars["host"]?
       end
       domain ||= "[::1]"
-      vars["url"] = "http://" + domain + '/' + @name
+      # Add the application name as a path by default if behind a webserver
+      vars["url"] = "http://" + domain + (web_server ? '/' + @name : '/')
       vars["domain"] = domain
     end
 
@@ -515,7 +518,7 @@ struct Prefix::App
       if uid_string = vars["uid"]?
         uid = uid_string.to_u32
         user = libcrown.users[uid].name
-      elsif user = vars["user"]?
+      elsif user = vars["system_user"]?
         uid = libcrown.to_uid user
       else
         user = '_' + @name
@@ -523,7 +526,7 @@ struct Prefix::App
       if gid_string = vars["gid"]?
         gid = gid_string.to_u32
         group = libcrown.groups[gid].name
-      elsif group = vars["group"]?
+      elsif group = vars["system_group"]?
         gid = libcrown.to_gid group
       else
         group = '_' + @name
@@ -538,8 +541,8 @@ struct Prefix::App
 
     vars["uid"] = uid.to_s
     vars["gid"] = gid.to_s
-    vars["user"] = user
-    vars["group"] = group
+    vars["system_user"] = user
+    vars["system_group"] = group
     vars["package"] = pkg.package
     vars["version"] = pkg.version
     vars["basedir"] = @path

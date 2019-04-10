@@ -6,7 +6,8 @@ module IntegrationSpec
       pkg = CLI::Pkg.build(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        source: SAMPLES_DIR,
+        source_name: DPPM.default_source_name,
+        source_path: SAMPLES_DIR,
         prefix: prefix_path,
         package: package,
         custom_vars: Array(String).new)
@@ -20,7 +21,9 @@ module IntegrationSpec
       app = CLI::App.add(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        source: SAMPLES_DIR,
+        group: DPPM.default_group,
+        source_name: DPPM.default_source_name,
+        source_path: SAMPLES_DIR,
         prefix: prefix_path,
         application: application,
         name: name,
@@ -36,6 +39,7 @@ module IntegrationSpec
       delete = CLI::App.delete(
         no_confirm: true,
         prefix: prefix_path,
+        group: DPPM.default_group,
         application: application,
         keep_user_group: false,
         preserve_database: false).not_nil!

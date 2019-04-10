@@ -47,7 +47,6 @@ struct WebSite::Caddy
   end
 
   def write
-    #    @headers.map &.to_a
     File.open @file, "w" do |io|
       @hosts.try &.each do |host|
         io << host << ' '

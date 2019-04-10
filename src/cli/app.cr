@@ -1,25 +1,42 @@
 module CLI::App
   extend self
 
-  def query(prefix, application, path, **args) : String
-    pkg_file = Prefix.new(prefix).new_app(application).pkg_file
+  def query(prefix, group, application, path, **args) : String
+    pkg_file = Prefix.new(prefix, group: group).new_app(application).pkg_file
     CLI.query(pkg_file.any, path).to_pretty_con
   end
 
-  def delete(no_confirm, prefix, application, keep_user_group, preserve_database, **args)
-    Prefix.new(prefix).new_app(application).delete !no_confirm, keep_user_group, preserve_database do
+  def delete(no_confirm, prefix, group, application, keep_user_group, preserve_database, **args)
+    Prefix.new(prefix, group: group).new_app(application).delete !no_confirm, keep_user_group, preserve_database do
       CLI.confirm_prompt
     end
   end
 
-  def add(no_confirm, config, source, prefix, application, contained, noservice, socket, custom_vars = Array(String).new, name = nil, database = nil, url = nil, web_server = nil, debug = nil)
+  def add(
+    no_confirm,
+    config,
+    prefix,
+    source_name,
+    source_path,
+    group,
+    application,
+    contained,
+    noservice,
+    socket,
+    custom_vars = Array(String).new,
+    name = nil,
+    database = nil,
+    url = nil,
+    web_server = nil,
+    debug = nil
+  )
     vars = Hash(String, String).new
     Log.info "initializing", "add"
     vars_parser custom_vars, vars
 
     # Update cache
-    root_prefix = Prefix.new prefix, check: true
-    root_prefix.update source
+    root_prefix = Prefix.new prefix, check: true, group: group, source_name: source_name, source_path: source_path
+    root_prefix.update
     if config
       root_prefix.dppm_config = Prefix::Config.new File.read config
     end

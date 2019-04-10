@@ -8,7 +8,7 @@ description: An easy way to install and manage applications as packages
 
 targets:
   dppm:
-    main: src/dppm.cr
+    main: src/cli.cr
 
 dependencies:
   clicr:

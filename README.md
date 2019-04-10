@@ -43,7 +43,7 @@ See the `Development` section
 
 ### 2. Run the installation command
 
-`sudo bin/dppm install`
+`sudo bin/dppm app install`
 
 You don't *need* to install it as root, but no system services nor dedicated users will be available. You will have to rely on `sudo dppm app exec`
 
@@ -84,7 +84,7 @@ To follow last application logs:
 
 ## Uninstall
 
-`sudo dppm uninstall`
+`sudo dppm app uninstall`
 
 ## Supported environments
 

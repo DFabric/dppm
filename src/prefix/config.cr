@@ -1,5 +1,5 @@
 struct Prefix::Config
-  getter source : String { data["source"].as_s }
+  getter sources : Hash(String, String) { data["sources"].as_h.transform_values &.as_s }
   getter host : String { data["host"].as_s }
   getter port : String { data["port"].as_s }
   getter data : CON::Any

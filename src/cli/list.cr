@@ -1,8 +1,8 @@
 module CLI::List
   extend self
 
-  def all(prefix, **args)
-    root_prefix = Prefix.new prefix
+  def all(prefix, source_name, source_path, group = nil, **args)
+    root_prefix = Prefix.new prefix, group: group || DPPM.default_group, source_name: source_name, source_path: source_path
     Log.output.puts "applications:"
     root_prefix.each_app { |app| Log.output.puts app.name }
     Log.output.puts "\npackages:"

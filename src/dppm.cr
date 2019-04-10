@@ -1,5 +1,3 @@
-require "con"
-
 module DPPM
   extend self
 
@@ -14,20 +12,25 @@ module DPPM
   def version : String
     {{ `date --utc +"%Y.%m.%d"`.stringify.chomp }}
   end
+
+  # Default prefix for a DPPM installation
+  class_getter default_prefix : String do
+    if (current_dir = Dir.current).ends_with? "/app/dppm"
+      File.dirname(File.dirname(File.dirname(File.dirname(File.dirname current_dir))))
+    elsif File.exists? "/usr/local/bin/dppm"
+      File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.dirname(File.real_path "/usr/local/bin/dppm"))))))
+    elsif Process.root? && Dir.exists? "/srv"
+      "/srv/dppm"
+    elsif xdg_data_home = ENV["XDG_DATA_HOME"]?
+      xdg_data_home + "/dppm"
+    else
+      ENV["HOME"] + "/.dppm"
+    end
+  end
+
+  # Default group namespace where installing applications
+  class_getter default_group : String = "default-group"
+
+  # Default source name to get packages
+  class_getter default_source_name : String = "default"
 end
-
-require "./cli"
-
-# TODO: integrate the DPPM API repository
-def server(**args)
-  Log.output.puts "available soon! (press CTRL+C)"
-  sleep
-end
-
-# TODO: change to `dppm api`
-CLI.run(
-  server: {
-    info:   "Start the dppm API server",
-    action: "server",
-  }
-)

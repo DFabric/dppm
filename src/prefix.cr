@@ -1,5 +1,6 @@
 require "file_utils"
 require "exec"
+require "./dppm"
 require "./logger"
 require "./config"
 require "./database"
@@ -12,21 +13,41 @@ struct Prefix
   class_getter default_dppm_config = Config.new {{ read_file "./config.con" }}
 
   getter path : String,
+    root_app : String,
+    root_pkg : String,
+    root_src : String,
     app : String,
     pkg : String,
-    src : String
+    src : String,
+    group : String,
+    source_name : String
 
-  def initialize(@path : String, check : Bool = false)
-    @app = @path + "/app/"
-    @pkg = @path + "/pkg/"
-    @src = @path + "/src/"
+  getter source_path : String do
+    dppm_config.sources[@source_name]
+  end
+
+  def initialize(
+    @path : String,
+    check : Bool = false,
+    @group : String = DPPM.default_group,
+    @source_name : String = DPPM.default_source_name,
+    @source_path : String? = nil
+  )
+    @root_app = @path + "/app/"
+    @root_pkg = @path + "/pkg/"
+    @root_src = @path + "/src/"
+
+    @app = @root_app + @group + '/'
+    @pkg = @root_pkg + @source_name + '/'
+    @src = @root_src + @source_name + '/'
+
     if check && !dppm.exists?
-      raise "DPPM isn't installed in #{@path}. Run `dppm install`"
+      raise "DPPM isn't installed in #{@path}. Run `dppm app install`"
     end
   end
 
   def create
-    {@path, @app, @pkg}.each do |dir|
+    {@path, @root_app, @root_pkg, @root_src, @app, @pkg}.each do |dir|
       Dir.mkdir dir if !Dir.exists? dir
     end
   end
@@ -83,17 +104,15 @@ struct Prefix
   end
 
   # Download a cache of package sources
-  def update(source : String? = dppm_config.source, force : Bool = false)
-    source ||= dppm_config.source
-
+  def update(force : Bool = false)
     # Update cache if older than 2 days
     source_dir = @src.rchop
     packages_source_date = nil
     update = true
     if File.exists?(source_dir) && File.symlink?(source_dir)
       update = false
-    elsif HTTPHelper.url? source
-      if packages_source_date = HTTPHelper.get_string(source.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?
+    elsif HTTPHelper.url? source_path
+      if packages_source_date = HTTPHelper.get_string(source_path.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?
         if Dir.exists? @src
           update = !packages_source_date.starts_with? File.info(@src.rchop).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
         else
@@ -107,18 +126,19 @@ struct Prefix
     if force || update
       delete_src
       if packages_source_date
-        Log.info "downloading packages source", source
-        file = @path + '/' + File.basename source
-        HTTPHelper.get_file source, file
-        Host.exec "/bin/tar", {"zxf", file, "-C", @path}
+        Log.info "downloading packages source", source_path
+        file = @root_src + '/' + File.basename source_path
+        HTTPHelper.get_file source_path, file
+        Host.exec "/bin/tar", {"zxf", file, "-C", @root_src}
         File.delete file
-        File.rename Dir[@path + "/*packages-source*"][0], @src
+        File.rename Dir[@root_src + "/*packages-source*"][0], @src
         File.touch source_dir, Time.parse_utc(packages_source_date, "%Y-%m-%dT%H:")
         Log.info "cache updated", @src
       else
-        FileUtils.mkdir_p @path
-        File.symlink File.real_path(source), source_dir
-        Log.info "symlink added from `#{File.real_path(source)}`", source_dir
+        FileUtils.mkdir_p @root_src
+        real_source_path = File.real_path source_path
+        File.symlink real_source_path, source_dir
+        Log.info "symlink added from `#{real_source_path}`", source_dir
       end
     else
       Log.info "cache up-to-date", @src
