@@ -1,0 +1,3 @@
+require "./cli"
+
+CLI.run
