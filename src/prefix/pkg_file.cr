@@ -7,23 +7,34 @@ struct Prefix::PkgFile
     Lib
     PHP
     TCP
+    TCP_UDP
+    UDP
 
     def self.new(type : String)
       case type
-      when "HTML" then HTML
-      when "HTTP" then HTTP
-      when "lib"  then Lib
-      when "PHP"  then PHP
-      when "TCP"  then TCP
-      else             raise "unknow package type: " + type
+      when "HTML"    then HTML
+      when "HTTP"    then HTTP
+      when "lib"     then Lib
+      when "PHP"     then PHP
+      when "TCP"     then TCP
+      when "TCP/UDP" then TCP_UDP
+      when "UDP"     then UDP
+      else                raise "unknow package type: " + type
       end
     end
 
     def to_s : String
-      if self == Lib
-        "lib"
-      else
-        value.to_s
+      case self
+      when Lib     then "lib"
+      when TCP_UDP then "TCP/UDP"
+      else              value.to_s
+      end
+    end
+
+    def use_url? : Bool
+      case self
+      when HTML, HTTP, PHP then true
+      else                      false
       end
     end
   end

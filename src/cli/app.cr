@@ -72,12 +72,12 @@ module CLI::App
     end
   end
 
-  def version(prefix, application, **args) : String
-    Prefix.new(prefix).new_app(application).pkg.version
+  def version(prefix, group, application, **args) : String
+    Prefix.new(prefix, group: group).new_app(application).pkg.version
   end
 
-  def exec(prefix, application, **args)
-    app = Prefix.new(prefix).new_app application
+  def exec(prefix, group, application, **args)
+    app = Prefix.new(prefix, group: group).new_app application
 
     env_vars = app.pkg_file.env || Hash(String, String).new
     env_vars["PATH"] = app.path_env_var
@@ -95,8 +95,8 @@ module CLI::App
       chdir: app.path, &.wait
   end
 
-  def config_get(prefix, nopkg : Bool, application, path, **args)
-    app = Prefix.new(prefix).new_app application
+  def config_get(prefix, group, nopkg : Bool, application, path, **args)
+    app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       if nopkg && path == "."
         Log.output.puts app.config!.data
@@ -112,8 +112,8 @@ module CLI::App
     end
   end
 
-  def config_set(prefix, nopkg : Bool, application, path, value, **args)
-    app = Prefix.new(prefix).new_app application
+  def config_set(prefix, group, nopkg : Bool, application, path, value, **args)
+    app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       app.config!.set path, value
     else
@@ -121,8 +121,8 @@ module CLI::App
     end
   end
 
-  def config_del(prefix, nopkg : Bool, application, path, **args)
-    app = Prefix.new(prefix).new_app application
+  def config_del(prefix, group, nopkg : Bool, application, path, **args)
+    app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       app.config!.del path
     else
@@ -130,8 +130,8 @@ module CLI::App
     end
   end
 
-  def self.logs(prefix : String, log_names : Array(String), lines : String?, follow : Bool, application : String, **args, &block : String ->)
-    app = Prefix.new(prefix).new_app application
+  def self.logs(prefix : String, group : String, log_names : Array(String), lines : String?, follow : Bool, application : String, **args, &block : String ->)
+    app = Prefix.new(prefix, group: group).new_app application
     if log_names.empty?
       Log.output << "LOG NAMES\n"
       app.each_log_file do |log_file|

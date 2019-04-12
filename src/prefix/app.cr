@@ -437,18 +437,29 @@ struct Prefix::App
 
     if !socket && (port = vars["port"]?)
       Log.info "checking port availability", port
-      Host.tcp_port_available port.to_u16
+      if pkg_file.type.udp? || pkg_file.type.tcp_udp?
+        Host.udp_port_available port.to_u16
+      end
+
+      if !pkg_file.type.udp?
+        Host.tcp_port_available port.to_u16
+      end
     end
 
     source_package = pkg.exists? || pkg.src
     if web_server
-      if !(pkg_file.type.html? || pkg_file.type.http? || pkg_file.type.php?)
+      if !pkg_file.type.use_url?
         raise "only HTML, HTTP and PHP applications can be serverd behind a web server: #{pkg_file.type}"
       end
       webserver = @prefix.new_app web_server
       web_server_uid = webserver.file_info.owner
       @website = webserver.new_website @name, source_package.conf_dir
       vars["web_server"] = web_server
+    end
+
+    if url && pkg_file.type.use_url?
+      vars["url"] = url
+      vars["domain"] = URI.parse(url).hostname.to_s
     end
 
     set_url = false
