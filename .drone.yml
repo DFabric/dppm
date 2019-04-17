@@ -11,4 +11,4 @@ steps:
   commands:
   - shards install
   - crystal spec
-  - shards build --progress --release --static
+  - shards build --progress --static
