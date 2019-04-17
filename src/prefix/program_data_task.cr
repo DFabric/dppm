@@ -186,7 +186,7 @@ struct Prefix::ProgramData::Task
     when "dir" then Dir.current
     when "ls"
       directory = cmd[1]? || Dir.current
-      Dir.entries(directory).join '\n'
+      Dir.new(directory).children.join '\n'
     when "get" then ::Config.new(File.new cmd[1]).get(cmd[2]).to_s
     when "del"
       config_file = File.new cmd[1]

@@ -15,7 +15,8 @@ describe Prefix::ProgramData::Task do
     end
 
     it "ls" do
-      cmd.execute("ls .").should eq ".\n..\ntest_file"
+      File.touch path + "/TEST"
+      cmd.execute("ls .").should eq "test_file\nTEST"
     end
 
     describe "file_exists?" do
