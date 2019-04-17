@@ -1,0 +1,14 @@
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  image: jrei/crystal-alpine
+  commands:
+  - shards install
+  - crystal spec
+  - shards build --progress --release --static

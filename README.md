@@ -1,5 +1,6 @@
 ![DP logo](https://avatars.githubusercontent.com/u/19499073)
 
+[![Build Status](https://cloud.drone.io/api/badges/DFabric/dppm/status.svg)](https://cloud.drone.io/DFabric/dppm)
 [![Gitter](https://img.shields.io/badge/chat-on_gitter-red.svg?style=flat-square)](https://gitter.im/DFabric/dppm)
 [![ISC](https://img.shields.io/badge/License-ISC-blue.svg?style=flat-square)](https://en.wikipedia.org/wiki/ISC_license)
 
