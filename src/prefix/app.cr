@@ -161,11 +161,8 @@ struct Prefix::App
     port = database_app.get_config("port").to_s
 
     uri = URI.new(
-      scheme: nil,
       host: host,
       port: port.to_i,
-      path: nil,
-      query: nil,
       user: "root",
       password: database_app.password,
     )

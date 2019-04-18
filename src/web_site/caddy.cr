@@ -49,11 +49,13 @@ struct WebSite::Caddy
   def write
     File.open @file, "w" do |io|
       @hosts.try &.each do |host|
-        io << host << ' '
+        io << host.to_s.lchop("//") << ' '
       end
       io << "{"
       io << "\n    root " << @root if @root
-      io << "\n    proxy / " << @proxy if @proxy
+      if proxy = @proxy
+        io << "\n    proxy / " << proxy.to_s.lchop("//")
+      end
       io << "\n    fastcgi / unix:" << @fastcgi << " php" if @fastcgi
       io << "\n    log " << @log_file_output
       io << "\n    errors " << @log_file_error
