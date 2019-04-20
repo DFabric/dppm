@@ -6,9 +6,18 @@ platform:
   arch: amd64
 
 steps:
+- name: format
+  image: jrei/crystal-alpine
+  commands:
+  - crystal tool format --check
+
 - name: build
   image: jrei/crystal-alpine
   commands:
   - shards install
+  - shards build --time --static
+
+- name: test
+  image: jrei/crystal-alpine
+  commands:
   - crystal spec
-  - shards build --progress --static
