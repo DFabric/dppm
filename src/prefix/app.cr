@@ -565,16 +565,7 @@ struct Prefix::App
 
     deps = Set(Prefix::Pkg).new
     pkg.build deps, false do
-      if confirmation
-        Log.output << "task: add"
-        vars.each do |var, value|
-          Log.output << '\n' << var << ": " << value
-        end
-        simulate_deps deps, Log.output
-        return if !yield
-      else
-        yield
-      end
+      simulate vars, deps, "add", confirmation, Log.output, &block
     end
     begin
       Log.info "adding to the system", @name

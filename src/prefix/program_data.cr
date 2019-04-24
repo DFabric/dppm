@@ -73,19 +73,28 @@ module Prefix::ProgramData
     end
   end
 
-  def simulate_deps(deps : Set(Pkg), io)
-    if !deps.empty?
-      io << "\ndeps: "
-      start = true
-      deps.each do |dep_pkg|
-        if start
-          start = false
-        else
-          io << ", "
-        end
-        io << dep_pkg.name
+  private def simulate(vars : Hash(String, String), deps : Set(Pkg), task : String, confirmation : Bool, io : IO, &block) : Nil
+    if confirmation
+      io << "task: " << task
+      vars.each do |var, value|
+        io << '\n' << var << ": " << value
       end
+      if !deps.empty?
+        io << "\ndeps: "
+        start = true
+        deps.each do |dep_pkg|
+          if start
+            start = false
+          else
+            io << ", "
+          end
+          io << dep_pkg.name
+        end
+      end
+      io << '\n'
+      return if !yield
+    else
+      yield
     end
-    io << '\n'
   end
 end

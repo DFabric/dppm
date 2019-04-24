@@ -165,15 +165,8 @@ class Prefix::Pkg
       return self if confirmation
       yield
       return self
-    elsif confirmation
-      Log.output << "task: build"
-      vars.each do |var, value|
-        Log.output << '\n' << var << ": " << value
-      end
-      simulate_deps deps, Log.output
-      return if !yield
     else
-      yield
+      simulate vars, deps, "build", confirmation, Log.output, &block
     end
 
     begin
