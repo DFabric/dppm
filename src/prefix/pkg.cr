@@ -1,4 +1,5 @@
 require "./program_data"
+require "semantic_version"
 
 class Prefix::Pkg
   include ProgramData
@@ -7,6 +8,7 @@ class Prefix::Pkg
     version : String
 
   getter app_bin_path : String { @path + "app/bin" }
+  getter semantic_version : SemanticVersion { SemanticVersion.parse @version }
 
   protected property app_config_file : String? = nil, app_config : ::Config::Types? = nil
 
@@ -45,15 +47,7 @@ class Prefix::Pkg
       version = tag_or_version
     end
     if version
-      # Check if the version number is available
-      available_version = false
-      src.pkg_file.each_version do |ver|
-        if version == ver
-          available_version = true
-          break
-        end
-      end
-      raise "no available version number: " + version if !available_version
+      src.pkg_file.ensure_version version
     else
       version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
     end

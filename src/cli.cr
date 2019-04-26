@@ -75,8 +75,14 @@ module CLI
                 name: {
                   info: "Name of the application to install",
                 },
+                tag: {
+                  info: "Package version's tag (e.g: latest)",
+                },
                 url: {
                   info: "URL address (like https://myapp.example.net or http://[::1]/myapp), usually used with a web server",
+                },
+                version: {
+                  info: "Package version",
                 },
                 web_server: {
                   info: "Application name of the web server serving this application as a public website",
@@ -166,9 +172,29 @@ module CLI
               action:    "Log.output.puts App.query",
             },
             uninstall: {
-              alias:  'u',
+              alias:  'U',
               info:   "Uninstall DPPM with all its applications",
               action: "uninstall_dppm",
+            },
+            upgrade: {
+              alias:     'u',
+              info:      "Upgrade the application to a version",
+              arguments: \%w(application custom_vars...),
+              action:    "App.upgrade",
+              options: {
+                contained: {
+                  short: 'c',
+                  info:  "No shared dependencies, copy instead of symlinks",
+                },
+              },
+              variables: {
+                tag: {
+                  info: "Package version's tag (e.g: latest)",
+                },
+                version: {
+                  info: "Package version",
+                },
+              },
             },
             version: {
               alias:     'v',
@@ -187,11 +213,11 @@ module CLI
           alias:     'p',
           info:      "Manage built packages",
           variables: {
-            version: {
-              info: "Package version",
-            },
             tag: {
               info: "Package version's tag (e.g: latest)",
+            },
+            version: {
+              info: "Package version",
             },
           },
           commands: {

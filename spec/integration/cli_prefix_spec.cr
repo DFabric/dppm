@@ -34,6 +34,23 @@ module IntegrationSpec
     end
   end
 
+  def upgrade_application(prefix_path : String, application : String, version : String)
+    it "upgrades an application" do
+      app = CLI::App.upgrade(
+        no_confirm: true,
+        config: DPPM_CONFIG_FILE,
+        group: DPPM.default_group,
+        source_name: DPPM.default_source_name,
+        source_path: SAMPLES_DIR,
+        prefix: prefix_path,
+        application: application,
+        contained: false,
+        version: version,
+      )
+      app.pkg.version.should eq version
+    end
+  end
+
   def delete_application(prefix_path : String, application : String)
     it "deletes an application" do
       delete = CLI::App.delete(

@@ -12,6 +12,44 @@ module CLI::App
     end
   end
 
+  def upgrade(
+    no_confirm,
+    config,
+    prefix,
+    source_name,
+    source_path,
+    group,
+    application,
+    contained,
+    custom_vars = Array(String).new,
+    version = nil,
+    tag = nil,
+    **args
+  )
+    Log.info "initializing", "upgrade"
+    vars = vars_parser custom_vars
+
+    # Update cache
+    root_prefix = Prefix.new prefix, check: true, group: group, source_name: source_name, source_path: source_path
+    root_prefix.update
+    if config
+      root_prefix.dppm_config = Prefix::Config.new File.read config
+    end
+
+    # Create task
+    app = Prefix.new(prefix, group: group).new_app application
+    app.upgrade(
+      tag,
+      version,
+      vars: vars,
+      shared: !contained,
+      confirmation: !no_confirm
+    ) do
+      no_confirm || CLI.confirm_prompt
+    end
+    app
+  end
+
   def add(
     no_confirm,
     config,
@@ -24,15 +62,16 @@ module CLI::App
     noservice,
     socket,
     custom_vars = Array(String).new,
+    version = nil,
+    tag = nil,
     name = nil,
     database = nil,
     url = nil,
     web_server = nil,
     debug = nil
   )
-    vars = Hash(String, String).new
     Log.info "initializing", "add"
-    vars_parser custom_vars, vars
+    vars = vars_parser custom_vars
 
     # Update cache
     root_prefix = Prefix.new prefix, check: true, group: group, source_name: source_name, source_path: source_path
@@ -42,7 +81,7 @@ module CLI::App
     end
 
     # Create task
-    pkg = Prefix::Pkg.create root_prefix, application, vars["version"]?, vars["tag"]?
+    pkg = Prefix::Pkg.create root_prefix, application, version, tag
     app = pkg.new_app name
     app.add(
       vars: vars,
@@ -59,7 +98,8 @@ module CLI::App
     app
   end
 
-  def vars_parser(custom_vars : Array(String), vars : Hash(String, String))
+  def vars_parser(custom_vars : Array(String)) : Hash(String, String)
+    vars = Hash(String, String).new
     custom_vars.each do |arg|
       case arg
       when .includes? '='
@@ -70,6 +110,7 @@ module CLI::App
         raise "invalid variable: #{arg}"
       end
     end
+    vars
   end
 
   def version(prefix, group, application, **args) : String

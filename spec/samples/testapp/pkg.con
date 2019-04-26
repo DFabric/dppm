@@ -13,7 +13,7 @@ deps {
 }
 version {
   self {
-    src [ "0.0.1" "0.1.2-beta" ]
+    src [ "0.3.0" "0.2.0" ]
   }
 }
 config {
@@ -22,8 +22,8 @@ config {
   }
 }
 tags {
-  stable { src "0.0.1" }
-  latest { src "0.1.2-beta" }
+  beta   { src "0.3.0" }
+  latest { src "0.2.0" }
 }
 exec {
   start  "test start"

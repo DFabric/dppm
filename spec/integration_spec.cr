@@ -14,6 +14,7 @@ describe IntegrationSpec do
     IntegrationSpec.add_application prefix_path: prefix.path, application: package, name: package
 
     IntegrationSpec.test_prefix_app prefix, package
+    IntegrationSpec.upgrade_application prefix_path: prefix.path, application: package, version: "0.3.0"
 
     IntegrationSpec.delete_application prefix.path, package
     IntegrationSpec.clean_unused_packages prefix.path

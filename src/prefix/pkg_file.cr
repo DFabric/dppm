@@ -179,4 +179,17 @@ struct Prefix::PkgFile
       src
     end
   end
+
+  # Ensure the version number is available
+  def ensure_version(version : String) : String
+    available_version = false
+    each_version do |ver|
+      if version == ver
+        available_version = true
+        break
+      end
+    end
+    raise "no available version number: " + version if !available_version
+    version
+  end
 end

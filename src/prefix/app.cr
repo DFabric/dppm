@@ -12,6 +12,7 @@ struct Prefix::App
   getter logs_dir : String { path + "logs/" }
   getter log_file_output : String { logs_dir + "output.log" }
   getter log_file_error : String { logs_dir + "output.log" }
+  getter web_site_file : String { conf_dir + "web-site" }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg : Pkg? = nil)
     Utils.ascii_alphanumeric_dash? name
@@ -311,14 +312,22 @@ struct Prefix::App
     end
   end
 
+  # Real package path of the application
   def real_app_path : String
     File.dirname File.real_path(app_path)
+  end
+
+  # Use a shared application package
+  def shared? : Bool
+    raise "application directory doesn't exist: " + app_path if !File.exists? app_path
+    File.symlink? app_path
   end
 
   def each_log_file(&block : String ->)
     Dir.each_child logs_dir, &block
   end
 
+  # Get application logs
   def get_logs(file_name : String, follow : Bool = true, lines : Int32? = nil, &block : String ->)
     if follow
       Tail::File.new(logs_dir + file_name).follow(lines: (lines || 10), &block)
@@ -329,6 +338,7 @@ struct Prefix::App
     end
   end
 
+  # Set directory access permissions
   def set_permissions
     File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
     File.chmod(app_path, 0o750) if !File.symlink? app_path
@@ -345,10 +355,6 @@ struct Prefix::App
         str << ':' << library.bin_path
       end
     end
-  end
-
-  getter web_site_file : String do
-    conf_dir + "web-site"
   end
 
   def webserver? : Prefix::App?
@@ -393,6 +399,60 @@ struct Prefix::App
     when "caddy" then WebSite::Caddy.new file
     else              raise "unsupported web server: " + pkg_file.package
     end
+  end
+
+  def upgrade(
+    tag : String? = nil,
+    version : String? = nil,
+    vars : Hash(String, String) = Hash(String, String).new,
+    shared : Bool = true,
+    confirmation : Bool = true,
+    &block
+  )
+    new_pkg = Pkg.create prefix: @prefix, name: pkg.package, version: version, tag: tag
+
+    case new_pkg.semantic_version
+    when .< pkg.semantic_version
+      Log.warn "downgrading is not recommended", "from `#{pkg.version}` to `#{new_pkg.version}`"
+    when .== pkg.semantic_version
+      current_shared_state = shared?
+      if current_shared_state == shared
+        Log.info "nothing to do", pkg.version
+        return self
+      else
+        Log.info "changing application's package shared state", "from `#{current_shared_state}` to `#{shared}`"
+      end
+    end
+
+    vars["package"] = pkg.package
+    vars["version_current"] = pkg.version
+    vars["version"] = new_pkg.version
+    vars["basedir"] = @path
+    vars["name"] = @name
+
+    if env = pkg_file.env
+      vars.merge! env
+    end
+
+    deps = Set(Prefix::Pkg).new
+    new_pkg.build deps, false do
+      simulate vars, deps, "upgrade", confirmation, Log.output, &block
+    end
+
+    # Replace current application's package by the new one
+    FileUtils.rm_r app_path
+    File.delete pkg_file.path
+    @pkg = new_pkg
+    create_application_dir shared
+    write_configs
+    set_permissions
+
+    if Process.root?
+      Utils.chown_r @path, file_info.owner, file_info.group
+    end
+
+    Log.info "upgrade completed", @path
+    self
   end
 
   def add(
@@ -573,22 +633,7 @@ struct Prefix::App
 
       # Create the new application
       Dir.mkdir @path
-
-      app_shared = shared
-      if !pkg_file.shared
-        Log.warn "can't be shared, must be self-contained", pkg_file.package
-        app_shared = false
-      end
-
-      if app_shared
-        Log.info "creating symlinks from " + pkg.path, @path
-        File.symlink pkg.app_path, app_path
-        File.symlink pkg.pkg_file.path, pkg_file.path
-      else
-        Log.info "copying from " + pkg.path, @path
-        FileUtils.cp_r pkg.app_path, app_path
-        FileUtils.cp_r pkg.pkg_file.path, pkg_file.path
-      end
+      create_application_dir shared
 
       # Copy configurations and data
       Log.info "copying configurations and data", @name
@@ -702,7 +747,7 @@ struct Prefix::App
 
         # Save the modifications to the disk
         libcrown.write
-        Utils.chown_r path, uid, gid
+        Utils.chown_r @path, uid, gid
       end
 
       Log.info "add completed", @path
@@ -723,6 +768,23 @@ struct Prefix::App
       else
         Dir.mkdir dest
       end
+    end
+  end
+
+  private def create_application_dir(shared : Bool)
+    if !pkg_file.shared
+      Log.warn "can't be shared, must be self-contained", pkg_file.package
+      shared = false
+    end
+
+    if shared
+      Log.info "creating symlinks from " + pkg.path, @path
+      File.symlink pkg.app_path, app_path
+      File.symlink pkg.pkg_file.path, pkg_file.path
+    else
+      Log.info "copying from " + pkg.path, @path
+      FileUtils.cp_r pkg.app_path, app_path
+      FileUtils.cp_r pkg.pkg_file.path, pkg_file.path
     end
   end
 
