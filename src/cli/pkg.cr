@@ -22,12 +22,12 @@ module CLI::Pkg
     Log.info "initializing", "build"
 
     # Update cache
-    root_prefix = Prefix.new prefix, check: true, source_name: source_name, source_path: source_path
-
-    root_prefix.update
+    root_prefix = Prefix.new prefix, source_name: source_name, source_path: source_path
+    root_prefix.check
     if config
       root_prefix.dppm_config = Prefix::Config.new File.read config
     end
+    root_prefix.update
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, package, version, tag

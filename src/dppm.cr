@@ -27,10 +27,4 @@ module DPPM
       ENV["HOME"] + "/.dppm"
     end
   end
-
-  # Default group namespace where installing applications
-  class_getter default_group : String = "default-group"
-
-  # Default source name to get packages
-  class_getter default_source_name : String = "default"
 end

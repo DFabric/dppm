@@ -30,11 +30,12 @@ module CLI::App
     vars = vars_parser custom_vars
 
     # Update cache
-    root_prefix = Prefix.new prefix, check: true, group: group, source_name: source_name, source_path: source_path
-    root_prefix.update
+    root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
+    root_prefix.check
     if config
       root_prefix.dppm_config = Prefix::Config.new File.read config
     end
+    root_prefix.update
 
     # Create task
     app = Prefix.new(prefix, group: group).new_app application
@@ -74,11 +75,12 @@ module CLI::App
     vars = vars_parser custom_vars
 
     # Update cache
-    root_prefix = Prefix.new prefix, check: true, group: group, source_name: source_name, source_path: source_path
-    root_prefix.update
+    root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
+    root_prefix.check
     if config
       root_prefix.dppm_config = Prefix::Config.new File.read config
     end
+    root_prefix.update
 
     # Create task
     pkg = Prefix::Pkg.create root_prefix, application, version, tag

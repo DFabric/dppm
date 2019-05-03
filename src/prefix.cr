@@ -10,27 +10,51 @@ require "./web_site"
 require "./http_helper"
 
 struct Prefix
+  # Default DPPM configuration.
   class_getter default_dppm_config = Config.new {{ read_file "./config.con" }}
 
-  getter path : String,
-    root_app : String,
-    root_pkg : String,
-    root_src : String,
-    app : String,
-    pkg : String,
-    src : String,
-    group : String,
-    source_name : String
+  # Default group namespace where installing applications.
+  class_getter default_group : String = "default-group"
 
+  # Default source name to get packages.
+  class_getter default_source_name : String = "default"
+
+  # Application group namespace used.
+  getter group : String
+
+  # Source name to use when building packages and creating applications.
+  getter source_name : String
+
+  # Path of the prefix on the filesystem.
+  getter path : String
+
+  # Base path for applications.
+  getter root_app : String
+
+  # Base path for packages.
+  getter root_pkg : String
+
+  # Base path for packages sources.
+  getter root_src : String
+
+  # Application path, including the group namespace.
+  getter app : String
+
+  # Package path, including the source.
+  getter pkg : String
+
+  # Package path, including the source.
+  getter src : String
+
+  # Source path used, which can be an URL or a filesystem path.
   getter source_path : String do
     dppm_config.sources[@source_name]
   end
 
   def initialize(
     @path : String,
-    check : Bool = false,
-    @group : String = DPPM.default_group,
-    @source_name : String = DPPM.default_source_name,
+    @group : String = @@default_group,
+    @source_name : String = @@default_source_name,
     @source_path : String? = nil
   )
     @root_app = @path + "/app/"
@@ -40,22 +64,26 @@ struct Prefix
     @app = @root_app + @group + '/'
     @pkg = @root_pkg + @source_name + '/'
     @src = @root_src + @source_name + '/'
-
-    if check && !dppm.exists?
-      raise "DPPM isn't installed in #{@path}. Run `dppm app install`"
-    end
   end
 
+  # Create `@path` and all its subdirectories needed.
   def create
     {@path, @root_app, @root_pkg, @root_src, @app, @pkg}.each do |dir|
       Dir.mkdir dir if !Dir.exists? dir
     end
   end
 
+  # Raises if DPPM isn't installated.
+  def check
+    raise "DPPM isn't installed in #{@path}. Run `dppm app install`" if !dppm.exists?
+  end
+
+  # Returns the DPPM application.
   def dppm : App
     new_app "dppm"
   end
 
+  # DPPM configuration.
   property dppm_config : Config do
     if config_file = dppm.config_file
       Config.new config_file.gets_to_end
@@ -94,19 +122,19 @@ struct Prefix
     Src.new self, name
   end
 
+  # Delete the packages source `@src` directory.
   def delete_src
     source_path = @src.rchop
     if File.symlink? source_path
       File.delete source_path
     else
-      FileUtils.rm_rf @src
+      FileUtils.rm_rf src
     end
   end
 
-  # Download a cache of package sources
+  # Download, or update a packages source cache.
   def update(force : Bool = false)
-    # Update cache if older than 2 days
-    source_dir = @src.rchop
+    source_dir = src.rchop
     packages_source_date = nil
     update = true
     if File.exists?(source_dir) && File.symlink?(source_dir)

@@ -22,7 +22,7 @@ module CLI
         },
         source_name: {
           info:    "Name of the source to get packages and configuration",
-          default: DPPM.default_source_name,
+          default: Prefix.default_source_name,
         },
         source_path: {
           info: "Source path/url of the packages and configurations (default in the config file)",
@@ -45,7 +45,7 @@ module CLI
           variables: {
             group: {
               info:    "Group namespace where installing applications",
-              default: DPPM.default_group,
+              default: Prefix.default_group,
             },
           },
           commands: {
