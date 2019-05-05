@@ -26,7 +26,6 @@ dependencies:
     github: j8r/libcrown
   mysql:
     github: crystal-lang/crystal-mysql
-    commit: HEAD
   tail:
     github: j8r/tail
   semantic_compare:

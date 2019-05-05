@@ -15,7 +15,7 @@ steps:
   image: jrei/crystal-alpine
   commands:
   - shards install
-  - shards build --time --static
+  - shards build --static
 
 - name: test
   image: jrei/crystal-alpine
