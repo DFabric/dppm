@@ -1,6 +1,7 @@
 require "con"
 
 struct Prefix::PkgFile
+  # Supported application types.
   enum Type
     HTML
     HTTP
@@ -31,6 +32,7 @@ struct Prefix::PkgFile
       end
     end
 
+    # Returns `true` if the type is usually used along with an url.
     def use_url? : Bool
       case self
       when HTML, HTTP, PHP then true
@@ -65,12 +67,9 @@ struct Prefix::PkgFile
     any : CON::Any,
     config : Config?
 
+  # Returns the `pkg.con` file path.
   getter path : String do
-    self.class.path @root_dir
-  end
-
-  def self.path(root_dir) : String
-    root_dir + "pkg.con"
+    @root_dir + "pkg.con"
   end
 
   protected def path=(@path : String?) : String?

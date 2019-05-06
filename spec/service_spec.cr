@@ -32,7 +32,7 @@ def assert_service(service, file = __FILE__, line = __LINE__)
   test_app.service.file = test_app.service_file
 
   it "creates a service", file, line do
-    test_app.service_create user, group
+    test_app.service_create
   end
 
   it "parses the service", file, line do
@@ -40,7 +40,7 @@ def assert_service(service, file = __FILE__, line = __LINE__)
   end
 
   it "gets user value", file, line do
-    test_app.service.config.user.should eq user
+    test_app.service.config.user.should eq test_app.owner.user.name
   end
 
   it "checks service file building", file, line do

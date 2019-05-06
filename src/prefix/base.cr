@@ -12,6 +12,7 @@ module Prefix::Base
 
   @config_file_initialized = false
 
+  # Raises if the configuration file if it exists.
   getter config_file : File? do
     if !@config_file_initialized
       if Dir.exists? conf_dir.rchop
@@ -27,12 +28,14 @@ module Prefix::Base
     @config_file
   end
 
-  def config_file!
+  # Raises if the configuration file doesn't exist.
+  def config_file! : File
     config_file || raise "config file not available"
   end
 
   @config_initialized = false
 
+  # Returns the main configuration.
   getter config : ::Config::Types? do
     if !@config_initialized && config_file
       @config = ::Config.new? config_file!
@@ -41,6 +44,7 @@ module Prefix::Base
     @config
   end
 
+  # Raises if no configuration is available.
   def config! : ::Config::Types
     config || raise "no valid config file: #{conf_dir}config.*"
   end
@@ -65,6 +69,7 @@ module Prefix::Base
     end
   end
 
+  # `Hash` of each source with its version expression to match.
   getter deps_with_expr : Hash(Prefix::Src, String) do
     deps = Hash(Prefix::Src, String).new
     pkg_file.deps.try &.each do |name, version|
@@ -73,6 +78,7 @@ module Prefix::Base
     deps
   end
 
+  # Resolves semver expressions recursively.
   def resolve_deps(dependencies : Hash(String, Array(SemanticVersion)) = Hash(String, Array(SemanticVersion)).new) : Hash(String, Array(SemanticVersion))
     # No need to parse if the deps list is empty
     deps_with_expr.each do |dep_src, version_expr|

@@ -39,15 +39,18 @@ module Prefix::ProgramData
     libs
   end
 
+  # Return `self` if the root directory doesn't already exists, else raise.
   def exists!
     raise "directory already exists: " + @path if exists?
     self
   end
 
+  # Returns `self` if the root directory exists.
   def exists?
     self if File.exists? @path
   end
 
+  # Install the package dependencies.
   def install_deps(deps : Set(Pkg), shared : Bool = true, &block)
     Log.info "bulding dependencies", libs_dir
     Dir.mkdir_p libs_dir
@@ -73,6 +76,7 @@ module Prefix::ProgramData
     end
   end
 
+  # Operation summary before performing the task.
   private def simulate(vars : Hash(String, String), deps : Set(Pkg), task : String, confirmation : Bool, io : IO, &block) : Nil
     if confirmation
       io << "task: " << task

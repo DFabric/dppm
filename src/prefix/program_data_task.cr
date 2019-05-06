@@ -2,13 +2,14 @@ require "con"
 
 struct Prefix::ProgramData::Task
   getter vars : Hash(String, String) = Hash(String, String).new
-  @all_bin_paths : Array(String)
   @line_number : Int32 = 0
 
+  # Creates a new task runtime with variables and paths where to search binaries.
   def initialize(vars : Hash(String, String), @all_bin_paths : Array(String))
     @vars = vars.transform_keys &.upcase
   end
 
+  # Returns the first executable matching `cmd` in .
   def executable?(cmd : String) : String?
     @all_bin_paths.each do |path|
       bin = path + '/' + cmd
@@ -16,6 +17,7 @@ struct Prefix::ProgramData::Task
     end
   end
 
+  # Run the commands.
   def run(commands_array : Array)
     # End of block
     last_cond = false

@@ -54,6 +54,7 @@ struct Prefix::App
 
   @service_intialized = false
 
+  # Returns the system service, if available.
   def service? : Service::OpenRC | Service::Systemd | Nil
     if !@service_intialized
       if service = Service.init?
@@ -64,30 +65,35 @@ struct Prefix::App
     @service
   end
 
+  # Returns the system service of the application. Raise if not present.
   getter service : Service::OpenRC | Service::Systemd do
     service? || raise "service not available"
   end
 
+  # Service directory.
   getter service_path : String do
     conf_dir + "init"
   end
 
+  # Service file location.
   getter service_file : String do
     service_path + '/' + service.type
   end
 
+  # Used to tap inside the service, to modify its reference instead of a copy.
   def service_tap(&block : Service::OpenRC | Service::Systemd -> Service::OpenRC | Service::Systemd)
     @service = yield service
   end
 
-  def service_create(user : String, group : String, database_name : String? = nil)
+  # Creates a new system service
+  def service_create(database_name : String? = nil)
     Dir.mkdir_p service_path
 
     # Set service options
     service_tap do |service|
       service.config_tap do |config|
-        config.user = user
-        config.group = group
+        config.user = owner.user.name
+        config.group = owner.group.name
         config.directory = path
         config.description = pkg_file.description
         config.log_output = log_file_output
@@ -116,14 +122,17 @@ struct Prefix::App
     end
   end
 
+  # Enable system service by creating a symlink.
   def service_enable
     service.link service_file
   end
 
+  # Returns a database if already initialized.
   def database? : Database::MySQL | Nil
     @database
   end
 
+  # Returns a database, if any.
   getter database : Database::MySQL | Nil do
     if config_vars = pkg_file.config_vars
       if database_type = get_config?("database_type")
@@ -155,6 +164,7 @@ struct Prefix::App
     end
   end
 
+  # Creates a new database for this application.
   def database_create(database_app : App) : Database::MySQL
     user = '_' + @name
     host = database_app.get_config("host").to_s
@@ -242,6 +252,7 @@ struct Prefix::App
     end
   end
 
+  # Write all configurations
   def write_configs
     if app_config = @config
       File.write config_file!.path, app_config.build
@@ -702,16 +713,6 @@ struct Prefix::App
 
       # Create system user and group for the application
       if Process.root?
-        if add_service
-          if database_app
-            database_name = database_app.name
-          end
-          Log.info "creating system service", service.name
-          service_create user, group, database_name
-          service_enable
-          Log.info service.type + " system service added", service.name
-        end
-
         libcrown = Libcrown.new
         add_group_member = false
         # Add a new group
@@ -721,15 +722,16 @@ struct Prefix::App
           add_group_member = true
         end
 
-        if !libcrown.users.has_key? uid
-          # Add a new user with `new_group` as its main group
-          new_user = Libcrown::User.new(
+        system_user = libcrown.users[uid]?
+        # Add a new user with `new_group` as its main group
+        if !system_user
+          system_user = Libcrown::User.new(
             name: user,
             gid: gid,
             gecos_comment: pkg_file.description,
             home_directory: data_dir
           )
-          libcrown.add_user new_user, uid
+          libcrown.add_user system_user, uid
           Log.info "system user created", user
         else
           !libcrown.user_group_member? uid, gid
@@ -744,6 +746,17 @@ struct Prefix::App
 
         # Save the modifications to the disk
         libcrown.write
+        @owner = Owner.new system_user, libcrown.groups[gid]
+
+        if add_service
+          if database_app
+            database_name = database_app.name
+          end
+          Log.info "creating system service", service.name
+          service_create database_name
+          service_enable
+          Log.info service.type + " system service added", service.name
+        end
         Utils.chown_r @path, uid, gid
       end
 

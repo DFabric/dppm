@@ -162,6 +162,7 @@ module CLI::App
     else
       app.set_config path, value
     end
+    app.write_configs
   end
 
   def config_del(prefix, group, nopkg : Bool, application, path, **args)
@@ -171,6 +172,7 @@ module CLI::App
     else
       app.del_config path
     end
+    app.write_configs
   end
 
   def self.logs(prefix : String, group : String, log_names : Array(String), lines : String?, follow : Bool, application : String, **args, &block : String ->)
