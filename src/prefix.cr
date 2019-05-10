@@ -26,25 +26,25 @@ struct Prefix
   getter source_name : String
 
   # Path of the prefix on the filesystem.
-  getter path : String
+  getter path : Path
 
   # Base path for applications.
-  getter root_app : String
+  getter root_app : Path
 
   # Base path for packages.
-  getter root_pkg : String
+  getter root_pkg : Path
 
   # Base path for packages sources.
-  getter root_src : String
+  getter root_src : Path
 
-  # Application path, including the group namespace.
-  getter app : String
+  # Application path, including the `group` namespace.
+  getter app : Path
 
-  # Package path, including the source.
-  getter pkg : String
+  # Package path, including the `source_name`.
+  getter pkg : Path
 
-  # Package path, including the source.
-  getter src : String
+  # Package path, including the `source_name`.
+  getter src : Path
 
   # Source path used, which can be an URL or a filesystem path.
   getter source_path : String do
@@ -52,24 +52,25 @@ struct Prefix
   end
 
   def initialize(
-    @path : String,
+    path : String,
     @group : String = @@default_group,
     @source_name : String = @@default_source_name,
     @source_path : String? = nil
   )
-    @root_app = @path + "/app/"
-    @root_pkg = @path + "/pkg/"
-    @root_src = @path + "/src/"
+    @path = Path.new path
+    @root_app = @path / "app"
+    @root_pkg = @path / "pkg"
+    @root_src = @path / "src"
 
-    @app = @root_app + @group + '/'
-    @pkg = @root_pkg + @source_name + '/'
-    @src = @root_src + @source_name + '/'
+    @app = @root_app / @group
+    @pkg = @root_pkg / @source_name
+    @src = @root_src / @source_name
   end
 
   # Create `@path` and all its subdirectories needed.
   def create
     {@path, @root_app, @root_pkg, @root_src, @app, @pkg}.each do |dir|
-      Dir.mkdir dir if !Dir.exists? dir
+      Dir.mkdir dir.to_s if !Dir.exists? dir.to_s
     end
   end
 
@@ -93,19 +94,19 @@ struct Prefix
   end
 
   def each_app(&block : App ->)
-    Dir.each_child(@app) do |dir|
+    Dir.each_child(@app.to_s) do |dir|
       yield App.new self, dir
     end
   end
 
   def each_pkg(&block : Pkg ->)
-    Dir.each_child(@pkg) do |dir|
+    Dir.each_child(@pkg.to_s) do |dir|
       yield Pkg.new self, dir
     end
   end
 
   def each_src(&block : Src ->)
-    Dir.each_child(@src) do |dir|
+    Dir.each_child(@src.to_s) do |dir|
       yield Src.new(self, dir) if dir[0].ascii_lowercase?
     end
   end
@@ -124,25 +125,23 @@ struct Prefix
 
   # Delete the packages source `@src` directory.
   def delete_src
-    source_path = @src.rchop
-    if File.symlink? source_path
-      File.delete source_path
+    if File.symlink? @src.to_s
+      File.delete @src.to_s
     else
-      FileUtils.rm_rf src
+      FileUtils.rm_rf @src.to_s
     end
   end
 
   # Download, or update a packages source cache.
   def update(force : Bool = false)
-    source_dir = src.rchop
     packages_source_date = nil
     update = true
-    if File.exists?(source_dir) && File.symlink?(source_dir)
+    if File.exists?(@src.to_s) && File.symlink?(@src.to_s)
       update = false
     elsif HTTPHelper.url? source_path
       if packages_source_date = HTTPHelper.get_string(source_path.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?
-        if Dir.exists? @src
-          update = !packages_source_date.starts_with? File.info(@src.rchop).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
+        if Dir.exists? @src.to_s
+          update = !packages_source_date.starts_with? File.info(@src.to_s).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
         else
           update = true
         end
@@ -155,39 +154,39 @@ struct Prefix
       delete_src
       if packages_source_date
         Log.info "downloading packages source", source_path
-        file = @root_src + '/' + File.basename source_path
-        HTTPHelper.get_file source_path, file
-        Host.exec "/bin/tar", {"zxf", file, "-C", @root_src}
+        file = @root_src / File.basename(source_path)
+        HTTPHelper.get_file source_path, file.to_s
+        Host.exec "/bin/tar", {"zxf", file.to_s, "-C", @root_src.to_s}
         File.delete file
-        File.rename Dir[@root_src + "/*packages-source*"][0], @src
-        File.touch source_dir, Time.parse_utc(packages_source_date, "%Y-%m-%dT%H:")
-        Log.info "cache updated", @src
+        File.rename Dir[(@root_src / "*packages-source*").to_s][0], @src.to_s
+        File.touch @src.to_s, Time.parse_utc(packages_source_date, "%Y-%m-%dT%H:")
+        Log.info "cache updated", @src.to_s
       else
-        FileUtils.mkdir_p @root_src
+        FileUtils.mkdir_p @root_src.to_s
         real_source_path = File.real_path source_path
-        File.symlink real_source_path, source_dir
-        Log.info "symlink added from `#{real_source_path}`", source_dir
+        File.symlink real_source_path, @src.to_s
+        Log.info "symlink added from `#{real_source_path}`", @src.to_s
       end
     else
-      Log.info "cache up-to-date", @src
+      Log.info "cache up-to-date", @src.to_s
     end
   end
 
   def clean_unused_packages(confirmation : Bool = true, &block) : Set(String)?
     packages = Set(String).new
-    Log.info "retrieving available packages", @pkg
+    Log.info "retrieving available packages", @pkg.to_s
     each_pkg { |pkg| packages << pkg.name }
 
-    Log.info "excluding used packages by applications", @pkg
+    Log.info "excluding used packages by applications", @pkg.to_s
     each_app do |app|
-      packages.delete File.basename(app.real_app_path)
+      packages.delete app.real_app_path.basename.to_s
       app.libs.each do |library|
         packages.delete library.name
       end
     end
 
     if packages.empty?
-      Log.info "No packages to clean", @path
+      Log.info "No packages to clean", @path.to_s
       return
     elsif confirmation
       Log.output << "task: clean"
@@ -199,14 +198,14 @@ struct Prefix
       return if !yield
     end
 
-    Log.info "deleting packages", @pkg
-    packages.each do |pkg|
-      pkg_prefix = new_pkg pkg
-      FileUtils.rm_rf pkg_prefix.path
-      Log.info "package deleted", pkg
+    Log.info "deleting packages", @pkg.to_s
+    packages.each do |package|
+      pkg_prefix = new_pkg package
+      FileUtils.rm_rf pkg_prefix.path.to_s
+      Log.info "package deleted", package
     end
 
-    Log.info "packages cleaned", @pkg
+    Log.info "packages cleaned", @pkg.to_s
     packages
   end
 end

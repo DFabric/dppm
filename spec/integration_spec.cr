@@ -10,15 +10,15 @@ describe IntegrationSpec do
   prefix = IntegrationSpec.create_prefix File.tempname("_temp_dppm_prefix")
 
   begin
-    IntegrationSpec.build_package prefix.path, package
-    IntegrationSpec.add_application prefix_path: prefix.path, application: package, name: package
+    IntegrationSpec.build_package prefix.path.to_s, package
+    IntegrationSpec.add_application prefix_path: prefix.path.to_s, application: package, name: package
 
     IntegrationSpec.test_prefix_app prefix, package
-    IntegrationSpec.upgrade_application prefix_path: prefix.path, application: package, version: "0.3.0"
+    IntegrationSpec.upgrade_application prefix_path: prefix.path.to_s, application: package, version: "0.3.0"
 
-    IntegrationSpec.delete_application prefix.path, package
-    IntegrationSpec.clean_unused_packages prefix.path
+    IntegrationSpec.delete_application prefix.path.to_s, package
+    IntegrationSpec.clean_unused_packages prefix.path.to_s
   ensure
-    FileUtils.rm_rf prefix.path
+    FileUtils.rm_rf prefix.path.to_s
   end
 end

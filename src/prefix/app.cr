@@ -5,24 +5,19 @@ require "tail"
 struct Prefix::App
   include ProgramData
 
-  getter logs_dir : String,
-    log_file_output : String,
-    log_file_error : String
-
-  getter logs_dir : String { path + "logs/" }
-  getter log_file_output : String { logs_dir + "output.log" }
-  getter log_file_error : String { logs_dir + "output.log" }
-  getter web_site_file : String { conf_dir + "web-site" }
+  getter logs_path : Path { path / "logs" }
+  getter log_file_output : Path { logs_path / "output.log" }
+  getter log_file_error : Path { logs_path / "output.log" }
+  getter web_site_file : Path { conf_path / "web-site" }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg : Pkg? = nil)
     Utils.ascii_alphanumeric_dash? name
-    @path = @prefix.app + @name + '/'
-    @bin_path = app_path + "/bin"
+    @path = @prefix.app / @name
     if pkg
       @pkg = pkg
       pkg_pkg_file = pkg.pkg_file
       pkg_pkg_file.path = nil
-      pkg_pkg_file.root_dir = @path
+      pkg_pkg_file.root_path = @path
       @pkg_file = pkg_pkg_file
     end
   end
@@ -35,12 +30,12 @@ struct Prefix::App
   end
 
   # Password path, typically used for the database user.
-  getter password_file : String do
-    conf_dir + ".password"
+  getter password_file : Path do
+    conf_path / ".password"
   end
 
   getter pkg : Pkg do
-    Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path))), nil, @pkg_file
+    Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path.to_s))), nil, @pkg_file
   end
 
   getter exec : Hash(String, String) do
@@ -71,13 +66,13 @@ struct Prefix::App
   end
 
   # Service directory.
-  getter service_path : String do
-    conf_dir + "init"
+  getter service_path : Path do
+    conf_path / "init"
   end
 
   # Service file location.
-  getter service_file : String do
-    service_path + '/' + service.type
+  getter service_file : Path do
+    service_path / service.type
   end
 
   # Used to tap inside the service, to modify its reference instead of a copy.
@@ -87,18 +82,18 @@ struct Prefix::App
 
   # Creates a new system service
   def service_create(database_name : String? = nil)
-    Dir.mkdir_p service_path
+    Dir.mkdir_p service_path.to_s
 
     # Set service options
     service_tap do |service|
       service.config_tap do |config|
         config.user = owner.user.name
         config.group = owner.group.name
-        config.directory = path
+        config.directory = @path.to_s
         config.description = pkg_file.description
-        config.log_output = log_file_output
-        config.log_error = log_file_error
-        config.command = path + exec["start"]
+        config.log_output = log_file_output.to_s
+        config.log_error = log_file_error.to_s
+        config.command = (path / exec["start"]).to_s
         config.after << database_name if database_name
 
         # add a reload directive if available
@@ -124,7 +119,7 @@ struct Prefix::App
 
   # Enable system service by creating a symlink.
   def service_enable
-    service.link service_file
+    service.link service_file.to_s
   end
 
   # Returns a database if already initialized.
@@ -273,7 +268,7 @@ struct Prefix::App
         command = splitted_command[0]
         args = splitted_command[1..-1]
 
-        Exec.new command, args, output: Log.output, error: Log.error, chdir: @path, env: pkg_file.env do |process|
+        Exec.new command, args, output: Log.output, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
           raise "can't import configuration: " + full_command if !process.wait.success?
         end
       end
@@ -289,8 +284,8 @@ struct Prefix::App
         command = splitted_command[0]
         args = splitted_command[1..-1]
 
-        File.open config_file!.path, "w" do |io|
-          Exec.new command, args, output: io, error: Log.error, chdir: @path, env: pkg_file.env do |process|
+        File.open config_file!.path.to_s, "w" do |io|
+          Exec.new command, args, output: io, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
             raise "can't export configuration: " + full_command if !process.wait.success?
           end
         end
@@ -302,10 +297,10 @@ struct Prefix::App
 
   private def update_configuration(&block)
     if origin_file = pkg_file.config_origin
-      origin_file = @path + origin_file
-      return if !File.exists? origin_file
-      config_time = File.info(config_file!.path).modification_time
-      origin_file_info = File.info(origin_file)
+      origin_file = (@path / origin_file).to_s
+      return if !File.exists? origin_file.to_s
+      config_time = File.info(config_file!.path.to_s).modification_time
+      origin_file_info = File.info origin_file
       return if config_time == origin_file_info.modification_time
 
       # Required by Nextcloud
@@ -320,45 +315,46 @@ struct Prefix::App
     end
   end
 
-  # Real package path of the application
-  def real_app_path : String
-    File.dirname File.real_path(app_path)
+  # Real package path of the application.
+  def real_app_path : Path
+    Path[File.dirname(File.real_path(app_path.to_s))]
   end
 
-  # Use a shared application package
+  # Use a shared application package.
   def shared? : Bool
-    raise "application directory doesn't exist: " + app_path if !File.exists? app_path
-    File.symlink? app_path
+    raise "application directory doesn't exist: " + app_path.to_s if !File.exists? app_path.to_s
+    File.symlink? app_path.to_s
   end
 
   def each_log_file(&block : String ->)
-    Dir.each_child logs_dir, &block
+    Dir.each_child logs_path.to_s, &block
   end
 
   # Get application logs
   def get_logs(file_name : String, follow : Bool = true, lines : Int32? = nil, &block : String ->)
+    log_file = (logs_path / file_name).to_s
     if follow
-      Tail::File.new(logs_dir + file_name).follow(lines: (lines || 10), &block)
+      Tail::File.new(log_file).follow(lines: (lines || 10), &block)
     elsif lines
-      yield Tail::File.new(logs_dir + file_name).last_lines(lines: lines.to_i).join '\n'
+      yield Tail::File.new(log_file).last_lines(lines: lines.to_i).join '\n'
     else
-      yield File.read logs_dir + file_name
+      yield File.read log_file
     end
   end
 
   # Set directory access permissions
   def set_permissions
-    File.chmod(libs_dir, 0o700) if Dir.exists? libs_dir
-    File.chmod(app_path, 0o750) if !File.symlink? app_path
-    File.chmod conf_dir, 0o710
-    File.chmod @path, 0o750
-    File.chmod logs_dir, 0o700
-    File.chmod data_dir, 0o750
+    File.chmod(libs_path.to_s, 0o700) if Dir.exists? libs_path.to_s
+    File.chmod(app_path.to_s, 0o750) if !File.symlink? app_path.to_s
+    File.chmod conf_path.to_s, 0o710
+    File.chmod @path.to_s, 0o750
+    File.chmod logs_path.to_s, 0o700
+    File.chmod data_path.to_s, 0o750
   end
 
   def path_env_var : String
     String.build do |str|
-      str << @bin_path
+      str << app_bin_path
       libs.each do |library|
         str << ':' << library.bin_path
       end
@@ -367,7 +363,7 @@ struct Prefix::App
 
   def webserver? : Prefix::App?
     if File.exists? web_site_file
-      @prefix.new_app File.basename(File.dirname((File.dirname(File.dirname(File.real_path(web_site_file))))))
+      @prefix.new_app Path[File.real_path(web_site_file.to_s)].parent.parent.basename
     end
   end
 
@@ -382,27 +378,27 @@ struct Prefix::App
 
   # Adds a new site.
   # Assumes the app is a Web Server.
-  def new_website(app_name : String, build_conf_dir : String) : WebSite::Caddy
+  def new_website(app_name : String, build_conf_path : Path) : WebSite::Caddy
     raise "Web server doesn't exists: #{@path}" if !Dir.exists? @path
-    default_site_file = build_conf_dir + "web/" + pkg_file.package
+    default_site_file = build_conf_path / "web" / pkg_file.package
     site = parse_site app_name, default_site_file
 
     # Add security headers
-    if !File.exists? default_site_file
+    if !File.exists? default_site_file.to_s
       site.headers["Strict-Transport-Security"] = "max-age=31536000;"
       site.headers["X-XSS-Protection"] = "1; mode=block"
       site.headers["X-Content-Type-Options"] = "nosniff"
       site.headers["X-Frame-Options"] = "DENY"
       site.headers["Content-Security-Policy"] = "frame-ancestors 'none';"
     end
-    site.log_file_error = logs_dir + app_name + "-error.log"
-    site.log_file_output = logs_dir + app_name + "-output.log"
-    site.file = conf_dir + "sites/" + app_name
+    site.log_file_error = logs_path / (app_name + "-error.log")
+    site.log_file_output = logs_path / (app_name + "-output.log")
+    site.file = conf_path / "sites" / app_name
     site
   end
 
-  protected def parse_site(app_name : String, file : String? = nil) : WebSite::Caddy
-    file ||= conf_dir + "sites/" + app_name
+  protected def parse_site(app_name : String, file : Path? = nil) : WebSite::Caddy
+    file ||= conf_path / "sites" / app_name
     case pkg_file.package
     when "caddy" then WebSite::Caddy.new file
     else              raise "unsupported web server: " + pkg_file.package
@@ -435,7 +431,7 @@ struct Prefix::App
     vars["package"] = pkg.package
     vars["version_current"] = pkg.version
     vars["version"] = new_pkg.version
-    vars["basedir"] = @path
+    vars["basedir"] = @path.to_s
     vars["name"] = @name
 
     if env = pkg_file.env
@@ -448,18 +444,18 @@ struct Prefix::App
     end
 
     # Replace current application's package by the new one
-    FileUtils.rm_r app_path
-    File.delete pkg_file.path
+    FileUtils.rm_r app_path.to_s
+    File.delete pkg_file.path.to_s
     @pkg = new_pkg
     create_application_dir shared
     write_configs
     set_permissions
 
     if Process.root?
-      Utils.chown_r @path, file_info.owner, file_info.group
+      Utils.chown_r @path.to_s, file_info.owner, file_info.group
     end
 
-    Log.info "upgrade completed", @path
+    Log.info "upgrade completed", @path.to_s
     self
   end
 
@@ -521,7 +517,7 @@ struct Prefix::App
       end
       webserver = @prefix.new_app web_server
       web_server_uid = webserver.file_info.owner
-      @website = webserver.new_website @name, source_package.conf_dir
+      @website = webserver.new_website @name, source_package.conf_path
       vars["web_server"] = web_server
     end
 
@@ -537,7 +533,7 @@ struct Prefix::App
       # Skip if the var is set, or port if a socket is used
       if var == "socket"
         if !vars.has_key? "socket"
-          vars["socket"] = @path + "socket"
+          vars["socket"] = (@path / "socket").to_s
         end
         has_socket = true
       elsif !vars.has_key?(var) && !(var == "port" && socket)
@@ -624,7 +620,7 @@ struct Prefix::App
     vars["system_group"] = group
     vars["package"] = pkg.package
     vars["version"] = pkg.version
-    vars["basedir"] = @path
+    vars["basedir"] = @path.to_s
     vars["name"] = @name
 
     if env = pkg_file.env
@@ -637,26 +633,26 @@ struct Prefix::App
     end
     begin
       Log.info "adding to the system", @name
-      raise "application directory already exists: " + @path if File.exists? @path
+      raise "application directory already exists: #{@path}" if File.exists? @path.to_s
 
       # Create the new application
-      Dir.mkdir @path
+      Dir.mkdir @path.to_s
       create_application_dir shared
 
       # Copy configurations and data
       Log.info "copying configurations and data", @name
 
-      copy_dir pkg.conf_dir, conf_dir
-      copy_dir pkg.data_dir, data_dir
-      Dir.mkdir logs_dir
+      copy_dir pkg.conf_path.to_s, conf_path.to_s
+      copy_dir pkg.data_path.to_s, data_path.to_s
+      Dir.mkdir logs_path.to_s
 
       # Build and add missing dependencies and copy library configurations
       install_deps deps, shared do |dep_pkg|
         if dep_config = dep_pkg.config
           Log.info "copying library configuration files", dep_pkg.name
-          dep_conf_dir = conf_dir + dep_pkg.package
-          Dir.mkdir_p dep_conf_dir
-          FileUtils.cp dep_pkg.config_file!.path, dep_conf_dir + '/' + File.basename(dep_pkg.config_file!.path)
+          dep_conf_path = conf_path / dep_pkg.package
+          Dir.mkdir_p dep_conf_path.to_s
+          FileUtils.cp dep_pkg.config_file!.path, (dep_conf_path / File.basename(dep_pkg.config_file!.path)).to_s
         end
       end
 
@@ -681,12 +677,12 @@ struct Prefix::App
       Log.info "running configuration tasks", @name
 
       if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
-        Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run add_task }
+        Dir.cd(@path.to_s) { Task.new(vars.dup, all_bin_paths).run add_task }
       end
 
       if website = @website
-        Log.info "adding web site", website.file
-        dir = File.dirname website.file
+        Log.info "adding web site", website.file.to_s
+        dir = website.file.dirname
         Dir.mkdir dir if !File.exists? dir
 
         app_uri = uri?
@@ -708,7 +704,7 @@ struct Prefix::App
         end
         @website = website
         website.write
-        File.symlink website.file, web_site_file
+        File.symlink website.file.to_s, web_site_file.to_s
       end
 
       # Create system user and group for the application
@@ -729,7 +725,7 @@ struct Prefix::App
             name: user,
             gid: gid,
             gecos_comment: pkg_file.description,
-            home_directory: data_dir
+            home_directory: data_path.to_s
           )
           libcrown.add_user system_user, uid
           Log.info "system user created", user
@@ -757,10 +753,10 @@ struct Prefix::App
           service_enable
           Log.info service.type + " system service added", service.name
         end
-        Utils.chown_r @path, uid, gid
+        Utils.chown_r @path.to_s, uid, gid
       end
 
-      Log.info "add completed", @path
+      Log.info "add completed", @path.to_s
       Log.info "application information", pkg_file.info
     rescue ex
       begin
@@ -788,18 +784,18 @@ struct Prefix::App
     end
 
     if shared
-      Log.info "creating symlinks from " + pkg.path, @path
-      File.symlink pkg.app_path, app_path
-      File.symlink pkg.pkg_file.path, pkg_file.path
+      Log.info "creating symlinks from #{pkg.path}", @path.to_s
+      File.symlink pkg.app_path.to_s, app_path.to_s
+      File.symlink pkg.pkg_file.path.to_s, pkg_file.path.to_s
     else
-      Log.info "copying from " + pkg.path, @path
-      FileUtils.cp_r pkg.app_path, app_path
-      FileUtils.cp_r pkg.pkg_file.path, pkg_file.path
+      Log.info "copying from #{pkg.path}", @path.to_s
+      FileUtils.cp_r pkg.app_path.to_s, app_path.to_s
+      FileUtils.cp_r pkg.pkg_file.path.to_s, pkg_file.path.to_s
     end
   end
 
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block)
-    raise "application doesn't exist: " + @path if !File.exists? @path
+    raise "application doesn't exist: #{@path}" if !File.exists? @path.to_s
 
     begin
       database.try(&.check_connection) if !preserve_database
@@ -831,7 +827,7 @@ struct Prefix::App
       return if !yield
     end
 
-    Log.info "deleting", @path
+    Log.info "deleting", @path.to_s
 
     if service = service?
       if service.exists?
@@ -842,13 +838,13 @@ struct Prefix::App
 
     if webserver = webserver?
       website = webserver.parse_site @name
-      Log.info "deleting web site", website.file
-      File.delete web_site_file
-      File.delete website.file
-      if output_file = website.log_file_output
+      Log.info "deleting web site", website.file.to_s
+      File.delete web_site_file.to_s
+      File.delete website.file.to_s
+      if output_file = website.log_file_output.to_s
         File.delete output_file if File.exists? output_file
       end
-      if error_file = website.log_file_error
+      if error_file = website.log_file_error.to_s
         File.delete error_file if File.exists? error_file
       end
       webserver.service.restart if webserver.service.run?
@@ -872,10 +868,10 @@ struct Prefix::App
       app_database.delete
     end
 
-    Log.info "delete completed", @path
+    Log.info "delete completed", @path.to_s
     self
   ensure
-    FileUtils.rm_rf @path
+    FileUtils.rm_rf @path.to_s
   end
 
   def uri? : URI?
@@ -887,7 +883,7 @@ struct Prefix::App
   record Owner, user : Libcrown::User, group : Libcrown::Group
 
   getter file_info : File::Info do
-    File.info @path
+    File.info @path.to_s
   end
 
   getter owner : Owner do

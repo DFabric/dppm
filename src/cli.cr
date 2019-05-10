@@ -364,7 +364,7 @@ module DPPM::CLI
     root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
     if root_prefix.dppm.exists?
-      Log.info "DPPM already installed", root_prefix.path
+      Log.info "DPPM already installed", root_prefix.path.to_s
       return root_prefix
     end
     root_prefix.create
@@ -375,10 +375,10 @@ module DPPM::CLI
       dppm_package = root_prefix.new_pkg "dppm", DPPM.version
       dppm_package.copy_src_to_path
 
-      Dir.mkdir dppm_package.app_path
-      Dir.mkdir dppm_package.app_path + "/bin"
-      dppm_bin_path = dppm_package.app_path + "/bin/dppm"
-      FileUtils.cp PROGRAM_NAME, dppm_bin_path
+      Dir.mkdir dppm_package.app_path.to_s
+      Dir.mkdir (dppm_package.app_path / "bin").to_s
+      dppm_bin_path = dppm_package.app_path / "bin/dppm"
+      FileUtils.cp PROGRAM_NAME, dppm_bin_path.to_s
       app = dppm_package.new_app "dppm"
 
       app.add(
@@ -390,7 +390,7 @@ module DPPM::CLI
       end
     rescue ex
       root_prefix.delete_src
-      FileUtils.rm_r root_prefix.path
+      FileUtils.rm_r root_prefix.path.to_s
       raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted:\n#{ex}", ex
     end
     dppm_package.create_global_bin_symlinks(force: true) if Process.root?
@@ -401,8 +401,8 @@ module DPPM::CLI
   def uninstall_dppm(no_confirm, config, prefix, group, source_name, source_path, debug = nil)
     root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
-    raise "DPPM not installed in " + root_prefix.path if !root_prefix.dppm.exists?
-    raise "DPPM path not removable - root permission needed" + root_prefix.path if !File.writable? root_prefix.path
+    raise "DPPM not installed in #{root_prefix.path}" if !root_prefix.dppm.exists?
+    raise "DPPM path not removable - root permission needed #{root_prefix.path}" if !File.writable? root_prefix.path.to_s
 
     # Delete each installed app
     root_prefix.each_app do |app|
@@ -414,10 +414,10 @@ module DPPM::CLI
       end
     end
 
-    if (apps = Dir.children(root_prefix.app).join ", ").empty?
+    if (apps = Dir.children(root_prefix.app.to_s).join ", ").empty?
       root_prefix.delete_src
-      FileUtils.rm_r root_prefix.path
-      Log.info "DPPM uninstallation complete", root_prefix.path
+      FileUtils.rm_r root_prefix.path.to_s
+      Log.info "DPPM uninstallation complete", root_prefix.path.to_s
     else
       Log.warn "DPPM uninstallation not complete, there are remaining applications", apps
     end
