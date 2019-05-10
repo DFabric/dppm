@@ -68,18 +68,18 @@ struct Prefix::PkgFile
     config : Config?
 
   # Returns the `pkg.con` file path.
-  getter path : String do
-    @root_dir + "pkg.con"
+  getter path : Path do
+    @root_path / "pkg.con"
   end
 
-  protected def path=(@path : String?) : String?
+  protected def path=(@path : Path?) : Path?
   end
 
-  protected property root_dir : String
+  protected property root_path : Path
 
   macro finished
-  def initialize(@root_dir : String)
-    raise "package directory doesn't exist: " + @root_dir if !Dir.exists? @root_dir
+  def initialize(@root_path : Path)
+    raise "package directory doesn't exist: " + @root_path.to_s if !Dir.exists? @root_path.to_s
 
     # TODO: Replace CON::Any by CON::Serializable
     @any = CON.parse File.read(path)

@@ -26,10 +26,10 @@ def assert_service(service, file = __FILE__, line = __LINE__)
   test_prefix = Prefix.new File.tempname("_dppm_service_test")
   test_prefix.create
   test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
-  FileUtils.cp_r SAMPLES_DIR + '/' + TEST_APP_PACKAGE_NAME, test_app.path
+  FileUtils.cp_r SAMPLES_DIR + '/' + TEST_APP_PACKAGE_NAME, test_app.path.to_s
 
   service_config = test_app.service.config.class.new
-  test_app.service.file = test_app.service_file
+  test_app.service.file = test_app.service_file.to_s
 
   it "creates a service", file, line do
     test_app.service_create
@@ -51,7 +51,7 @@ def assert_service(service, file = __FILE__, line = __LINE__)
     test_app.service.config.env_vars["PATH"].should eq test_app.path_env_var
   end
 
-  FileUtils.rm_r test_prefix.path
+  FileUtils.rm_r test_prefix.path.to_s
   Service.init = nil
 end
 

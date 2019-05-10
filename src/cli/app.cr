@@ -135,7 +135,7 @@ module DPPM::CLI::App
       env: env_vars,
       output: Log.output,
       error: Log.error,
-      chdir: app.path, &.wait
+      chdir: app.path.to_s, &.wait
   end
 
   def config_get(prefix, group, nopkg : Bool, application, path, **args)

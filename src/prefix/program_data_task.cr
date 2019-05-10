@@ -5,15 +5,15 @@ struct Prefix::ProgramData::Task
   @line_number : Int32 = 0
 
   # Creates a new task runtime with variables and paths where to search binaries.
-  def initialize(vars : Hash(String, String), @all_bin_paths : Array(String))
+  def initialize(vars : Hash(String, String), @all_bin_paths : Array(Path))
     @vars = vars.transform_keys &.upcase
   end
 
   # Returns the first executable matching `cmd` in .
   def executable?(cmd : String) : String?
     @all_bin_paths.each do |path|
-      bin = path + '/' + cmd
-      return bin if File.executable? bin
+      bin = path / cmd
+      return bin.to_s if File.executable? bin.to_s
     end
   end
 

@@ -38,18 +38,18 @@ describe WebSite do
   }
   E
   File.write CADDY_SITE_FILE, caddyfile
-  caddy_site = WebSite::Caddy.new CADDY_SITE_FILE
+  caddy_site = WebSite::Caddy.new Path[CADDY_SITE_FILE]
 
   it "parses root" do
-    caddy_site.root.should eq "root_site"
+    caddy_site.root.should eq Path["root_site"]
   end
 
   it "parses log_file_output" do
-    caddy_site.log_file_output.should eq "/output"
+    caddy_site.log_file_output.should eq Path["/output"]
   end
 
   it "parses log_file_error" do
-    caddy_site.log_file_error.should eq "/error"
+    caddy_site.log_file_error.should eq Path["/error"]
   end
 
   it "parses gzip" do

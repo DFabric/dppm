@@ -7,7 +7,7 @@ describe Prefix::ProgramData::Task do
   Dir.mkdir path
   Dir.cd path
   File.write "test_file", "data"
-  cmd = Prefix::ProgramData::Task.new(Hash(String, String).new, Array(String).new)
+  cmd = Prefix::ProgramData::Task.new(Hash(String, String).new, Array(Path).new)
 
   describe "command" do
     it "current" do

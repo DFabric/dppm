@@ -2,12 +2,17 @@ require "./pkg_file"
 require "semantic_compare"
 
 module Prefix::Base
-  getter path : String,
-    name : String,
-    prefix : Prefix
+  # Root path of the package.
+  getter path : Path
 
-  getter libs_dir : String { @path + "libs/" }
-  getter conf_dir : String { @path + "conf/" }
+  # Name of the package.
+  getter name : String
+
+  # Prefix used.
+  getter prefix : Prefix
+
+  getter libs_path : Path { @path / "libs/" }
+  getter conf_path : Path { @path / "conf" }
   getter pkg_file : PkgFile { PkgFile.new @path }
 
   @config_file_initialized = false
@@ -15,11 +20,11 @@ module Prefix::Base
   # Raises if the configuration file if it exists.
   getter config_file : File? do
     if !@config_file_initialized
-      if Dir.exists? conf_dir.rchop
-        Dir.each_child conf_dir do |file|
-          file_path = conf_dir + file
+      if Dir.exists? conf_path.to_s
+        Dir.each_child conf_path.to_s do |file|
+          file_path = conf_path / file
           if file.starts_with? "config."
-            @config_file = File.new file_path
+            @config_file = File.new file_path.to_s
           end
         end
       end
@@ -46,7 +51,7 @@ module Prefix::Base
 
   # Raises if no configuration is available.
   def config! : ::Config::Types
-    config || raise "no valid config file: #{conf_dir}config.*"
+    config || raise "no valid config file: #{conf_path}config.*"
   end
 
   abstract def get_config(key : String)
@@ -82,7 +87,7 @@ module Prefix::Base
   def resolve_deps(dependencies : Hash(String, Array(SemanticVersion)) = Hash(String, Array(SemanticVersion)).new) : Hash(String, Array(SemanticVersion))
     # No need to parse if the deps list is empty
     deps_with_expr.each do |dep_src, version_expr|
-      if !File.exists? libs_dir + dep_src.name
+      if !File.exists? (libs_path / dep_src.name).to_s
         Log.info "calculing dependency", dep_src.name
 
         # If an array of versions is already provided by a dependency

@@ -4,31 +4,36 @@ require "./program_data_task"
 module Prefix::ProgramData
   include Base
 
-  getter bin_path : String
-
-  getter all_bin_paths : Array(String) do
-    paths = [bin_path]
+  getter all_bin_paths : Array(Path) do
+    paths = [app_bin_path]
     libs.each do |library|
       paths << library.bin_path
     end
     paths
   end
 
-  getter data_dir : String { @path + "data/" }
+  # Path where application data is stored.
+  getter data_path : Path { @path / "data" }
 
-  getter app_path : String { @path + "app" }
+  # Application package path, where is the application executable.
+  getter app_path : Path { @path / "app" }
 
+  # Path of the application binary.
+  getter app_bin_path : Path { app_path / "bin" }
+
+  # Libraries on which the application depend.
   getter libs : Array(Pkg) do
     libs = Array(Pkg).new
-    return libs if !Dir.exists? libs_dir
+    return libs if !Dir.exists? libs_path.to_s
 
-    Dir.each_child libs_dir do |lib_package|
-      lib_path = libs_dir + lib_package
-      lib_pkg = @prefix.new_pkg File.basename(File.real_path(lib_path))
+    Dir.each_child libs_path.to_s do |lib_package|
+      lib_path = libs_path / lib_package
+      lib_pkg = @prefix.new_pkg Path[File.real_path lib_path.to_s].basename
       app_config_file = nil
-      if Dir.exists?(conf_libs_dir = conf_dir + lib_pkg.package)
-        Dir.each_child conf_libs_dir do |file|
-          app_config_file = conf_libs_dir + '/' + file
+      conf_libs_path = (conf_path / lib_pkg.package).to_s
+      if Dir.exists? conf_libs_path
+        Dir.each_child conf_libs_path do |file|
+          app_config_file = Path[conf_libs_path, file].to_s
           lib_pkg.app_config = ::Config.new? File.new(app_config_file)
         end
       end
@@ -41,34 +46,34 @@ module Prefix::ProgramData
 
   # Return `self` if the root directory doesn't already exists, else raise.
   def exists!
-    raise "directory already exists: " + @path if exists?
+    raise "directory already exists: " + @path.to_s if exists?
     self
   end
 
   # Returns `self` if the root directory exists.
   def exists?
-    self if File.exists? @path
+    self if File.exists? @path.to_s
   end
 
   # Install the package dependencies.
   def install_deps(deps : Set(Pkg), shared : Bool = true, &block)
-    Log.info "bulding dependencies", libs_dir
-    Dir.mkdir_p libs_dir
+    Log.info "bulding dependencies", libs_path.to_s
+    Dir.mkdir_p libs_path.to_s
 
     # Build each dependency
     deps.each do |dep_pkg|
-      dest_pkg_dep_dir = libs_dir + dep_pkg.package
-      if !Dir.exists? dep_pkg.path
-        Log.info "building dependency", dep_pkg.path
+      dest_pkg_dep_dir = (libs_path / dep_pkg.package).to_s
+      if !Dir.exists? dep_pkg.path.to_s
+        Log.info "building dependency", dep_pkg.path.to_s
         dep_pkg.build
       end
       if !File.exists? dest_pkg_dep_dir
         if shared
           Log.info "adding symlink to dependency", dep_pkg.name
-          File.symlink dep_pkg.path, dest_pkg_dep_dir
+          File.symlink dep_pkg.path.to_s, dest_pkg_dep_dir
         else
           Log.info "copying dependency", dep_pkg.name
-          FileUtils.cp_r dep_pkg.path, dest_pkg_dep_dir
+          FileUtils.cp_r dep_pkg.path.to_s, dest_pkg_dep_dir
         end
       end
       Log.info "dependency added", dep_pkg.name

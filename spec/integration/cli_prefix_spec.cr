@@ -12,7 +12,7 @@ module IntegrationSpec
         package: package,
         custom_vars: Array(String).new)
       pkg.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
-      Dir.exists?(pkg.path).should be_true
+      pkg.exists?.should eq pkg
     end
   end
 
@@ -53,15 +53,15 @@ module IntegrationSpec
 
   def delete_application(prefix_path : String, application : String)
     it "deletes an application" do
-      delete = DPPM::CLI::App.delete(
+      app = DPPM::CLI::App.delete(
         no_confirm: true,
         prefix: prefix_path,
         group: Prefix.default_group,
         application: application,
         keep_user_group: false,
         preserve_database: false).not_nil!
-      delete.name.should eq TEST_APP_PACKAGE_NAME
-      Dir.exists?(delete.path).should be_false
+      app.name.should eq TEST_APP_PACKAGE_NAME
+      app.exists?.should be_nil
     end
   end
 end

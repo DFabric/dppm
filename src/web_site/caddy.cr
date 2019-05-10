@@ -5,8 +5,8 @@ struct WebSite::Caddy
   include Site
   @extra : IO::Memory = IO::Memory.new
 
-  def initialize(@file : String)
-    if File.exists? @file
+  def initialize(@file : Path)
+    if File.exists? @file.to_s
       line_number = 0
       header_block = false
 
@@ -27,9 +27,9 @@ struct WebSite::Caddy
         else
           line = raw_line.strip("\t ").split ' '
           case line.shift
-          when "root"    then @root = line[0]
-          when "log"     then @log_file_output = line[0]
-          when "errors"  then @log_file_error = line[0]
+          when "root"    then @root = Path[line[0]]
+          when "log"     then @log_file_output = Path[line[0]]
+          when "errors"  then @log_file_error = Path[line[0]]
           when "proxy"   then @proxy = URI.parse "//" + line[1]
           when "fastcgi" then @fastcgi = line[1].lchop "unix:"
           when "gzip"    then @gzip = true
@@ -47,7 +47,7 @@ struct WebSite::Caddy
   end
 
   def write
-    File.open @file, "w" do |io|
+    File.open @file.to_s, "w" do |io|
       @hosts.try &.each do |host|
         io << host.to_s.lchop("//") << ' '
       end

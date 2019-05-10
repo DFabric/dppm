@@ -1,13 +1,13 @@
 require "uri"
 
 module WebSite::Site
-  property root : String? = nil,
-    log_file_output : String? = nil,
-    log_file_error : String? = nil,
+  property root : Path? = nil,
+    log_file_output : Path? = nil,
+    log_file_error : Path? = nil,
     headers : Hash(String, String) = Hash(String, String).new,
     gzip : Bool = false,
     fastcgi : String? = nil,
     proxy : URI? = nil,
     hosts : Array(URI) = Array(URI).new,
-    file : String
+    file : Path
 end

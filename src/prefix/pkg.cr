@@ -4,11 +4,17 @@ require "semantic_version"
 class Prefix::Pkg
   include ProgramData
 
-  getter package : String,
-    version : String
+  # Package name.
+  getter package : String
 
-  getter app_bin_path : String { @path + "app/bin" }
+  # Version of the package.
+  getter version : String
+
+  # Semantic version representation.
   getter semantic_version : SemanticVersion { SemanticVersion.parse @version }
+
+  # Path of the application binary.
+  getter bin_path : Path
 
   protected property app_config_file : String? = nil, app_config : ::Config::Types? = nil
 
@@ -24,13 +30,13 @@ class Prefix::Pkg
     end
     @name = @package + '_' + @version
 
-    @path = @prefix.pkg + @name + '/'
+    @path = @prefix.pkg / @name
     if pkg_file
       pkg_file.path = nil
-      pkg_file.root_dir = @path
+      pkg_file.root_path = @path
       @pkg_file = pkg_file
     end
-    @bin_path = @path + "bin"
+    @bin_path = @path / "bin"
   end
 
   def self.create(prefix : Prefix, name : String, version : String?, tag : String?)
@@ -74,7 +80,7 @@ class Prefix::Pkg
 
   # Copy the source to this package directory path
   def copy_src_to_path
-    FileUtils.cp_r src.path, @path
+    FileUtils.cp_r src.path.to_s, @path.to_s
   end
 
   def get_config(key : String)
@@ -92,10 +98,10 @@ class Prefix::Pkg
     deps_with_expr.each_key &.internal_each_config_key { |key| yield key }
   end
 
-  def each_binary_with_path(&block : String, String ->)
+  def each_binary_with_path(&block : Path, String ->)
     {@bin_path, app_bin_path}.each do |path|
-      if Dir.exists? path
-        Dir.each_child path do |binary|
+      if Dir.exists? path.to_s
+        Dir.each_child path.to_s do |binary|
           yield path, binary
         end
       end
@@ -105,16 +111,16 @@ class Prefix::Pkg
   # Create symlinks to a globally reachable path
   def create_global_bin_symlinks(force : Bool = false)
     each_binary_with_path do |path, binary|
-      global_bin = "/usr/local/bin/" + binary
+      global_bin = Path["/usr/local/bin", binary].to_s
       File.delete global_bin if File.exists? global_bin
-      File.symlink path + '/' + binary, global_bin
+      File.symlink (path / binary).to_s, global_bin
     end
   end
 
   def delete_global_bin_symlinks
     each_binary_with_path do |path, binary|
-      global_bin = "/usr/local/bin/" + binary
-      if File.exists?(global_bin) && File.real_path(global_bin) == path + '/' + binary
+      global_bin = Path["/usr/local/bin", binary].to_s
+      if File.exists?(global_bin) && File.real_path(global_bin) == (path / binary).to_s
         File.delete global_bin
       end
     end
@@ -145,17 +151,17 @@ class Prefix::Pkg
                 end
       deps << dep_src.new_pkg dep_name, version
     end
-    vars["prefix"] = @prefix.path
+    vars["prefix"] = @prefix.path.to_s
     vars["version"] = @version
     vars["package"] = @package
-    vars["basedir"] = @path
+    vars["basedir"] = @path.to_s
     vars["arch_alias"] = arch_alias
     if env = pkg_file.env
       vars.merge! env
     end
 
     if File.exists? @path
-      Log.info "already present", @path
+      Log.info "already present", @path.to_s
       return self if confirmation
       yield
       return self
@@ -165,7 +171,7 @@ class Prefix::Pkg
 
     begin
       if File.exists? @path
-        Log.info "package already present", @path
+        Log.info "package already present", @path.to_s
         return self
       end
       copy_src_to_path
@@ -174,14 +180,14 @@ class Prefix::Pkg
       install_deps(deps) { }
       if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
         Log.info "building", @name
-        Dir.cd(@path) { Task.new(vars.dup, all_bin_paths).run build_task }
+        Dir.cd(@path.to_s) { Task.new(vars.dup, all_bin_paths).run build_task }
       else
-        raise "missing tasks.build key in " + pkg_file.path
+        raise "missing tasks.build key in " + pkg_file.path.to_s
       end
-      FileUtils.rm_rf libs_dir.rchop
+      FileUtils.rm_rf libs_path.to_s
       @libs = @all_bin_paths = nil
 
-      Log.info "build completed", @path
+      Log.info "build completed", @path.to_s
       self
     rescue ex
       begin
@@ -192,25 +198,24 @@ class Prefix::Pkg
     end
   end
 
-  private def move(path : String)
-    Dir.each_child(path) do |entry|
-      src = path + entry
-      dest = '.' + src
-      if Dir.exists? dest
-        move src + '/'
+  private def move(path : Path)
+    Dir.each_child(path.to_s) do |entry|
+      src = path / entry
+      if Dir.exists? src.to_s
+        move src
       else
-        File.rename src, dest
+        File.rename src.to_s, dest.to_s
       end
     end
   end
 
   def delete(confirmation : Bool = true, &block) : Pkg?
-    raise "package doesn't exist: " + @path if !File.exists? @path
+    raise "package doesn't exist: " + @path.to_s if !File.exists? @path.to_s
 
     # Check if the package is still in use by an application
-    Log.info "check packages in use", @path
+    Log.info "check packages in use", @path.to_s
     prefix.each_app do |app|
-      if app.real_app_path + '/' == @path
+      if @path == app.real_app_path
         raise "application package `#{package}` still in use by an application: " + app.name
       end
       app.libs.each do |library|
@@ -230,8 +235,8 @@ class Prefix::Pkg
     end
 
     delete_global_bin_symlinks if Process.root?
-    FileUtils.rm_rf @path
-    Log.info "package deleted", @path
+    FileUtils.rm_rf @path.to_s
+    Log.info "package deleted", @path.to_s
     self
   end
 end
