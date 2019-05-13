@@ -13,13 +13,13 @@ struct Service::OpenRC
   end
 
   def initialize(@name : String)
-    @file = "/etc/init.d/" + @name
-    @boot_file = "/etc/runlevels/default/" + @name
+    @file = Path["/etc/init.d", @name]
+    @boot_file = Path["/etc/runlevels/default", @name]
   end
 
   getter config : Config do
-    if @file && File.exists? @file
-      Config.from_openrc File.read(@file)
+    if @file && File.exists? @file.to_s
+      Config.from_openrc File.read(@file.to_s)
     else
       Config.new
     end
@@ -44,8 +44,8 @@ struct Service::OpenRC
   end
 
   def link(service_file : String)
-    File.symlink service_file, @file
-    File.chmod @file, 0o750
+    File.symlink service_file, @file.to_s
+    File.chmod @file.to_s, 0o750
   end
 
   {% for action in %w(start stop restart reload) %}
