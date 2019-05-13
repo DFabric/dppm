@@ -1,4 +1,4 @@
-module CLI::App
+module DPPM::CLI::App
   extend self
 
   def query(prefix, group, application, path, **args) : String

@@ -2,12 +2,12 @@ require "clicr"
 require "./prefix"
 require "./cli/*"
 
-module CLI
+module DPPM::CLI
   extend self
   include Clicr
 
   macro run(**additional_commands)
-  def CLI.internal_run(**additional_commands)
+  def DPPM::CLI.internal_run(**additional_commands)
     __debug = false
     Clicr.create(
       name: "dppm",
@@ -341,7 +341,7 @@ module CLI
     end
     exit 1
   end
-  CLI.internal_run
+  DPPM::CLI.internal_run
   end
 
   def version(**args)

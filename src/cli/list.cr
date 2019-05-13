@@ -1,4 +1,4 @@
-module CLI::List
+module DPPM::CLI::List
   extend self
 
   def all(prefix, source_name, source_path, group = nil, **args)

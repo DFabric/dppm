@@ -1,3 +1,3 @@
 require "./cli"
 
-CLI.run
+DPPM::CLI.run

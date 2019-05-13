@@ -1,4 +1,4 @@
-module CLI::Service
+module DPPM::CLI::Service
   extend self
 
   def self.new(service, **args)

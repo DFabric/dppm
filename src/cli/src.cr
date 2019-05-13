@@ -1,4 +1,4 @@
-module CLI::Src
+module DPPM::CLI::Src
   extend self
 
   def query(prefix, source_name, package, path, **args)
