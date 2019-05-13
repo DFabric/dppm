@@ -1,7 +1,7 @@
 module Service::InitSystem
   getter name : String,
-    file : String,
-    boot_file : String
+    file : Path,
+    boot_file : Path
 
   def config_tap(&block : Config -> Config)
     @config = yield config
@@ -12,38 +12,38 @@ module Service::InitSystem
   end
 
   def boot? : Bool
-    File.exists? @boot_file
+    File.exists? @boot_file.to_s
   end
 
   def exists? : Bool
-    File.symlink?(@file) || File.exists?(@file)
+    File.symlink?(@file.to_s) || File.exists?(@file.to_s)
   end
 
   def writable? : Bool
-    File.writable? @file
+    File.writable? @file.to_s
   end
 
   def creatable? : Bool
-    File.writable? File.dirname(@file)
+    File.writable? @file.dirname
   end
 
   def boot(value : Bool) : Bool
     case value
     when boot? # nothing to do
-    when true  then File.symlink @file, @boot_file
-    when false then File.delete boot_file
+    when true  then File.symlink @file.to_s, @boot_file.to_s
+    when false then File.delete @boot_file.to_s
     end
     value
   end
 
   def real_file : String
-    File.real_path file
+    File.real_path @file.to_s
   end
 
   private def delete_internal
     stop if run?
     boot false if boot?
-    File.delete @file if exists?
+    File.delete @file.to_s if exists?
   end
 
   def check_delete

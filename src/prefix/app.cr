@@ -475,7 +475,7 @@ struct Prefix::App
         add_service = false
       elsif app_service = service?
         if !app_service.creatable?
-          Log.warn "service creation not available - root permissions missing?", app_service.file
+          Log.warn "service creation not available - root permissions missing?", app_service.file.to_s
           add_service = false
         elsif app_service.exists?
           raise "system service already exist: " + app_service.name

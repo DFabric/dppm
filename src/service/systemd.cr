@@ -13,16 +13,16 @@ struct Service::Systemd
 
   def initialize(@name : String)
     @file = if File.exists?(service = "/lib/systemd/system/#{@name}.service")
-              service
+              Path[service]
             else
-              "/etc/systemd/system/#{@name}.service"
+              Path["/etc/systemd/system/#{@name}.service"]
             end
-    @boot_file = "/etc/systemd/system/multi-user.target.wants/#{@name}.service"
+    @boot_file = Path["/etc/systemd/system/multi-user.target.wants/#{@name}.service"]
   end
 
   getter config : Config do
-    if @file && File.exists? @file
-      Config.from_systemd File.read(@file)
+    if @file && File.exists? @file.to_s
+      Config.from_systemd File.read(@file.to_s)
     else
       Config.new
     end
@@ -53,7 +53,7 @@ struct Service::Systemd
   end
 
   def link(service_file : String)
-    File.symlink service_file, @file
+    File.symlink service_file, @file.to_s
     Host.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
