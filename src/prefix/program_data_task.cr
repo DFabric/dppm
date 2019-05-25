@@ -129,18 +129,18 @@ struct Prefix::ProgramData::Task
   # https://crystal-lang.org/api/File.html
   def execute(cmdline : String, last_cond : Bool = false) : String | Bool
     # Check if it's a variable
-    if cmdline.starts_with?('\'') && cmdline.starts_with?('\'')
-      return var_reader cmdline[1..-2]
+    if line = cmdline.lchop?('\'').try &.rchop?('\'')
+      return var_reader line
     elsif variable = @vars[cmdline]?
       return variable
     end
 
     cmd = cmdline.split ' '
     case command = cmd[0]
-    when "if"                     then ifexpr cmdline[3..-1]
-    when "elif"                   then last_cond ? false : ifexpr(cmdline[5..-1])
-    when "else"                   then !last_cond
-    when cmdline.starts_with? '/' then Host.exec command, cmd[1..-1]
+    when "if"              then ifexpr cmdline[3..-1]
+    when "elif"            then last_cond ? false : ifexpr(cmdline[5..-1])
+    when "else"            then !last_cond
+    when .starts_with? '/' then Host.exec command, cmd[1..-1]
       # use globs while executing a command
     when "glob"
       if dir = cmd[3]?
@@ -236,7 +236,7 @@ struct Prefix::ProgramData::Task
           raise "execution returned an error: #{command} #{cmd.join ' '}\n#{output}"
         end
       else
-        raise "unknown command or variable: #{cmd}"
+        raise "unknown command or variable: #{cmd.join ' '}"
       end
     end
   end

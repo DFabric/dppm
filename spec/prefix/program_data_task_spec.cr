@@ -80,13 +80,31 @@ describe Prefix::ProgramData::Task do
       cmd.execute("symlink test_file symlinked_file")
       File.symlink?("symlinked_file").should be_true
     end
+
+    it "parses a quoted line as a string" do
+      cmd.execute("'echo'").should eq "echo"
+    end
+
+    it "raises on unterminated quoted line" do
+      ex = expect_raises(Exception) do
+        cmd.execute "'echo"
+      end
+      ex.to_s.should eq "unknown command or variable: 'echo"
+    end
   end
 
   describe "Parse" do
     describe "variable" do
+      it "raises on unterminated quoted line" do
+        ex = expect_raises(Exception) do
+          cmd.run CON.parse(%<["'echo"]>).as_a
+        end
+        ex.to_s.should eq "error at line 1:\nunknown command or variable: 'echo"
+      end
+
       it "affect a string" do
         cmd.run CON.parse(%<["a = 'b'"]>).as_a
-        cmd.@vars["a"].should eq "b"
+        cmd.vars["a"].should eq "b"
       end
 
       it "affect a command output" do
@@ -96,7 +114,7 @@ describe Prefix::ProgramData::Task do
 
       it "uses interpolation" do
         cmd.run CON.parse(%<["c = '${dir}'"]>).as_a
-        cmd.@vars["c"].should eq Dir.current
+        cmd.vars["c"].should eq Dir.current
       end
     end
 
