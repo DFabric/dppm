@@ -175,7 +175,7 @@ struct Prefix::App
     @database = Database.new uri, user, db_type
   end
 
-  private def config_from_libs(key : String, &block)
+  private def config_from_libs(key : String, &block : ::Config::Types ->)
     libs.each do |library|
       if library_pkg_config_vars = library.pkg_file.config_vars
         if config_key = library_pkg_config_vars[key]?
@@ -248,9 +248,9 @@ struct Prefix::App
   end
 
   # Write all configurations
-  def write_configs
+  def write_configs : Nil
     if app_config = @config
-      File.write config_file!.path, app_config.build
+      File.write config_file!.to_s, app_config.build
     end
     config_import
     libs.each do |library|
@@ -279,18 +279,18 @@ struct Prefix::App
   private def config_export
     if export = pkg_file.config_export
       update_configuration do
+        config_path = config_file!
         full_command = export
         splitted_command = full_command.split ' '
         command = splitted_command[0]
         args = splitted_command[1..-1]
 
-        File.open config_file!.path.to_s, "w" do |io|
+        File.open config_path.to_s, "w" do |io|
           Exec.new command, args, output: io, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
             raise "can't export configuration: " + full_command if !process.wait.success?
           end
         end
-        config_file!.rewind
-        @config = ::Config.new config_file!
+        @config = ::Config.read config_path
       end
     end
   end
@@ -299,7 +299,7 @@ struct Prefix::App
     if origin_file = pkg_file.config_origin
       origin_file = (@path / origin_file).to_s
       return if !File.exists? origin_file.to_s
-      config_time = File.info(config_file!.path.to_s).modification_time
+      config_time = File.info(config_file!.to_s).modification_time
       origin_file_info = File.info origin_file
       return if config_time == origin_file_info.modification_time
 
@@ -311,7 +311,7 @@ struct Prefix::App
       File.chown origin_file, origin_file_info.owner, origin_file_info.group
       time = Time.utc_now
       File.touch origin_file, time
-      File.touch config_file!.path, time
+      File.touch config_file!.to_s, time
     end
   end
 
@@ -652,7 +652,7 @@ struct Prefix::App
           Log.info "copying library configuration files", dep_pkg.name
           dep_conf_path = conf_path / dep_pkg.package
           Dir.mkdir_p dep_conf_path.to_s
-          FileUtils.cp dep_pkg.config_file!.path, (dep_conf_path / File.basename(dep_pkg.config_file!.path)).to_s
+          FileUtils.cp dep_pkg.config_file!.to_s, (dep_conf_path / dep_pkg.config_file!.basename).to_s
         end
       end
 

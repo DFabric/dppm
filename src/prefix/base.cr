@@ -18,13 +18,13 @@ module Prefix::Base
   @config_file_initialized = false
 
   # Raises if the configuration file if it exists.
-  getter config_file : File? do
+  getter config_file : Path? do
     if !@config_file_initialized
       if Dir.exists? conf_path.to_s
         Dir.each_child conf_path.to_s do |file|
           file_path = conf_path / file
           if file.starts_with? "config."
-            @config_file = File.new file_path.to_s
+            @config_file = file_path
           end
         end
       end
@@ -34,7 +34,7 @@ module Prefix::Base
   end
 
   # Raises if the configuration file doesn't exist.
-  def config_file! : File
+  def config_file! : Path
     config_file || raise "config file not available"
   end
 
@@ -42,8 +42,8 @@ module Prefix::Base
 
   # Returns the main configuration.
   getter config : ::Config::Types? do
-    if !@config_initialized && config_file
-      @config = ::Config.new? config_file!
+    if !@config_initialized && (config_path = config_file)
+      @config = ::Config.read? config_path
       @config_initialized = true
     end
     @config
@@ -111,9 +111,5 @@ module Prefix::Base
       end
     end
     dependencies
-  end
-
-  def finalize
-    @config_file.try &.close
   end
 end

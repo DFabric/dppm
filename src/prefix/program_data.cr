@@ -33,8 +33,8 @@ module Prefix::ProgramData
       conf_libs_path = (conf_path / lib_pkg.package).to_s
       if Dir.exists? conf_libs_path
         Dir.each_child conf_libs_path do |file|
-          app_config_file = Path[conf_libs_path, file].to_s
-          lib_pkg.app_config = ::Config.new? File.new(app_config_file)
+          app_config_path = Path[conf_libs_path, file]
+          lib_pkg.app_config = ::Config.read? app_config_path
         end
       end
       lib_pkg.app_config_file = app_config_file

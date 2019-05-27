@@ -189,18 +189,18 @@ struct Prefix::ProgramData::Task
     when "ls"
       directory = cmd[1]? || Dir.current
       Dir.new(directory).children.join '\n'
-    when "get" then ::Config.new(File.new cmd[1]).get(cmd[2]).to_s
+    when "get" then ::Config.read(Path[cmd[1]]).get(cmd[2]).to_s
     when "del"
-      config_file = File.new cmd[1]
-      config = ::Config.new config_file
+      config_path = Path[cmd[1]]
+      config = ::Config.read config_path
       result = config.del(cmd[2]).to_s
-      File.write config_file.path, config.build
+      File.write config_path.to_s, config.build
       result
     when "set"
-      config_file = File.new cmd[1]
-      config = ::Config.new config_file
+      config_path = Path[cmd[1]]
+      config = ::Config.read config_path
       result = config.set(cmd[2], cmd[3..-1].join(' ')).to_s
-      File.write config_file.path, config.build
+      File.write config_path.to_s, config.build
       result
     when "chmod_r" then Utils.chmod_r cmd[1], cmd[2].to_i(8); "permissions changed"
     # Download

@@ -87,7 +87,7 @@ struct Prefix
   # DPPM configuration.
   property dppm_config : Config do
     if config_file = dppm.config_file
-      Config.new config_file.gets_to_end
+      Config.new File.read(config_file)
     else
       @@default_dppm_config
     end

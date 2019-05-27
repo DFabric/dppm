@@ -2,27 +2,32 @@ require "./config/*"
 require "./utils"
 
 module Config
-  alias Types = Config::CON | Config::INI | Config::JSON | Config::TOML | Config::YAML
+  extend self
+  alias Types = CON | INI | JSON | TOML | YAML
 
-  def self.new(file : File) : Format
-    new file, File.extname(file.path).lchop
+  # Yield the block when the file format is supported, and return the corresponding `Config::Types`, else raise.
+  def read(file : Path) : Types
+    to_type(file.extension.to_s.lchop) { File.read file.to_s }
   end
 
-  def self.new(file : File, format : String) : Format
-    new?(file, format) || raise "not supported file format for #{file}: #{format}"
+  # :ditto:
+  def to_type(format : String, &block : Proc(String)) : Types
+    to_type?(format) { yield } || raise "not supported file format: #{format}"
   end
 
-  def self.new?(file : File) : Format?
-    new? file, File.extname(file.path).lchop
+  # Yield the block when the file format is supported, and return the corresponding `Config::Types`.
+  def read?(file : Path) : Types?
+    to_type?(file.extension.to_s.lchop) { File.read file.to_s }
   end
 
-  def self.new?(file : File, format : String) : Format?
+  # :ditto:
+  def to_type?(format : String, &block : Proc(String)) : Types?
     case format
-    when "con"         then Config::CON.new file.gets_to_end
-    when "json"        then Config::JSON.new file.gets_to_end
-    when "ini", "INI"  then Config::INI.new file.gets_to_end
-    when "yml", "yaml" then Config::YAML.new file.gets_to_end
-    when "toml"        then Config::TOML.new file.gets_to_end
+    when "con"         then Config::CON.new yield
+    when "json"        then Config::JSON.new yield
+    when "ini", "INI"  then Config::INI.new yield
+    when "yml", "yaml" then Config::YAML.new yield
+    when "toml"        then Config::TOML.new yield
     end
   end
 end
