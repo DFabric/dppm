@@ -2,17 +2,17 @@ require "../spec_helper"
 require "../../src/prefix"
 
 module IntegrationSpec
-  def create_prefix(prefix_path : String) : Prefix
-    prefix = Prefix.new prefix_path
+  def create_prefix(prefix_path : String) : DPPM::Prefix
+    prefix = DPPM::Prefix.new prefix_path
     prefix.create
     FileUtils.mkdir_p (prefix.app / "dppm").to_s
     prefix
   end
 
-  def test_prefix_app(prefix : Prefix, application : String)
+  def test_prefix_app(prefix : DPPM::Prefix, application : String)
     app = prefix.new_app application
 
-    describe Prefix::App do
+    describe DPPM::Prefix::App do
       it "exists" do
         app.exists?.should eq app
       end
@@ -59,7 +59,7 @@ module IntegrationSpec
 
   def clean_unused_packages(prefix_path : String)
     it "cleans unused packages" do
-      prefix = Prefix.new prefix_path
+      prefix = DPPM::Prefix.new prefix_path
       Dir.rmdir (prefix.app / "dppm").to_s
       packages = prefix.clean_unused_packages(false) { }
       packages.not_nil!.should_not be_empty

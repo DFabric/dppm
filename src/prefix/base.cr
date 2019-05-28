@@ -1,7 +1,7 @@
 require "./pkg_file"
 require "semantic_compare"
 
-module Prefix::Base
+module DPPM::Prefix::Base
   # Root path of the package.
   getter path : Path
 

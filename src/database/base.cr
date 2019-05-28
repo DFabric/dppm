@@ -1,4 +1,4 @@
-module Database::Base
+module DPPM::Database::Base
   getter uri : URI,
     user : String
 

@@ -5,8 +5,11 @@ struct Config::YAML
   include Format
   getter data : ::YAML::Any
 
-  def initialize(content : String, file : File? = nil)
-    @data = ::YAML.parse content
+  def initialize(@data : ::YAML::Any)
+  end
+
+  def self.new(content : String)
+    new ::YAML.parse content
   end
 
   def get(path : Array)
@@ -14,7 +17,7 @@ struct Config::YAML
   end
 
   def set(path : Array, value)
-    value = Utils.to_type value
+    value = to_type value
     @data[path] = ::YAML::Any.new case value
     when Hash(String, String) then Hash(::YAML::Any, ::YAML::Any).new
     when Array(String)        then Array(::YAML::Any).new

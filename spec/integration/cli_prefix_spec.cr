@@ -6,7 +6,7 @@ module IntegrationSpec
       pkg = DPPM::CLI::Pkg.build(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        source_name: Prefix.default_source_name,
+        source_name: DPPM::Prefix.default_source_name,
         source_path: SAMPLES_DIR,
         prefix: prefix_path,
         package: package,
@@ -21,8 +21,8 @@ module IntegrationSpec
       app = DPPM::CLI::App.add(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        group: Prefix.default_group,
-        source_name: Prefix.default_source_name,
+        group: DPPM::Prefix.default_group,
+        source_name: DPPM::Prefix.default_source_name,
         source_path: SAMPLES_DIR,
         prefix: prefix_path,
         application: application,
@@ -39,8 +39,8 @@ module IntegrationSpec
       app = DPPM::CLI::App.upgrade(
         no_confirm: true,
         config: DPPM_CONFIG_FILE,
-        group: Prefix.default_group,
-        source_name: Prefix.default_source_name,
+        group: DPPM::Prefix.default_group,
+        source_name: DPPM::Prefix.default_source_name,
         source_path: SAMPLES_DIR,
         prefix: prefix_path,
         application: application,
@@ -56,7 +56,7 @@ module IntegrationSpec
       app = DPPM::CLI::App.delete(
         no_confirm: true,
         prefix: prefix_path,
-        group: Prefix.default_group,
+        group: DPPM::Prefix.default_group,
         application: application,
         keep_user_group: false,
         preserve_database: false).not_nil!

@@ -353,10 +353,10 @@ module DPPM::CLI
     end
   end
 
-  def query(any : CON::Any, path : String) : CON::Any
+  def query(any : CON::Any, path : String) : CON::Any?
     case path
     when "." then any
-    else          any[Utils.to_array path]
+    else          Config::CON.new(any).get path
     end
   end
 

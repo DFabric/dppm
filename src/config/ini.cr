@@ -5,8 +5,11 @@ struct Config::INI
   include Format
   getter data : Hash(String, Hash(String, String))
 
-  def initialize(content : String)
-    @data = ::INI.parse content
+  def initialize(@data : Hash(String, Hash(String, String)))
+  end
+
+  def self.new(content : String)
+    new ::INI.parse content
   end
 
   def get(path : Array)

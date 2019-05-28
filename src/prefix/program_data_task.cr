@@ -1,6 +1,6 @@
 require "con"
 
-struct Prefix::ProgramData::Task
+struct DPPM::Prefix::ProgramData::Task
   getter vars : Hash(String, String) = Hash(String, String).new
   @line_number : Int32 = 0
 
@@ -177,12 +177,12 @@ struct Prefix::ProgramData::Task
     when "real_path"     then File.real_path cmdline[10..-1]
     when "random_base64" then Random::Secure.urlsafe_base64(cmd[1].to_i).to_s
       # Double argument with space separator
-    when "append"  then File.open cmd[1], "a", &.print Utils.to_type(cmd[2..-1].join(' ')); "text appended"
+    when "append"  then File.open cmd[1], "a", &.print cmd[2..-1].join(' ').lchop('\'').rchop('\''); "text appended"
     when "cp"      then FileUtils.cp cmd[1], cmd[2]; "file copied"
     when "cp_r"    then FileUtils.cp_r cmd[1], cmd[2]; "directory copied"
     when "link"    then File.link cmd[1], cmd[2]; "hard link created"
     when "symlink" then File.symlink cmd[1], cmd[2]; "symbolic link created"
-    when "write"   then File.write cmd[1], Utils.to_type(cmd[2..-1].join(' ')); "text written"
+    when "write"   then File.write cmd[1], cmd[2..-1].join(' ').lchop('\'').rchop('\''); "text written"
     when "chmod" then File.chmod cmd[1], cmd[2].to_i(8); "permissions changed"
     # Custom
     when "dir" then Dir.current

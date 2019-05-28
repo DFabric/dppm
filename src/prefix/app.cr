@@ -2,7 +2,7 @@ require "./program_data"
 require "libcrown"
 require "tail"
 
-struct Prefix::App
+struct DPPM::Prefix::App
   include ProgramData
 
   getter logs_path : Path { path / "logs" }

@@ -6,39 +6,42 @@ struct Config::TOML
   include Format
   getter data : Hash(String, Hash(String, String))
 
-  def initialize(content : String, file : File? = nil)
-    @data = ::INI.parse content
+  def initialize(@data : Hash(String, Hash(String, String)))
+  end
+
+  def self.new(content : String)
+    new ::INI.parse content
   end
 
   def get(path : Array)
     case path.size
     when 1
       if toml = @data[""]?
-        to_type toml[path[0].to_s]?
+        internal_to_type toml[path[0].to_s]?
       end
     when 2
       if toml = @data[path[0].to_s]?
-        to_type toml[path[1].to_s]?
+        internal_to_type toml[path[1].to_s]?
       end
     else
       raise "max key path exceeded: #{path.size}"
     end
   end
 
-  private def to_type(result : String?)
-    if result.is_a?(String)
-      if result.starts_with?('"') && result.ends_with?('"')
-        return result[1..-2]
-      elsif result == "true"
+  private def internal_to_type(string : String?)
+    if string.is_a? String
+      if result = string.lchop?('"').try &.rchop?('"')
+        result
+      elsif string == "true"
         true
-      elsif result == "false"
+      elsif string == "false"
         false
-      elsif int = result.to_i64?
+      elsif int = string.to_i64?
         int
-      elsif float = result.to_f64?
+      elsif float = string.to_f64?
         float
       else
-        result
+        string
       end
     end
   end

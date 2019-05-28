@@ -1,7 +1,7 @@
 require "./program_data"
 require "semantic_version"
 
-class Prefix::Pkg
+class DPPM::Prefix::Pkg
   include ProgramData
 
   # Package name.

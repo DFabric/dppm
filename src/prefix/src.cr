@@ -1,6 +1,6 @@
 require "./base"
 
-struct Prefix::Src
+struct DPPM::Prefix::Src
   include Base
 
   protected def initialize(@prefix : Prefix, @name : String, @pkg_file : PkgFile? = nil)

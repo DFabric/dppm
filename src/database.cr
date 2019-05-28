@@ -1,7 +1,7 @@
 require "uri"
 require "./database/*"
 
-module Database
+module DPPM::Database
   extend self
 
   class ConnectionError < Exception

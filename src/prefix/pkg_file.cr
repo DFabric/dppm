@@ -1,6 +1,6 @@
 require "con"
 
-struct Prefix::PkgFile
+struct DPPM::Prefix::PkgFile
   # Supported application types.
   enum Type
     HTML

@@ -5,8 +5,11 @@ struct Config::CON
   include Format
   getter data : ::CON::Any
 
-  def initialize(content : String)
-    @data = ::CON.parse content
+  def initialize(@data : ::CON::Any)
+  end
+
+  def self.new(content : String)
+    new ::CON.parse content
   end
 
   def get(path : Array)
@@ -14,7 +17,7 @@ struct Config::CON
   end
 
   def set(path : Array, value)
-    value = Utils.to_type value
+    value = to_type value
     @data[path] = ::CON::Any.new case value
     when Hash(String, String) then Hash(String, ::CON::Any).new
     when Array(String)        then Array(::CON::Any).new

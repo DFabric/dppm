@@ -9,7 +9,7 @@ require "./service"
 require "./web_site"
 require "./http_helper"
 
-struct Prefix
+struct DPPM::Prefix
   # Default DPPM configuration.
   class_getter default_dppm_config = Config.new {{ read_file "./config.con" }}
 

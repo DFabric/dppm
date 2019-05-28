@@ -1,7 +1,7 @@
 require "./base"
 require "./program_data_task"
 
-module Prefix::ProgramData
+module DPPM::Prefix::ProgramData
   include Base
 
   getter all_bin_paths : Array(Path) do

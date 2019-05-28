@@ -5,8 +5,11 @@ struct Config::JSON
   include Format
   getter data : ::JSON::Any
 
-  def initialize(content : String, file : File? = nil)
-    @data = ::JSON.parse content
+  def initialize(@data : ::JSON::Any)
+  end
+
+  def self.new(content : String)
+    new ::JSON.parse content
   end
 
   def get(path : Array)
@@ -14,7 +17,7 @@ struct Config::JSON
   end
 
   def set(path : Array, value)
-    value = Utils.to_type value
+    value = to_type value
     @data[path] = ::JSON::Any.new case value
     when Hash(String, String) then Hash(String, ::JSON::Any).new
     when Array(String)        then Array(::JSON::Any).new

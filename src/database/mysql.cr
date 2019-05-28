@@ -1,6 +1,6 @@
 require "mysql"
 
-struct Database::MySQL
+struct DPPM::Database::MySQL
   include Base
 
   def initialize(@uri : URI, @user : String)
