@@ -1,4 +1,4 @@
-struct Service::Config
+class Service::Config
   property user : String? = nil,
     group : String? = nil,
     directory : String? = nil,

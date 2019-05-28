@@ -13,7 +13,7 @@ module Service
     end
   end
 
-  struct Systemd
+  class Systemd
     def self.version=(@@version)
     end
   end

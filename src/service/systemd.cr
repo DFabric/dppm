@@ -1,6 +1,6 @@
 require "./init_system"
 
-struct Service::Systemd
+class Service::Systemd
   include InitSystem
   class_getter type : String = "systemd"
 
@@ -43,7 +43,7 @@ struct Service::Systemd
     end
   end
 
-  def run?
+  def run? : Bool
     Host.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
   end
 

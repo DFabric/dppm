@@ -1,6 +1,6 @@
 require "./config"
 
-struct Service::Config
+class Service::Config
   private OPENRC_RELOAD_COMMAND  = "supervise-daemon --pidfile \"$pidfile\" --signal "
   private OPENRC_PIDFILE         = "pidfile=\"/run/${RC_SVCNAME}.pid\""
   private OPENRC_SHEBANG         = "#!/sbin/openrc-run"

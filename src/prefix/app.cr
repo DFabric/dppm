@@ -75,46 +75,33 @@ struct DPPM::Prefix::App
     service_path / service.type
   end
 
-  # Used to tap inside the service, to modify its reference instead of a copy.
-  def service_tap(&block : Service::OpenRC | Service::Systemd -> Service::OpenRC | Service::Systemd)
-    @service = yield service
-  end
-
   # Creates a new system service
   def service_create(database_name : String? = nil)
     Dir.mkdir_p service_path.to_s
 
     # Set service options
-    service_tap do |service|
-      service.config_tap do |config|
-        config.user = owner.user.name
-        config.group = owner.group.name
-        config.directory = @path.to_s
-        config.description = pkg_file.description
-        config.log_output = log_file_output.to_s
-        config.log_error = log_file_error.to_s
-        config.command = (path / exec["start"]).to_s
-        config.after << database_name if database_name
+    service.config.user = owner.user.name
+    service.config.group = owner.group.name
+    service.config.directory = @path.to_s
+    service.config.description = pkg_file.description
+    service.config.log_output = log_file_output.to_s
+    service.config.log_error = log_file_error.to_s
+    service.config.command = (path / exec["start"]).to_s
+    service.config.after << database_name if database_name
 
-        # add a reload directive if available
-        if exec_reload = exec["reload"]?
-          config.reload_signal = exec_reload
-        end
-
-        # Add a PATH environment variable if not empty
-        if !(path_var = path_env_var).empty?
-          config.env_vars["PATH"] = path_var
-        end
-        if pkg_env = pkg_file.env
-          config.env_vars.merge! pkg_env
-        end
-
-        # Convert back hashes to service files
-        config
-      end
-      File.write service_file, service.config_build
-      service
+    # add a reload directive if available
+    if exec_reload = exec["reload"]?
+      service.config.reload_signal = exec_reload
     end
+
+    # Add a PATH environment variable if not empty
+    if !(path_var = path_env_var).empty?
+      service.config.env_vars["PATH"] = path_var
+    end
+    if pkg_env = pkg_file.env
+      service.config.env_vars.merge! pkg_env
+    end
+    File.write service_file, service.config_build
   end
 
   # Enable system service by creating a symlink.
@@ -187,7 +174,7 @@ struct DPPM::Prefix::App
     end
   end
 
-  private def keys_from_libs(&block : String ->)
+  private def each_key_from_libs(&block : String ->)
     libs.each do |library|
       library.pkg_file.config_vars.try &.each_key do |key|
         yield key
@@ -195,15 +182,17 @@ struct DPPM::Prefix::App
     end
   end
 
+  # Gets the config key. Raises if the key is not found.
   def get_config(key : String)
     get_config(key) { raise "config key not found: " + key }
   end
 
+  # Gets the config key, if any.
   def get_config?(key : String)
     get_config(key) { nil }
   end
 
-  # Get the config key. If not found, returns the block.
+  # Gets the config key. Returns the block if not found.
   def get_config(key : String, &block)
     config_from_pkg_file key do |app_config, config_key|
       config_export
@@ -215,6 +204,7 @@ struct DPPM::Prefix::App
     yield
   end
 
+  # Deletes a config key. Raises if the key is not found.
   def del_config(key : String)
     config_from_pkg_file key do |app_config, config_key|
       config_export
@@ -226,6 +216,7 @@ struct DPPM::Prefix::App
     raise "config key not found: " + key
   end
 
+  # Sets a config key. Raises if the key is not found.
   def set_config(key : String, value)
     config_from_pkg_file key do |app_config, config_key|
       config_export
@@ -237,12 +228,13 @@ struct DPPM::Prefix::App
     raise "config key not found: " + key
   end
 
+  # Yields each configuration key of the application and its libraries (if any).
   def each_config_key(&block : String ->)
     config_export
     internal_each_config_key do |key|
       yield key
     end
-    keys_from_libs do |key|
+    each_key_from_libs do |key|
       yield key
     end
   end
@@ -260,7 +252,7 @@ struct DPPM::Prefix::App
     end
   end
 
-  # Import the readable configuration to the application
+  # Import the readable configuration to an application readable format.
   private def config_import
     if full_command = pkg_file.config_import
       update_configuration do
@@ -275,7 +267,7 @@ struct DPPM::Prefix::App
     end
   end
 
-  # Export the application's internal configuration to a readable config file
+  # Export the application's configuration format to a readable config file.
   private def config_export
     if export = pkg_file.config_export
       update_configuration do
@@ -352,6 +344,7 @@ struct DPPM::Prefix::App
     File.chmod data_path.to_s, 0o750
   end
 
+  # Returns a `PATH` with the directories locations to find the application and libaries binaries.
   def path_env_var : String
     String.build do |str|
       str << app_bin_path
@@ -376,8 +369,7 @@ struct DPPM::Prefix::App
   def website=(@website : WebSite::Caddy)
   end
 
-  # Adds a new site.
-  # Assumes the app is a Web Server.
+  # Adds a new site. Assumes the app is a Web Server.
   def new_website(app_name : String, build_conf_path : Path) : WebSite::Caddy
     raise "Web server doesn't exists: #{@path}" if !Dir.exists? @path
     default_site_file = build_conf_path / "web" / pkg_file.package

@@ -1,6 +1,6 @@
 require "./init_system"
 
-struct Service::OpenRC
+class Service::OpenRC
   include InitSystem
   class_getter type : String = "openrc"
 
@@ -35,7 +35,7 @@ struct Service::OpenRC
     end
   end
 
-  def run?
+  def run? : Bool
     Host.exec? "/sbin/rc-service", {@name, "status"}
   end
 

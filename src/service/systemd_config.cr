@@ -1,7 +1,7 @@
 require "ini"
 require "./config"
 
-struct Service::Config
+class Service::Config
   private SYSTEMD_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
   private SYSTEMD_NETWORK_SERVICE    = "network.target"
 

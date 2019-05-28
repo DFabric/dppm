@@ -19,10 +19,6 @@ module Service
   end
 
   def self.init : Systemd.class | OpenRC.class
-    if init = init?
-      init
-    else
-      raise "unsupported init system"
-    end
+    init? || raise "unsupported init system"
   end
 end

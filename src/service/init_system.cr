@@ -3,10 +3,6 @@ module Service::InitSystem
     file : Path,
     boot_file : Path
 
-  def config_tap(&block : Config -> Config)
-    @config = yield config
-  end
-
   def type : String
     self.class.type
   end
