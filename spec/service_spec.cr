@@ -5,7 +5,7 @@ require "file_utils"
 
 module Service
   def self.init=(@@init)
-    @@supported = true
+    @@initialized = true
   end
 
   module InitSystem
@@ -32,7 +32,14 @@ def assert_service(service, file = __FILE__, line = __LINE__)
   test_app.service.file = test_app.service_file
 
   it "creates a service", file, line do
-    test_app.service_create
+    config = test_app.service_create.config
+    config.user.should be_a String
+    config.group.should be_a String
+    config.directory.should be_a String
+    config.command.should be_a String
+    config.reload_signal.should be_a String
+    config.description.should be_a String
+    config.log_output.should be_a String
   end
 
   it "parses the service", file, line do

@@ -76,7 +76,7 @@ struct DPPM::Prefix::App
   end
 
   # Creates a new system service
-  def service_create(database_name : String? = nil)
+  def service_create(database_name : String? = nil) : Service::OpenRC | Service::Systemd
     Dir.mkdir_p service_path.to_s
 
     # Set service options
@@ -102,6 +102,7 @@ struct DPPM::Prefix::App
       service.config.env_vars.merge! pkg_env
     end
     File.write service_file, service.config_build
+    service
   end
 
   # Enable system service by creating a symlink.

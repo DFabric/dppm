@@ -6,9 +6,9 @@ class Service::Systemd
 
   class_getter version : Int32 do
     output, error = Exec.new "/bin/systemctl", {"--version"}, &.wait
-    output.to_s.lines[0].lchop("systemd ").split(' ', limit: 2)[0].to_i
-  rescue
-    raise "can't retrieve the systemd version: #{output}#{error}"
+    output.to_s.lchop("systemd ").partition('\n')[0].to_i
+  rescue ex
+    raise "can't retrieve the systemd version (#{output}#{error}): #{ex}"
   end
 
   def initialize(@name : String)
@@ -35,8 +35,7 @@ class Service::Systemd
   def self.each(&block : String -> _)
     {"/lib/systemd/system", "/etc/systemd/system"}.each do |service_dir|
       Dir.each_child service_dir do |service|
-        if service.ends_with? ".service"
-          service_name = service.rchop ".service"
+        if service_name = service.rchop? ".service"
           yield service_name if !service_name.ends_with? '@'
         end
       end

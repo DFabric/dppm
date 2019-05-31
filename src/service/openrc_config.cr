@@ -14,33 +14,36 @@ class Service::Config
     function_name = ""
 
     data.each_line do |full_line|
-      case line = full_line.lstrip "\n\t "
-      when .ends_with? '}'                then function_name = ""
-      when .ends_with? "() {"             then function_name = line.rchop "() {"
-      when .starts_with? "description="   then service.description = line.lchop("description='").rchop
-      when .starts_with? "directory="     then service.directory = line.lchop("directory='").rchop
-      when .starts_with? "umask="         then service.umask = line.lchop "umask="
-      when .starts_with? "output_log="    then service.log_output = line.lchop("output_log='").rchop
-      when .starts_with? "error_log="     then service.log_error = line.lchop("error_log='").rchop
-      when .starts_with? "respawn_delay=" then service.restart_delay = line.lchop("respawn_delay=").to_u32
-      when .starts_with? "command="
-        service.command = line.lchop("command='").rchop + service.command.to_s
-      when .starts_with? "command_args="
-        service.command = service.command.to_s + ' ' + line.lchop("command_args='").rchop
-      when .starts_with? "command_user="
-        user_and_group = line.lchop("command_user='").rchop.split ':', limit: 2
+      line = full_line.lstrip "\n\t "
+      if line.ends_with? '}'
+        function_name = ""
+      elsif function_name = line.rchop? "() {"
+      elsif service.description = line.lchop?("description='").try &.rchop
+      elsif service.directory = line.lchop?("directory='").try &.rchop
+      elsif service.umask = line.lchop? "umask="
+      elsif service.log_output = line.lchop?("output_log='").try &.rchop
+      elsif service.log_error = line.lchop?("error_log='").try &.rchop
+      elsif service.restart_delay = line.lchop?("respawn_delay=").try &.to_u32
+      elsif service.command = line.lchop?("command='").try &.rchop.+ service.command.to_s
+      elsif command_args = line.lchop?("command_args='")
+        service.command = service.command.to_s + ' ' + command_args.rchop
+      elsif command_user = line.lchop?("command_user='")
+        user_and_group = command_user.rchop.split ':', limit: 2
         service.user = user_and_group[0]?
         service.group = user_and_group[1]?
-      when .starts_with? OPENRC_ENV_VARS_PREFIX
-        service.parse_env_vars line.lchop(OPENRC_ENV_VARS_PREFIX).rchop("'\"")
-      when .empty?,
-           OPENRC_SHEBANG,
-           OPENRC_SUPERVISOR,
-           OPENRC_PIDFILE,
-           "\"",
-           .starts_with?("extra_started_commands"),
-           .starts_with?("pidfile")
+      elsif openrc_env_vars = line.lchop?(OPENRC_ENV_VARS_PREFIX)
+        service.parse_env_vars openrc_env_vars.rchop("'\"")
       else
+        case line
+        when .empty?,
+             OPENRC_SHEBANG,
+             OPENRC_SUPERVISOR,
+             OPENRC_PIDFILE,
+             "\"",
+             .starts_with?("extra_started_commands"),
+             .starts_with?("pidfile")
+          next
+        end
         case function_name
         when "depend"
           directive = true

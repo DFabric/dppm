@@ -6,10 +6,9 @@ class Service::OpenRC
 
   class_getter version : String do
     output, error = Exec.new "/sbin/openrc", {"-V"}, &.wait
-    output.to_s =~ /([0-9]+\.[0-9]+\.[0-9]+)/
-    $1.not_nil!
-  rescue
-    raise "can't retrieve the OpenRC version: #{output}#{error}"
+    output.to_s.rpartition(' ')[-1].rpartition('.')[-1]
+  rescue ex
+    raise "can't retrieve the OpenRC version (#{output}#{error}): #{ex}"
   end
 
   def initialize(@name : String)
