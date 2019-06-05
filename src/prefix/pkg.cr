@@ -83,14 +83,15 @@ class DPPM::Prefix::Pkg
     FileUtils.cp_r src.path.to_s, @path.to_s
   end
 
-  def get_config(key : String)
+  # Gets the config key. Yields the block if not found.
+  def get_config(key : String, &block)
     config_from_pkg_file key do |package_config, config_key|
       return package_config.get config_key
     end
     deps_with_expr.each_key &.config_from_pkg_file key do |package_config, config_key|
       return package_config.get config_key
     end
-    raise "config key not found: " + key
+    yield
   end
 
   def each_config_key(&block : String ->)

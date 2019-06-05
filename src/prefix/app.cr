@@ -183,17 +183,7 @@ struct DPPM::Prefix::App
     end
   end
 
-  # Gets the config key. Raises if the key is not found.
-  def get_config(key : String)
-    get_config(key) { raise "config key not found: " + key }
-  end
-
-  # Gets the config key, if any.
-  def get_config?(key : String)
-    get_config(key) { nil }
-  end
-
-  # Gets the config key. Returns the block if not found.
+  # Gets the config key. Yields the block if not found.
   def get_config(key : String, &block)
     config_from_pkg_file key do |app_config, config_key|
       config_export
@@ -205,7 +195,7 @@ struct DPPM::Prefix::App
     yield
   end
 
-  # Deletes a config key. Raises if the key is not found.
+  # Deletes a config key. Raises a `KeyError` if the key is not found.
   def del_config(key : String)
     config_from_pkg_file key do |app_config, config_key|
       config_export
@@ -214,10 +204,10 @@ struct DPPM::Prefix::App
     config_from_libs key do |lib_config, config_key|
       return lib_config.del config_key
     end
-    raise "config key not found: " + key
+    config_key_exception key
   end
 
-  # Sets a config key. Raises if the key is not found.
+  # Sets a config key. Raises a `KeyError` if the key is not found.
   def set_config(key : String, value)
     config_from_pkg_file key do |app_config, config_key|
       config_export
@@ -226,7 +216,7 @@ struct DPPM::Prefix::App
     config_from_libs key do |lib_config, config_key|
       return lib_config.set config_key, value
     end
-    raise "config key not found: " + key
+    config_key_exception key
   end
 
   # Yields each configuration key of the application and its libraries (if any).

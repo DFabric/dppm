@@ -54,7 +54,24 @@ module DPPM::Prefix::Base
     config || raise "no valid config file: #{conf_path}config.*"
   end
 
-  abstract def get_config(key : String)
+  class ConfigKeyError < Exception
+  end
+
+  private def config_key_exception(key : String)
+    raise ConfigKeyError.new "Missing config key: " + key.inspect
+  end
+
+  # Gets the config key. Raises a `KeyError` if the key is not found.
+  def get_config(key : String)
+    get_config(key) { config_key_exception key }
+  end
+
+  # Gets the config key, if any.
+  def get_config?(key : String)
+    get_config(key) { nil }
+  end
+
+  abstract def get_config(key : String, &block)
 
   protected def config_from_pkg_file(key : String, &block)
     if app_config = config

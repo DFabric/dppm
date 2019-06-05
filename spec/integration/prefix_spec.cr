@@ -29,6 +29,12 @@ module IntegrationSpec
         it "from the app which is in a lib config" do
           app.get_config("host").should be_a String
         end
+
+        it "raises config key on missing key" do
+          expect_raises(DPPM::Prefix::App::ConfigKeyError) do
+            app.get_config "does not exist"
+          end
+        end
       end
 
       describe "del config" do

@@ -11,14 +11,15 @@ struct DPPM::Prefix::Src
     Pkg.new @prefix, pkg_name, version, pkg_file
   end
 
-  def get_config(key : String)
+  # Gets the config key. Yields the block if not found.
+  def get_config(key : String, &block)
     config_from_pkg_file key do |config_file, config_key|
       return config_file.get config_key
     end
     deps_with_expr.each_key &.config_from_pkg_file key do |config_file, config_key|
       return config_file.get config_key
     end
-    raise "config key not found: " + key
+    yield
   end
 
   def each_config_key(&block : String ->)
