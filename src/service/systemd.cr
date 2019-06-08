@@ -6,7 +6,7 @@ class Service::Systemd
 
   class_getter version : Int32 do
     output, error = Exec.new "/bin/systemctl", {"--version"}, &.wait
-    output.to_s.lchop("systemd ").partition('\n')[0].to_i
+    output.to_s.lchop("systemd ").partition('\n')[0].partition(' ')[0].to_i
   rescue ex
     raise "can't retrieve the systemd version (#{output}#{error}): #{ex}"
   end
