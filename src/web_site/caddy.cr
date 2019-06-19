@@ -41,7 +41,7 @@ struct WebSite::Caddy
         end
         line_number += 1
       rescue ex
-        raise Exception.new "Caddyfile parsing error at line #{line_number} for #{raw_line}:\n#{ex}", ex
+        raise Exception.new "Caddyfile parsing error at line #{line_number} for #{raw_line}", ex
       end
     end
   end

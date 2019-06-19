@@ -99,7 +99,8 @@ describe DPPM::Prefix::ProgramData::Task do
         ex = expect_raises(Exception) do
           cmd.run CON.parse(%<["'echo"]>).as_a
         end
-        ex.to_s.should eq "error at line 1:\nunknown command or variable: 'echo"
+        ex.to_s.should eq "error at line 1"
+        ex.cause.to_s.should eq "unknown command or variable: 'echo"
       end
 
       it "affect a string" do

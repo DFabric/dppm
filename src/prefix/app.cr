@@ -745,7 +745,7 @@ struct DPPM::Prefix::App
       begin
         delete false { }
       ensure
-        raise Exception.new "add failed - application deleted: #{@path}:\n#{ex}", ex
+        raise Exception.new "add failed - application deleted: #{@path}", ex
       end
     end
   end
@@ -783,7 +783,7 @@ struct DPPM::Prefix::App
     begin
       database.try(&.check_connection) if !preserve_database
     rescue ex
-      raise Exception.new "either start the database or use the preseve database option:\n#{ex}", ex
+      raise Exception.new "either start the database or use the preseve database option", ex
     end
 
     # Checks

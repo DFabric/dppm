@@ -337,7 +337,7 @@ module DPPM::CLI
     if __debug
       ex.inspect_with_backtrace Log.error
     else
-      Log.error ex.to_s
+      Log.error ex
     end
     exit 1
   end
@@ -391,7 +391,7 @@ module DPPM::CLI
     rescue ex
       root_prefix.delete_src
       FileUtils.rm_r root_prefix.path.to_s
-      raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted:\n#{ex}", ex
+      raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted", ex
     end
     dppm_package.create_global_bin_symlinks(force: true) if Process.root?
     Log.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"

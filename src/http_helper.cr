@@ -12,7 +12,7 @@ module HTTPHelper
       raise "status code #{response.status}: " + url
     end
   rescue ex
-    raise Exception.new "failed to get #{url.colorize.underline}:\n#{ex}", ex
+    raise Exception.new "failed to get #{url.colorize.underline}", ex
   end
 
   def get_file(url : String, path : String = File.basename(url))

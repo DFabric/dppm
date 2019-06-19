@@ -59,7 +59,7 @@ class DPPM::Prefix::Pkg
     end
     new prefix, package, version, src.pkg_file, src
   rescue ex
-    raise Exception.new "can't obtain a version:\n#{ex}", ex
+    raise Exception.new "can't obtain a version", ex
   end
 
   def new_app(app_name : String? = nil) : App
@@ -194,7 +194,7 @@ class DPPM::Prefix::Pkg
       begin
         delete false { }
       ensure
-        raise Exception.new "build failed - package deleted: #{@path}:\n#{ex}", ex
+        raise Exception.new "build failed - package deleted: #{@path}", ex
       end
     end
   end

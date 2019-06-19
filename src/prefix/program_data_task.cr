@@ -54,7 +54,7 @@ struct DPPM::Prefix::ProgramData::Task
       end
     end
   rescue ex
-    raise Exception.new "error at line #{@line_number}:\n#{ex}", ex
+    raise Exception.new "error at line #{@line_number}", ex
   end
 
   private def var_reader(cmd : String)
