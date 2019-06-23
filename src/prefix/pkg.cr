@@ -18,13 +18,11 @@ class DPPM::Prefix::Pkg
 
   protected property app_config_file : String? = nil, app_config : ::Config::Types? = nil
 
-  protected def initialize(@prefix : Prefix, name : String, version : String? = nil, @pkg_file : PkgFile? = nil, @src : Src? = nil)
+  protected def initialize(@prefix : Prefix, name : String, version : String? = nil, pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version
       @package, @version = name, version
     elsif name.includes? '_'
-      @package, @version = name.split '_', limit: 2
-    elsif name.includes? ':'
-      @package, @version = name.split ':', limit: 2
+      @package, _, @version = name.partition '_'
     else
       raise "no version provided for #{name}"
     end
@@ -32,34 +30,10 @@ class DPPM::Prefix::Pkg
 
     @path = @prefix.pkg / @name
     if pkg_file
-      pkg_file.path = nil
-      pkg_file.root_path = @path
-      @pkg_file = pkg_file
+      import_pkg_file pkg_file
     end
+
     @bin_path = @path / "bin"
-  end
-
-  def self.create(prefix : Prefix, name : String, version : String?, tag : String?)
-    if name.includes? '_'
-      package, tag_or_version = name.split '_', limit: 2
-    elsif name.includes? ':'
-      package, tag_or_version = name.split ':', limit: 2
-    else
-      package = name
-    end
-    src = Src.new prefix, package
-
-    if tag_or_version && tag_or_version =~ /^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/
-      version = tag_or_version
-    end
-    if version
-      src.pkg_file.ensure_version version
-    else
-      version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
-    end
-    new prefix, package, version, src.pkg_file, src
-  rescue ex
-    raise Exception.new "can't obtain a version", ex
   end
 
   def new_app(app_name : String? = nil) : App
@@ -71,7 +45,7 @@ class DPPM::Prefix::Pkg
       app_name ||= package + '-' + Random::Secure.hex(8)
       Utils.ascii_alphanumeric_dash? app_name
     end
-    App.new @prefix, app_name, self
+    App.new @prefix, app_name, pkg_file, self
   end
 
   def src : Src
@@ -134,6 +108,11 @@ class DPPM::Prefix::Pkg
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
   def build(deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block)
+    if !@pkg_file
+      import_pkg_file src.pkg_file
+    end
+    pkg_file.ensure_version @version
+
     vars = Host.vars.dup
     arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
                    version_alias

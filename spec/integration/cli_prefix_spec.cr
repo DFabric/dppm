@@ -31,6 +31,7 @@ module IntegrationSpec
         noservice: true,
         socket: false)
       app.name.starts_with?(TEST_APP_PACKAGE_NAME).should be_true
+      app.exists?.should eq app
     end
   end
 

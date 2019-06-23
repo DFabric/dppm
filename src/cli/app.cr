@@ -83,7 +83,7 @@ module DPPM::CLI::App
     root_prefix.update
 
     # Create task
-    pkg = Prefix::Pkg.create root_prefix, application, version, tag
+    pkg = root_prefix.new_pkg application, version, tag
     app = pkg.new_app name
     app.add(
       vars: vars,

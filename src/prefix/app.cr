@@ -10,9 +10,12 @@ struct DPPM::Prefix::App
   getter log_file_error : Path { logs_path / "output.log" }
   getter web_site_file : Path { conf_path / "web-site" }
 
-  protected def initialize(@prefix : Prefix, @name : String, pkg : Pkg? = nil)
+  protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil, @pkg : Pkg? = nil)
     Utils.ascii_alphanumeric_dash? name
     @path = @prefix.app / @name
+    if pkg_file
+      import_pkg_file pkg_file
+    end
     if pkg
       @pkg = pkg
       pkg_pkg_file = pkg.pkg_file
@@ -396,7 +399,7 @@ struct DPPM::Prefix::App
     confirmation : Bool = true,
     &block
   )
-    new_pkg = Pkg.create prefix: @prefix, name: pkg.package, version: version, tag: tag
+    new_pkg = @prefix.new_pkg package_name: pkg.package, version: version, tag: tag
 
     case new_pkg.semantic_version
     when .< pkg.semantic_version

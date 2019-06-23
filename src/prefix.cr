@@ -111,14 +111,41 @@ struct DPPM::Prefix
     end
   end
 
+  # Creates a new `App` application object.
   def new_app(name : String) : App
     App.new self, name
   end
 
-  def new_pkg(name : String, version : String? = nil) : Pkg
-    Pkg.new self, name, version
+  # Creates a new `Pkg` package object.
+  # A package name includes the package and optionally a version/tag separated by either a `_` or `:`.
+  # If no version is provided, latest one will be used.
+  def new_pkg(package_name : String, version : String? = nil, tag : String? = nil) : Pkg
+    if version
+      Pkg.new self, package_name, version
+    else
+      case package_name
+      when .includes? '_'
+        package, _, tag_or_version = package_name.partition '_'
+      when .includes? ':'
+        package, _, tag_or_version = package_name.partition ':'
+      else
+        package = package_name
+      end
+      src = Src.new self, package
+
+      if tag_or_version && tag_or_version =~ /^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/
+        version = tag_or_version
+      end
+      if version
+        src.pkg_file.ensure_version version
+      else
+        version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
+      end
+      Pkg.new self, package, version, src.pkg_file, src
+    end
   end
 
+  # Creates a new `Src` source package object.
   def new_src(name : String) : Src
     Src.new self, name
   end

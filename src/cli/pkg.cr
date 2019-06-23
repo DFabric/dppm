@@ -30,7 +30,7 @@ module DPPM::CLI::Pkg
     root_prefix.update
 
     # Create task
-    pkg = Prefix::Pkg.create root_prefix, package, version, tag
+    pkg = root_prefix.new_pkg package, version, tag
     pkg.build confirmation: !no_confirm do
       no_confirm || CLI.confirm_prompt
     end

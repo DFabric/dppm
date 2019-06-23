@@ -61,7 +61,7 @@ module DPPM::Prefix::Base
     raise ConfigKeyError.new "Missing config key: " + key.inspect
   end
 
-  # Gets the config key. Raises a `KeyError` if the key is not found.
+  # Gets the config key. Raises a `ConfigKeyError` if the key is not found.
   def get_config(key : String)
     get_config(key) { config_key_exception key }
   end
@@ -128,5 +128,11 @@ module DPPM::Prefix::Base
       end
     end
     dependencies
+  end
+
+  private def import_pkg_file(foreign_pkg_file : PkgFile) : PkgFile
+    foreign_pkg_file.path = nil
+    foreign_pkg_file.root_path = @path
+    @pkg_file = foreign_pkg_file
   end
 end

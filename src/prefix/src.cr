@@ -3,8 +3,11 @@ require "./base"
 struct DPPM::Prefix::Src
   include Base
 
-  protected def initialize(@prefix : Prefix, @name : String, @pkg_file : PkgFile? = nil)
+  protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil)
     @path = @prefix.src / @name
+    if pkg_file
+      import_pkg_file pkg_file
+    end
   end
 
   def new_pkg(pkg_name : String, version : String?) : Pkg
