@@ -44,8 +44,8 @@ module DPPM::Prefix::ProgramData
     libs
   end
 
-  # Return `self` if the root directory doesn't already exists, else raise.
-  def exists!
+  # Return `self` if the root directory is available, else raise.
+  def available!
     raise "directory already exists: " + @path.to_s if exists?
     self
   end

@@ -468,7 +468,7 @@ struct DPPM::Prefix::App
         end
       end
     end
-    exists!
+    available!
 
     database_app = nil
     if database

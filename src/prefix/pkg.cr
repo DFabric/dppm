@@ -140,7 +140,7 @@ class DPPM::Prefix::Pkg
       vars.merge! env
     end
 
-    if File.exists? @path
+    if exists?
       Log.info "already present", @path.to_s
       return self if confirmation
       yield
@@ -150,7 +150,7 @@ class DPPM::Prefix::Pkg
     end
 
     begin
-      if File.exists? @path
+      if exists?
         Log.info "package already present", @path.to_s
         return self
       end
