@@ -35,7 +35,7 @@ class Service::OpenRC
   end
 
   def run? : Bool
-    Host.exec? "/sbin/rc-service", {@name, "status"}
+    Service.exec? "/sbin/rc-service", {@name, "status"}
   end
 
   def delete
@@ -49,7 +49,7 @@ class Service::OpenRC
 
   {% for action in %w(start stop restart reload) %}
   def {{action.id}} : Bool
-    Host.exec? "/sbin/rc-service", {@name, {{action}}}
+    Service.exec? "/sbin/rc-service", {@name, {{action}}}
   end
   {% end %}
 end

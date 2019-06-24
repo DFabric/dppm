@@ -33,7 +33,7 @@ class Process
   end
 end
 
-struct Host
+struct DPPM::Host
   class_getter proc_ver : Array(String) = File.read("/proc/version").split(' '),
     kernel_ver : String = proc_ver[2].split('-')[0]
 
@@ -65,7 +65,7 @@ struct Host
 
   # All system environment variables
   class_getter vars : Hash(String, String) do
-    Service.init? || Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
+    Service.init? || DPPM::Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
     {
       "arch"        => @@arch,
       "kernel"      => @@kernel,
@@ -113,17 +113,9 @@ struct Host
   end
 
   def self.exec(command : String, args : Array(String) | Tuple) : String
-    Exec.new command, args, output: Log.output, error: Log.error do |process|
+    Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
       raise "execution returned an error: #{command} #{args.join ' '}" if !process.wait.success?
     end
     "success"
-  end
-
-  def self.exec?(command : String, args : Array(String) | Tuple) : Bool
-    success = false
-    Exec.new command, args, output: Log.output, error: Log.error do |process|
-      success = process.wait.success?
-    end
-    return success
   end
 end

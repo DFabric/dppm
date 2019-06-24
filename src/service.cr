@@ -21,4 +21,12 @@ module Service
   def self.init : Systemd.class | OpenRC.class
     init? || raise "unsupported init system"
   end
+
+  def self.exec?(command : String, args : Array(String) | Tuple) : Bool
+    success = false
+    Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
+      success = process.wait.success?
+    end
+    return success
+  end
 end

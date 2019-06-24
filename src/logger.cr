@@ -1,6 +1,6 @@
 require "colorize"
 
-module Log
+module DPPM::Log
   extend self
   class_property output : IO::FileDescriptor = STDOUT
   class_property error : IO::FileDescriptor = STDERR

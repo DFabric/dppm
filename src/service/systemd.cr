@@ -43,22 +43,22 @@ class Service::Systemd
   end
 
   def run? : Bool
-    Host.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
+    Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
   end
 
   def delete : Bool
     delete_internal
-    Host.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
+    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
   def link(service_file : String)
     File.symlink service_file, @file.to_s
-    Host.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
+    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 
   {% for action in %w(start stop restart reload) %}
   def {{action.id}} : Bool
-    Host.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
+    Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
   end
   {% end %}
 end
