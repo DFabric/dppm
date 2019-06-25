@@ -382,7 +382,7 @@ module DPPM::CLI
       app = dppm_package.new_app "dppm"
 
       app.add(
-        vars: {"uid" => "0", "gid" => "0"},
+        vars: {"uid" => Process.uid.to_s, "gid" => Process.gid.to_s},
         shared: true,
         confirmation: !no_confirm
       ) do
