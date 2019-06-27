@@ -28,10 +28,10 @@ struct DPPM::Prefix::ProgramData::Task
         @line_number += 1
         # # New variable assignation
         if line.size > 4 &&
-           (line_var = line.split(" = ", limit: 2)) &&
+           (line_var = line.partition(" = ")) &&
            (first_line_var = line_var[0]) &&
            Utils.ascii_alphanumeric_underscore? first_line_var
-          if (output = execute(line_var[1])).is_a? String
+          if (output = execute(line_var[2])).is_a? String
             @vars[first_line_var] = output
           else
             raise "expected String, got #{output}"

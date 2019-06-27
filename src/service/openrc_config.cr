@@ -28,9 +28,9 @@ class Service::Config
       elsif command_args = line.lchop?("command_args='")
         service.command = service.command.to_s + ' ' + command_args.rchop
       elsif command_user = line.lchop?("command_user='")
-        user_and_group = command_user.rchop.split ':', limit: 2
-        service.user = user_and_group[0]?
-        service.group = user_and_group[1]?
+        user_and_group = command_user.rchop.partition ':'
+        service.user = user_and_group[0].empty? ? nil : user_and_group[0]
+        service.group = user_and_group[2].empty? ? nil : user_and_group[2]
       elsif openrc_env_vars = line.lchop?(OPENRC_ENV_VARS_PREFIX)
         service.parse_env_vars openrc_env_vars.rchop("'\"")
       else
@@ -79,10 +79,10 @@ class Service::Config
       str << "\ncommand_user='#{@user}:#{@group}'" if @user || @group
       str << "\ndirectory='" << @directory << '\'' if @directory
       if command = @command
-        command_elements = command.split ' ', limit: 2
+        command_elements = command.partition ' '
         str << "\ncommand='" << command_elements[0] << '\''
-        if command_args = command_elements[1]?
-          str << "\ncommand_args='" << command_args << '\''
+        if !command_elements[2].empty?
+          str << "\ncommand_args='" << command_elements[2] << '\''
         end
       end
       str << "\noutput_log='" << @log_output << '\'' if @log_output

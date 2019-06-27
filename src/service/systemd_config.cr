@@ -34,8 +34,8 @@ class Service::Config
 
     if command = ini["Service"]["ExecStart"]?
       if shell_command = command.lchop? SYSTEMD_SHELL_LOG_REDIRECT
-        service.log_error, output_with_command = shell_command.split " >>", limit: 2
-        service.log_output, service.command = output_with_command.rchop.split ' ', limit: 2
+        service.log_error, _, output_with_command = shell_command.partition " >>"
+        service.log_output, _, service.command = output_with_command.rchop.partition ' '
       else
         service.command = command
       end

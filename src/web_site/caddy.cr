@@ -17,11 +17,11 @@ struct WebSite::Caddy
             @hosts << URI.parse "//" + host
           end
         elsif header_block
-          line = raw_line.strip("\t ").split " \"", limit: 2
+          line = raw_line.strip("\t ").partition " \""
           if line.first == "}"
             header_block = false
           else
-            @headers[line.first] = line[1].rchop '"'
+            @headers[line.first] = line[2].rchop '"'
           end
           next
         else
