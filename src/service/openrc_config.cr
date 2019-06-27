@@ -56,8 +56,8 @@ class Service::Config
             end
           end
         when "reload"
-          if line.starts_with? OPENRC_RELOAD_COMMAND
-            service.reload_signal = line.lchop OPENRC_RELOAD_COMMAND
+          if reload_signal = line.lchop? OPENRC_RELOAD_COMMAND
+            service.reload_signal = reload_signal
           end
         else
           raise "unsupported line"

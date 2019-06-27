@@ -33,8 +33,7 @@ class Service::Config
     end
 
     if command = ini["Service"]["ExecStart"]?
-      if command.starts_with? SYSTEMD_SHELL_LOG_REDIRECT
-        shell_command = command.lchop SYSTEMD_SHELL_LOG_REDIRECT
+      if shell_command = command.lchop? SYSTEMD_SHELL_LOG_REDIRECT
         service.log_error, output_with_command = shell_command.split " >>", limit: 2
         service.log_output, service.command = output_with_command.rchop.split ' ', limit: 2
       else

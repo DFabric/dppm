@@ -47,8 +47,8 @@ module Config::Format
     when "{}"    then Hash(String, String).new
     when "[]"    then Array(String).new
     else
-      if string.starts_with?('\'') && string.ends_with?('\'')
-        string[1..-2]
+      if str = string.lchop?('\'').try &.rchop?('\'')
+        str
       elsif int = string.to_i64?
         int
       elsif float = string.to_f64?
