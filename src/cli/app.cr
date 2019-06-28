@@ -1,12 +1,12 @@
 module DPPM::CLI::App
   extend self
 
-  def query(prefix, group, application, path, **args) : String
+  def query(prefix, group, application, path) : String
     pkg_file = Prefix.new(prefix, group: group).new_app(application).pkg_file
     CLI.query(pkg_file.any, path).to_pretty_con
   end
 
-  def delete(no_confirm, prefix, group, application, keep_user_group, preserve_database, **args)
+  def delete(no_confirm, prefix, group, application, keep_user_group, preserve_database)
     Prefix.new(prefix, group: group).new_app(application).delete !no_confirm, keep_user_group, preserve_database do
       CLI.confirm_prompt
     end
@@ -23,8 +23,7 @@ module DPPM::CLI::App
     contained,
     custom_vars = Array(String).new,
     version = nil,
-    tag = nil,
-    **args
+    tag = nil
   )
     Log.info "initializing", "upgrade"
     vars = vars_parser custom_vars
@@ -68,8 +67,7 @@ module DPPM::CLI::App
     name = nil,
     database = nil,
     url = nil,
-    web_server = nil,
-    debug = nil
+    web_server = nil
   )
     Log.info "initializing", "add"
     vars = vars_parser custom_vars
@@ -115,11 +113,11 @@ module DPPM::CLI::App
     vars
   end
 
-  def version(prefix, group, application, **args) : String
+  def version(prefix, group, application) : String
     Prefix.new(prefix, group: group).new_app(application).pkg.version
   end
 
-  def exec(prefix, group, application, **args)
+  def exec(prefix, group, application)
     app = Prefix.new(prefix, group: group).new_app application
 
     env_vars = app.pkg_file.env || Hash(String, String).new
@@ -138,7 +136,7 @@ module DPPM::CLI::App
       chdir: app.path.to_s, &.wait
   end
 
-  def config_get(prefix, group, nopkg : Bool, application, path, **args)
+  def config_get(prefix, group, nopkg : Bool, application, path)
     app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       if nopkg && path == "."
@@ -155,7 +153,7 @@ module DPPM::CLI::App
     end
   end
 
-  def config_set(prefix, group, nopkg : Bool, application, path, value, **args)
+  def config_set(prefix, group, nopkg : Bool, application, path, value)
     app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       app.config!.set path, value
@@ -165,7 +163,7 @@ module DPPM::CLI::App
     app.write_configs
   end
 
-  def config_del(prefix, group, nopkg : Bool, application, path, **args)
+  def config_del(prefix, group, nopkg : Bool, application, path)
     app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       app.config!.del path
@@ -175,7 +173,7 @@ module DPPM::CLI::App
     app.write_configs
   end
 
-  def self.logs(prefix : String, group : String, log_names : Array(String), lines : String?, follow : Bool, application : String, **args, &block : String ->)
+  def self.logs(prefix : String, group : String, log_names : Array(String), lines : String?, follow : Bool, application : String, &block : String ->)
     app = Prefix.new(prefix, group: group).new_app application
     if log_names.empty?
       Log.output << "LOG NAMES\n"

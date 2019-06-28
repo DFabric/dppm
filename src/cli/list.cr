@@ -1,7 +1,7 @@
 module DPPM::CLI::List
   extend self
 
-  def all(prefix, source_name, source_path, group = nil, **args)
+  def all(prefix, source_name, source_path, group = nil)
     root_prefix = Prefix.new prefix, group: group || Prefix.default_group, source_name: source_name, source_path: source_path
     Log.output.puts "applications:"
     root_prefix.each_app { |app| Log.output.puts app.name }
@@ -12,7 +12,7 @@ module DPPM::CLI::List
   end
 
   {% for dir in %w(app pkg src) %}
-  def {{dir.id}}(prefix, **args)
+  def {{dir.id}}(prefix)
     Prefix.new(prefix).each_{{dir.id}} { |el| Log.output.puts el.name }
   end
   {% end %}

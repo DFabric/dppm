@@ -1,11 +1,11 @@
 module DPPM::CLI::Service
   extend self
 
-  def self.new(service, **args)
+  def self.new(service)
     ::Service.init.new service
   end
 
-  def boot(service : String, state : String, **args) : Bool
+  def boot(service : String, state : String) : Bool
     ::Service.init.new(service).boot Utils.to_b(state)
   end
 
@@ -17,7 +17,7 @@ module DPPM::CLI::Service
     end
   end
 
-  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String), **args) : Nil
+  def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String)) : Nil
     Log.output << "RUN   " if !norun
     Log.output << "BOOT  " if !noboot
     Log.output.puts "SERVICE\n"

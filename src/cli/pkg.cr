@@ -1,24 +1,24 @@
 module DPPM::CLI::Pkg
   extend self
 
-  def query(prefix, source_name, config, package, path, **args)
+  def query(prefix, source_name, package, path)
     pkg_file = Prefix.new(prefix, source_name: source_name).new_pkg(package).pkg_file
     CLI.query(pkg_file.any, path).to_pretty_con
   end
 
-  def clean_unused_packages(no_confirm, prefix, source_name, **args)
+  def clean_unused_packages(no_confirm, prefix, source_name)
     Prefix.new(prefix, source_name: source_name).clean_unused_packages !no_confirm do
       CLI.confirm_prompt
     end
   end
 
-  def delete(no_confirm, prefix, source_name, package, version, **args)
+  def delete(no_confirm, prefix, source_name, package, version)
     Prefix.new(prefix, source_name: source_name).new_pkg(package, version).delete !no_confirm do
       CLI.confirm_prompt
     end
   end
 
-  def build(no_confirm, config, prefix, source_name, source_path, package, custom_vars, version = nil, tag = nil, debug = nil)
+  def build(no_confirm, config, prefix, source_name, source_path, package, custom_vars, version = nil, tag = nil)
     Log.info "initializing", "build"
 
     # Update cache

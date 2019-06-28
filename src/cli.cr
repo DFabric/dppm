@@ -42,6 +42,7 @@ module DPPM::CLI
         app: {
           alias:    'a',
           info:     "Manage applications",
+          inherit:   \%w(config debug no_confirm prefix source_name source_path),
           variables: {
             group: {
               info:    "Group namespace where installing applications",
@@ -52,8 +53,9 @@ module DPPM::CLI
             add: {
               alias:     'a',
               info:      "Add a new application (builds its missing dependencies)",
-              arguments: \%w(application custom_vars...),
               action:    "App.add",
+              arguments: \%w(application custom_vars...),
+              inherit:   \%w(config group no_confirm prefix source_name source_path),
               options:   {
                 contained: {
                   short: 'c',
@@ -92,6 +94,7 @@ module DPPM::CLI
             config: {
               alias:   'c',
               info:    "Manage application's configuration",
+              inherit: \%w(group nopkg prefix),
               options: {
                 nopkg: {
                   short: 'n',
@@ -101,26 +104,30 @@ module DPPM::CLI
               commands: {
                 get: {
                   info:      "Get a value. Single dot path `.` for all keys",
-                  arguments: \%w(application path),
                   action:    "App.config_get",
+                  arguments: \%w(application path),
+                  inherit:   \%w(group nopkg prefix),
                 },
                 set: {
                   info:      "Set a value",
-                  arguments: \%w(application path value),
                   action:    \%(App.config_set() && Log.output.puts "done"),
+                  arguments: \%w(application path value),
+                  inherit:   \%w(group nopkg prefix),
                 },
                 del: {
                   info:      "Delete a path",
-                  arguments: \%w(application path),
                   action:    \%(App.config_del() && Log.output.puts "done"),
+                  arguments: \%w(application path),
+                  inherit:   \%w(group nopkg prefix),
                 },
               },
             },
             delete: {
               alias:     'd',
               info:      "Delete an added application",
-              arguments: \%w(application custom_vars...),
               action:    "App.delete",
+              arguments: \%w(application),
+              inherit:   \%w(group no_confirm prefix),
               options:   {
                 keep_user_group: {
                   short: 'k',
@@ -135,24 +142,28 @@ module DPPM::CLI
             exec: {
               alias:     'e',
               info:      "Execute an application in the foreground",
-              arguments: \%w(application),
               action:    "App.exec",
+              arguments: \%w(application),
+              inherit:   \%w(prefix group),
             },
             install: {
-              alias:  'i',
-              info:   "Install DPPM to a new defined prefix",
-              action: "install_dppm",
+              alias:   'i',
+              info:    "Install DPPM to a new defined prefix",
+              action:  "install_dppm",
+              inherit: \%w(no_confirm config prefix group source_name source_path),
             },
             list: {
-              alias:  'l',
-              info:   "List applications",
-              action: "List.app",
+              alias:   'l',
+              info:    "List applications",
+              action:  "List.app",
+              inherit: \%w(prefix),
             },
             logs: {
               alias:     'L',
               info:      "Read logs of the application's service - list log names if empty",
-              arguments: \%w(application log_names...),
               action:    "App.logs() { |log| Log.output << log }",
+              arguments: \%w(application log_names...),
+              inherit:   \%w(prefix group),
               options:   {
                 follow: {
                   short: 'f',
@@ -168,19 +179,22 @@ module DPPM::CLI
             query: {
               alias:     'q',
               info:      "Query informations from an application - `.` for the whole document",
-              arguments: \%w(application path),
               action:    "Log.output.puts App.query",
+              arguments: \%w(application path),
+              inherit:   \%w(prefix group),
             },
             uninstall: {
               alias:  'U',
               info:   "Uninstall DPPM with all its applications",
               action: "uninstall_dppm",
+              inherit:   \%w(config group no_confirm prefix source_name source_path),
             },
             upgrade: {
               alias:     'u',
               info:      "Upgrade the application to a version",
-              arguments: \%w(application custom_vars...),
               action:    "App.upgrade",
+              arguments: \%w(application custom_vars...),
+              inherit:   \%w(config group no_confirm prefix source_name source_path),
               options: {
                 contained: {
                   short: 'c',
@@ -199,19 +213,22 @@ module DPPM::CLI
             version: {
               alias:     'v',
               info:      "Returns application's version",
-              arguments: \%w(application),
               action:    "Log.output.puts App.version",
+              arguments: \%w(application),
+              inherit:   \%w(group prefix),
             },
           },
         },
         list: {
-          alias:  'l',
-          info:   "List all applications, packages and sources",
-          action: "List.all",
+          alias:   'l',
+          info:    "List all applications, packages and sources",
+          action:  "List.all",
+          inherit: \%w(group prefix source_name source_path),
         },
         package: {
           alias:     'p',
           info:      "Manage built packages",
+          inherit:   \%w(config no_confirm prefix source_name source_path),
           variables: {
             tag: {
               info: "Package version's tag (e.g: latest)",
@@ -224,61 +241,68 @@ module DPPM::CLI
             build: {
               alias:     'b',
               info:      "Build a new a package",
-              arguments: \%w(package custom_vars...),
               action:    "Pkg.build",
+              arguments: \%w(package custom_vars...),
+              inherit:   \%w(config no_confirm prefix source_name source_path tag version),
             },
             clean: {
-              alias:  'C',
-              info:   "Clean unused built packages by the applications",
-              action: "Pkg.clean_unused_packages",
+              alias:   'C',
+              info:    "Clean unused built packages by the applications",
+              action:  "Pkg.clean_unused_packages",
+              inherit: \%w(no_confirm prefix source_name),
             },
             delete: {
               alias:     'd',
               info:      "Delete a built package",
-              arguments: \%w(package custom_vars...),
               action:    "Pkg.delete",
+              arguments: \%w(package),
+              inherit:   \%w(no_confirm prefix source_name version),
             },
             list: {
-              alias:  'l',
-              info:   "List packages",
-              action: "List.pkg",
+              alias:   'l',
+              info:    "List packages",
+              action:  "List.pkg",
+              inherit: \%w(prefix),
             },
             query: {
               alias:     'q',
               info:      "Query informations from a package - `.` for the whole document.",
-              arguments: \%w(package path),
               action:    "Log.output.puts Pkg.query",
+              arguments: \%w(package path),
+              inherit:   \%w(prefix source_name),
             },
           },
         },
         service: {
           alias:    'S',
           info:     "Manage application services",
+          inherit:  \%w(prefix),
           commands: {
             boot: {
               info:      "Auto-start the service at boot",
-              arguments: \%w(service state),
               action:    "Service.boot",
+              arguments: \%w(service state),
             },
             reload: {
               info:      "Reload the service",
-              arguments: \%w(service),
               action:    "Service.new().reload || exit 1",
+              arguments: \%w(service),
             },
             restart: {
               info:      "Restart the service",
-              arguments: \%w(service),
               action:    "Service.new().restart || exit 1",
+              arguments: \%w(service),
             },
             start: {
               info:      "Start the service",
-              arguments: \%w(service),
               action:    "Service.new().start || exit 1",
+              arguments: \%w(service),
             },
             status: {
               info:      "Status for specified services or all services if none set",
-              arguments: \%w(services...),
               action:    "Service.status",
+              arguments: \%w(services...),
+              inherit:   \%w(prefix),
               options:   {
                 all: {
                   short: 'a',
@@ -302,22 +326,26 @@ module DPPM::CLI
         source: {
           alias:    's',
           info:     "Manage packages sources",
+          inherit:   \%w(config no_confirm prefix source_name source_path),
           commands: {
             list: {
-              alias:  'l',
-              info:   "List source packages",
-              action: "List.src",
+              alias:   'l',
+              info:    "List source packages",
+              action:  "List.src",
+              inherit: \%w(prefix),
             },
             query: {
               alias:     'q',
               info:      "Query informations from a source package - `.` for the whole document",
-              arguments: \%w(package path),
               action:    "Log.output.puts Src.query",
+              arguments: \%w(package path),
+              inherit:   \%w(prefix source_name),
             },
             update: {
-              alias:  'u',
-              info:   "Check for packages source updates. `-y` to force update",
-              action: "Src.update",
+              alias:   'u',
+              info:    "Check for packages source updates. `-y` to force update",
+              action:  "Src.update",
+              inherit: \%w(config no_confirm prefix source_name source_path),
             },
           },
         },
@@ -360,7 +388,7 @@ module DPPM::CLI
     end
   end
 
-  def install_dppm(no_confirm, config, prefix, group, source_name, source_path, debug = nil)
+  def install_dppm(no_confirm, config, prefix, group, source_name, source_path)
     root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
     if root_prefix.dppm.exists?
@@ -398,7 +426,7 @@ module DPPM::CLI
     File.delete PROGRAM_NAME
   end
 
-  def uninstall_dppm(no_confirm, config, prefix, group, source_name, source_path, debug = nil)
+  def uninstall_dppm(no_confirm, config, prefix, group, source_name, source_path)
     root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
     raise "DPPM not installed in #{root_prefix.path}" if !root_prefix.dppm.exists?
