@@ -417,8 +417,7 @@ module DPPM::CLI
         no_confirm || CLI.confirm_prompt { raise "DPPM installation canceled." }
       end
     rescue ex
-      root_prefix.delete_src
-      FileUtils.rm_r root_prefix.path.to_s
+      root_prefix.delete
       raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted", ex
     end
     dppm_package.create_global_bin_symlinks(force: true) if Process.root?
@@ -443,8 +442,7 @@ module DPPM::CLI
     end
 
     if (apps = Dir.children(root_prefix.app.to_s).join ", ").empty?
-      root_prefix.delete_src
-      FileUtils.rm_r root_prefix.path.to_s
+      root_prefix.delete
       Log.info "DPPM uninstallation complete", root_prefix.path.to_s
     else
       Log.warn "DPPM uninstallation not complete, there are remaining applications", apps

@@ -174,6 +174,12 @@ struct DPPM::Prefix
     end
   end
 
+  # Delete the prefix directory path.
+  def delete
+    delete_src
+    FileUtils.rm_rf @path.to_s
+  end
+
   # Download, or update a packages source cache.
   def update(force : Bool = false)
     packages_source_date = nil
@@ -242,8 +248,8 @@ struct DPPM::Prefix
 
     Log.info "deleting packages", @pkg.to_s
     packages.each do |package|
-      pkg_prefix = new_pkg package
-      FileUtils.rm_rf pkg_prefix.path.to_s
+      pkg = new_pkg package
+      pkg.delete confirmation: false { }
       Log.info "package deleted", package
     end
 

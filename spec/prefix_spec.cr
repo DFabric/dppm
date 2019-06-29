@@ -13,7 +13,7 @@ describe DPPM::Prefix do
       children.includes?("src").should be_true
       Dir[prefix.src.to_s + "/*/*"].should_not be_empty
     ensure
-      FileUtils.rm_rf prefix.path.to_s
+      prefix.delete
     end
   end
 end

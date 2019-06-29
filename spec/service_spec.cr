@@ -58,7 +58,7 @@ def assert_service(service, file = __FILE__, line = __LINE__)
     test_app.service.config.env_vars["PATH"].should eq test_app.path_env_var
   end
 
-  FileUtils.rm_r test_prefix.path.to_s
+  test_prefix.delete
   Service.init = nil
 end
 

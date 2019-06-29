@@ -19,6 +19,6 @@ describe IntegrationSpec do
     IntegrationSpec.delete_application prefix.path.to_s, package
     IntegrationSpec.clean_unused_packages prefix.path.to_s
   ensure
-    FileUtils.rm_rf prefix.path.to_s
+    prefix.delete
   end
 end
