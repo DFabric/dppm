@@ -146,6 +146,12 @@ module DPPM::CLI
               arguments: \%w(application),
               inherit:   \%w(prefix group),
             },
+            query: {
+              info:      "Get information of an application - `.` for the whole document",
+              action:    "Log.output.puts App.info",
+              arguments: \%w(application path),
+              inherit:   \%w(prefix group),
+            },
             install: {
               alias:   'i',
               info:    "Install DPPM to a new defined prefix",
@@ -175,13 +181,6 @@ module DPPM::CLI
                   info: "Number of last lines to print. All lines when no set",
                 },
               },
-            },
-            query: {
-              alias:     'q',
-              info:      "Query informations from an application - `.` for the whole document",
-              action:    "Log.output.puts App.query",
-              arguments: \%w(application path),
-              inherit:   \%w(prefix group),
             },
             uninstall: {
               alias:  'U',
@@ -258,18 +257,17 @@ module DPPM::CLI
               arguments: \%w(package),
               inherit:   \%w(no_confirm prefix source_name version),
             },
+            info: {
+              info:      "Get information of a package - `.` for the whole document.",
+              action:    "Log.output.puts Pkg.info",
+              arguments: \%w(package path),
+              inherit:   \%w(prefix source_name),
+            },
             list: {
               alias:   'l',
               info:    "List packages",
               action:  "List.pkg",
               inherit: \%w(prefix),
-            },
-            query: {
-              alias:     'q',
-              info:      "Query informations from a package - `.` for the whole document.",
-              action:    "Log.output.puts Pkg.query",
-              arguments: \%w(package path),
-              inherit:   \%w(prefix source_name),
             },
           },
         },
@@ -334,10 +332,9 @@ module DPPM::CLI
               action:  "List.src",
               inherit: \%w(prefix),
             },
-            query: {
-              alias:     'q',
-              info:      "Query informations from a source package - `.` for the whole document",
-              action:    "Log.output.puts Src.query",
+            info: {
+              info:      "Get information of a source package - `.` for the whole document",
+              action:    "Log.output.puts Src.info",
               arguments: \%w(package path),
               inherit:   \%w(prefix source_name),
             },
@@ -381,7 +378,7 @@ module DPPM::CLI
     end
   end
 
-  def query(any : CON::Any, path : String) : CON::Any?
+  def info(any : CON::Any, path : String) : CON::Any?
     case path
     when "." then any
     else          Config::CON.new(any).get path

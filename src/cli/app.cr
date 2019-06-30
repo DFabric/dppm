@@ -1,9 +1,9 @@
 module DPPM::CLI::App
   extend self
 
-  def query(prefix, group, application, path) : String
+  def info(prefix, group, application, path) : String
     pkg_file = Prefix.new(prefix, group: group).new_app(application).pkg_file
-    CLI.query(pkg_file.any, path).to_pretty_con
+    CLI.info(pkg_file.any, path).to_pretty_con
   end
 
   def delete(no_confirm, prefix, group, application, keep_user_group, preserve_database)

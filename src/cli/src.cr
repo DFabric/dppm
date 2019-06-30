@@ -1,9 +1,9 @@
 module DPPM::CLI::Src
   extend self
 
-  def query(prefix, source_name, package, path)
+  def info(prefix, source_name, package, path)
     pkg_file = Prefix.new(prefix, source_name: source_name).new_src(package).pkg_file
-    CLI.query(pkg_file.any, path).to_pretty_con
+    CLI.info(pkg_file.any, path).to_pretty_con
   end
 
   def update(config, prefix, source_name, source_path, no_confirm)

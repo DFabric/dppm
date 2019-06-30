@@ -1,9 +1,9 @@
 module DPPM::CLI::Pkg
   extend self
 
-  def query(prefix, source_name, package, path)
+  def info(prefix, source_name, package, path)
     pkg_file = Prefix.new(prefix, source_name: source_name).new_pkg(package).pkg_file
-    CLI.query(pkg_file.any, path).to_pretty_con
+    CLI.info(pkg_file.any, path).to_pretty_con
   end
 
   def clean_unused_packages(no_confirm, prefix, source_name)
