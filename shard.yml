@@ -15,7 +15,6 @@ dependencies:
     github: j8r/clicr
   con:
     github: j8r/con
-    commit: HEAD
   cossack:
     github: crystal-community/cossack
   dynany:
