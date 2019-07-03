@@ -218,7 +218,6 @@ struct DPPM::Prefix::ProgramData::Task
     when "untar_xz"  then Host.exec "/bin/tar", {"Jxf", cmd[1], "-C", cmd[2]}; "xz archive extracted"
     when "unzip"     then Host.exec "/usr/bin/unzip", {"-oq", cmd[1], "-d", cmd[2]}; "zip archive extracted"
     when "un7z"      then Host.exec "/usr/bin/7z", {"e", "-y", cmd[1], "-o" + cmd[2]}; "7z archive extracted"
-    when "exit"      then Log.info "exit called", "exiting."; exit 1
     when "error"     then raise cmdline[4..-1].lstrip
     when "true"      then "true"
     when "false"     then "false"
