@@ -25,6 +25,7 @@ def assert_service(service, file = __FILE__, line = __LINE__)
   user = group = TEST_APP_PACKAGE_NAME
   test_prefix = DPPM::Prefix.new File.tempname("_dppm_service_test")
   test_prefix.create
+  test_prefix.ensure_app_dir
   test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
   FileUtils.cp_r Path[SAMPLES_DIR, TEST_APP_PACKAGE_NAME].to_s, test_app.path.to_s
 

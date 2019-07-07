@@ -154,6 +154,7 @@ class DPPM::Prefix::Pkg
         Log.info "package already present", @path.to_s
         return self
       end
+      @prefix.ensure_pkg_dir
       copy_src_to_path
 
       # Build dependencies
