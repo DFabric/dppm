@@ -118,21 +118,30 @@ struct DPPM::Prefix
     end
   end
 
+  # Yields each application in the group.
   def each_app(&block : App ->)
-    Dir.each_child(@app.to_s) do |dir|
-      yield App.new self, dir
+    if File.exists? @app.to_s
+      Dir.each_child(@app.to_s) do |dir|
+        yield App.new self, dir
+      end
     end
   end
 
+  # Yields each built package of the source.
   def each_pkg(&block : Pkg ->)
-    Dir.each_child(@pkg.to_s) do |dir|
-      yield Pkg.new self, dir
+    if File.exists? @pkg.to_s
+      Dir.each_child(@pkg.to_s) do |dir|
+        yield Pkg.new self, dir
+      end
     end
   end
 
+  # Yields each source package of the source.
   def each_src(&block : Src ->)
-    Dir.each_child(@src.to_s) do |dir|
-      yield Src.new(self, dir) if dir[0].ascii_lowercase?
+    if File.exists? @src.to_s
+      Dir.each_child(@src.to_s) do |dir|
+        yield Src.new(self, dir) if dir[0].ascii_lowercase?
+      end
     end
   end
 
