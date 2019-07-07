@@ -220,7 +220,7 @@ struct DPPM::Prefix
     end
   end
 
-  def clean_unused_packages(confirmation : Bool = true, &block) : Set(String)?
+  def clean_unused_packages(confirmation : Bool = true, &block) : Set(String)
     packages = Set(String).new
     Log.info "retrieving available packages", @pkg.to_s
     each_pkg { |pkg| packages << pkg.name }
@@ -235,7 +235,7 @@ struct DPPM::Prefix
 
     if packages.empty?
       Log.info "No packages to clean", @path.to_s
-      return
+      return packages
     elsif confirmation
       Log.output << "task: clean"
       Log.output << "\nbasedir: " << @pkg
@@ -243,7 +243,7 @@ struct DPPM::Prefix
       packages.each do |pkg|
         Log.output << pkg << '\n'
       end
-      return if !yield
+      return packages if !yield
     end
 
     Log.info "deleting packages", @pkg.to_s
