@@ -711,7 +711,7 @@ struct DPPM::Prefix::App
           system_user = Libcrown::User.new(
             name: user,
             gid: gid,
-            gecos_comment: pkg_file.description,
+            full_name: pkg_file.name,
             home_directory: data_path.to_s
           )
           libcrown.add_user system_user, uid
