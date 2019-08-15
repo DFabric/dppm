@@ -15,8 +15,7 @@ describe DPPM::Prefix::ProgramData::Task do
     end
 
     it "ls" do
-      File.touch path + "/TEST"
-      cmd.execute("ls .").should eq "test_file\nTEST"
+      cmd.execute("ls .").should eq "test_file"
     end
 
     describe "file_exists?" do
