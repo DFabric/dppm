@@ -10,6 +10,6 @@ module DPPM
   end
 
   def version : String
-    {{ `date --utc +"%Y.%m.%d"`.stringify.chomp }}
+    {{ `git show -s --format=%ci`.split(' ')[0] }}
   end
 end
