@@ -399,7 +399,7 @@ struct DPPM::Prefix::App
     confirmation : Bool = true,
     &block
   )
-    new_pkg = @prefix.new_pkg package_name: pkg.package, version: version, tag: tag
+    new_pkg = @prefix.new_pkg package: pkg.package, version: version, tag: tag
 
     case new_pkg.semantic_version
     when .< pkg.semantic_version

@@ -153,30 +153,31 @@ struct DPPM::Prefix
   # Creates a new `Pkg` package object.
   # A package name includes the package and optionally a version/tag separated by either a `_` or `:`.
   # If no version is provided, latest one will be used.
-  def new_pkg(package_name : String, version : String? = nil, tag : String? = nil) : Pkg
+  def new_pkg(package : String, version : String? = nil, tag : String? = nil) : Pkg
     if version
-      Pkg.new self, package_name, version
+      package_name = package
     else
-      case package_name
+      case package
       when .includes? '_'
-        package, _, tag_or_version = package_name.partition '_'
+        package_name, _, tag_or_version = package.partition '_'
       when .includes? ':'
-        package, _, tag_or_version = package_name.partition ':'
+        package_name, _, tag_or_version = package.partition ':'
       else
-        package = package_name
+        package_name = package
       end
-      src = Src.new self, package
 
       if tag_or_version && tag_or_version =~ /^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/
         version = tag_or_version
       end
-      if version
-        src.pkg_file.ensure_version version
-      else
-        version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
-      end
-      Pkg.new self, package, version, src.pkg_file, src
     end
+
+    src = Src.new self, package_name
+    if version
+      src.pkg_file.ensure_version version
+    else
+      version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
+    end
+    Pkg.new self, package_name, version, src.pkg_file, src
   end
 
   # Creates a new `Src` source package object.
