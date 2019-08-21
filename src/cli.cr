@@ -8,7 +8,6 @@ module DPPM::CLI
 
   macro run(**additional_commands)
   def DPPM::CLI.internal_run(**additional_commands)
-    __debug = false
     Clicr.create(
       name: "dppm",
       info: "The DPlatform Package Manager",
@@ -29,10 +28,6 @@ module DPPM::CLI
         },
       },
       options: {
-        debug: {
-          short: 'd',
-          info:  "Debug print with error backtraces",
-        },
         no_confirm: {
           short: 'y',
           info:  "No confirmations",
@@ -42,7 +37,7 @@ module DPPM::CLI
         app: {
           alias:    'a',
           info:     "Manage applications",
-          inherit:   \%w(config debug no_confirm prefix source_name source_path),
+          inherit:   \%w(config no_confirm prefix source_name source_path),
           variables: {
             group: {
               info:    "Group namespace where installing applications",
@@ -274,7 +269,7 @@ module DPPM::CLI
         service: {
           alias:    'S',
           info:     "Manage application services",
-          inherit:  \%w(prefix),
+          inherit:  \%w(debug prefix),
           commands: {
             boot: {
               info:      "Auto-start the service at boot",
@@ -359,7 +354,7 @@ module DPPM::CLI
   rescue ex : ArgumentRequired | UnknownCommand | UnknownOption | UnknownVariable
     abort ex
   rescue ex
-    if __debug
+    if ENV["DEBUG"]?
       ex.inspect_with_backtrace Log.error
     else
       Log.error ex
