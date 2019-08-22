@@ -44,9 +44,9 @@ module Service::InitSystem
 
   def check_delete
     if !writable?
-      raise "root execution needed for system service deletion: " + name
+      raise "Root execution needed for system service deletion: " + name
     elsif !exists?
-      raise "service doesn't exist: " + name
+      raise "Service doesn't exist: " + name
     end
   end
 end

@@ -54,7 +54,7 @@ module Config::Format
       elsif float = string.to_f64?
         float
       elsif strict
-        raise "can't convert to a type: " + string
+        raise "Can't convert to a type: " + string
       else
         string
       end

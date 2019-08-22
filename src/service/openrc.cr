@@ -8,7 +8,7 @@ class Service::OpenRC
     output, error = Exec.new "/sbin/openrc", {"-V"}, &.wait
     output.to_s.rpartition(' ')[-1].rpartition('.')[-1]
   rescue ex
-    raise Exception.new "can't retrieve the OpenRC version (#{output}#{error})", ex
+    raise Exception.new "Can't retrieve the OpenRC version (#{output}#{error})", ex
   end
 
   def initialize(@name : String)

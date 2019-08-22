@@ -6,19 +6,19 @@ module DPPM::Database
 
   class ConnectionError < Exception
     def self.new(uri : URI, cause : Exception)
-      new "can't connect to the database: #{uri}", cause
+      new "Can't connect to the database: #{uri}", cause
     end
   end
 
   class DatabasePresentException < Exception
     def self.new(uri : URI, user : String)
-      new "database already present in #{uri.scheme}: " + user
+      new "Database already present in #{uri.scheme}: " + user
     end
   end
 
   class UserPresentException < Exception
     def self.new(uri : URI, user : String)
-      new "user already present in #{uri.scheme}: " + user
+      new "User already present in #{uri.scheme}: " + user
     end
   end
 
@@ -29,7 +29,7 @@ module DPPM::Database
   def self.new(uri : URI, user : String, name : String) : MySQL
     case name
     when "mysql" then MySQL.new uri, user
-    else              raise "unsupported database: " + name
+    else              raise "Unsupported database: " + name
     end
   end
 

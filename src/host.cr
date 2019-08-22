@@ -109,12 +109,12 @@ struct DPPM::Host
         ports_used << port
       end
     end
-    raise "the limit of #{UInt16::MAX} for port numbers is reached, no ports available"
+    raise "Limit of #{UInt16::MAX} for port numbers is reached, no ports available"
   end
 
   def self.exec(command : String, args : Array(String) | Tuple) : String
     Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
-      raise "execution returned an error: #{command} #{args.join ' '}" if !process.wait.success?
+      raise "Execution returned an error: #{command} #{args.join ' '}" if !process.wait.success?
     end
     "success"
   end

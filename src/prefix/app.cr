@@ -48,7 +48,7 @@ struct DPPM::Prefix::App
         exec ||= library.pkg_file.exec
       end
     end
-    exec || raise "exec key not present in #{pkg_file.path}"
+    exec || raise "No `exec` key present in #{pkg_file.path}"
   end
 
   @service_intialized = false
@@ -66,7 +66,7 @@ struct DPPM::Prefix::App
 
   # Returns the system service of the application. Raise if not present.
   getter service : Service::OpenRC | Service::Systemd do
-    service? || raise "service not available"
+    service? || raise "Service not available"
   end
 
   # Service directory.
@@ -163,7 +163,7 @@ struct DPPM::Prefix::App
       user: "root",
       password: database_app.password,
     )
-    db_type = database_app.pkg_file.provides || raise "no `provides` key set, that includes the database type"
+    db_type = database_app.pkg_file.provides || raise "No `provides` key set in #{database_app.pkg_file.path}, that includes the database type"
     @database = Database.new uri, user, db_type
   end
 
@@ -256,7 +256,7 @@ struct DPPM::Prefix::App
         args = splitted_command[1..-1]
 
         Exec.new command, args, output: Log.output, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
-          raise "can't import configuration: " + full_command if !process.wait.success?
+          raise "Can't import configuration: " + full_command if !process.wait.success?
         end
       end
     end
@@ -274,7 +274,7 @@ struct DPPM::Prefix::App
 
         File.open config_path.to_s, "w" do |io|
           Exec.new command, args, output: io, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
-            raise "can't export configuration: " + full_command if !process.wait.success?
+            raise "Can't export configuration: " + full_command if !process.wait.success?
           end
         end
         @config = ::Config.read config_path
@@ -309,8 +309,9 @@ struct DPPM::Prefix::App
 
   # Use a shared application package.
   def shared? : Bool
-    raise "application directory doesn't exist: " + app_path.to_s if !File.exists? app_path.to_s
-    File.symlink? app_path.to_s
+    app_path_str = app_path.to_s
+    raise "Application directory doesn't exist: " + app_path_str if !File.exists? app_path_str
+    File.symlink? app_path_str
   end
 
   def each_log_file(&block : String ->)
@@ -392,7 +393,7 @@ struct DPPM::Prefix::App
     file ||= webserver_sites_path / app_name
     case pkg_file.package
     when "caddy" then WebSite::Caddy.new file
-    else              raise "unsupported web server: " + pkg_file.package
+    else              raise "Unsupported web server: " + pkg_file.package
     end
   end
 
@@ -469,7 +470,7 @@ struct DPPM::Prefix::App
           Log.warn "service creation not available - root permissions missing?", app_service.file.to_s
           add_service = false
         elsif app_service.exists?
-          raise "system service already exist: " + app_service.name
+          raise "System service already exist: " + app_service.name
         end
       end
     end
@@ -546,7 +547,7 @@ struct DPPM::Prefix::App
         end
       end
     end
-    raise "socket not supported by #{pkg_file.name}" if socket && !has_socket
+    raise "Socket not supported by #{pkg_file.name}" if socket && !has_socket
 
     if url
       vars["url"] = url
@@ -565,11 +566,11 @@ struct DPPM::Prefix::App
     # Database required
     if !vars.has_key?("database_type") && (databases = source_package.pkg_file.databases)
       if Database.supported?(database_type = databases.first.first)
-        raise "database password required: " + database_type if !database_password
-        raise "database name required: " + database_type if !vars.has_key?("database_name")
-        raise "database user required: " + database_type if !vars.has_key?("database_user")
+        raise "Database password required: " + database_type if !database_password
+        raise "Database name required: " + database_type if !vars.has_key?("database_name")
+        raise "Database user required: " + database_type if !vars.has_key?("database_user")
         if !vars.has_key?("database_address") || !(vars.has_key?("database_host") && vars.has_key?("database_port"))
-          raise "database address or host and port required:" + database_type
+          raise "Database address or host and port required:" + database_type
         end
       end
     end
@@ -623,7 +624,7 @@ struct DPPM::Prefix::App
     end
     begin
       Log.info "adding to the system", @name
-      raise "application directory already exists: #{@path}" if File.exists? @path.to_s
+      raise "Application directory already exists: #{@path}" if File.exists? @path.to_s
 
       # Create the new application
       @prefix.ensure_app_dir
@@ -691,7 +692,7 @@ struct DPPM::Prefix::App
         if url = vars["url"]?
           website.hosts << URI.parse url
         else
-          raise "no url address available for the web site"
+          raise "No url address available for the web site"
         end
         @website = website
         website.write
@@ -753,7 +754,7 @@ struct DPPM::Prefix::App
       begin
         delete false { }
       ensure
-        raise Exception.new "add failed - application deleted: #{@path}", ex
+        raise Exception.new "Add failed - application deleted: #{@path}", ex
       end
     ensure
       self
@@ -788,12 +789,12 @@ struct DPPM::Prefix::App
   end
 
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block) : App?
-    raise "application doesn't exist: #{@path}" if !File.exists? @path.to_s
+    raise "Application doesn't exist: #{@path}" if !File.exists? @path.to_s
 
     begin
       database.try(&.check_connection) if !preserve_database
     rescue ex
-      raise Exception.new "either start the database or use the preseve database option", ex
+      raise Exception.new "Either start the database or use the preseve database option", ex
     end
 
     # Checks

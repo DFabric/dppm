@@ -104,10 +104,10 @@ module DPPM::CLI::App
       case arg
       when .includes? '='
         key, value = arg.split '=', 2
-        raise "only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: " + arg if !Utils.ascii_alphanumeric_underscore? key
+        raise "Only `a-z`, `A-Z`, `0-9` and `_` are allowed as variable name: " + arg if !Utils.ascii_alphanumeric_underscore? key
         vars[key] = value
       else
-        raise "invalid variable: #{arg}"
+        raise "Invalid variable: #{arg}"
       end
     end
     vars

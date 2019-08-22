@@ -49,7 +49,7 @@ class Service::Config
           directive = true
           line.split(' ') do |element|
             if directive
-              raise "unsupported line depend directive: " + element if element != "after"
+              raise "Unsupported line depend directive: " + element if element != "after"
               directive = false
             elsif element != OPENRC_NETWORK_SERVICE
               service.after << element
@@ -60,12 +60,12 @@ class Service::Config
             service.reload_signal = reload_signal
           end
         else
-          raise "unsupported line"
+          raise "Unsupported line"
         end
       end
       line_number += 1
     rescue ex
-      raise Exception.new "parse error line at #{line_number}: #{full_line}", ex
+      raise Exception.new "Parse error line at #{line_number}: #{full_line}", ex
     end
     service
   end

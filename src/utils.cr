@@ -9,9 +9,9 @@ module DPPM::Utils
   end
 
   def ascii_alphanumeric_dash?(name : String) : Bool
-    raise "the name must starts with `a-z` or `0-9`, not a dash  `-`: " + name if name.starts_with? '-'
+    raise "A name must starts with `a-z` or `0-9`, not a dash  `-`: " + name if name.starts_with? '-'
     name.each_char do |char|
-      char.ascii_lowercase? || char.ascii_number? || char == '-' || raise "the name contains other characters than `a-z`, `0-9` and `-`: " + name
+      char.ascii_lowercase? || char.ascii_number? || char == '-' || raise "A name contains other characters than `a-z`, `0-9` and `-`: " + name
     end
     true
   end
@@ -20,7 +20,7 @@ module DPPM::Utils
     case string
     when "true"  then true
     when "false" then false
-    else              raise "can't convert to a boolean: " + string
+    else              raise "Can't convert to a boolean: " + string
     end
   end
 

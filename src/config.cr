@@ -12,7 +12,7 @@ module Config
 
   # :ditto:
   def to_type(format : String, &block : Proc(String)) : Types
-    to_type?(format) { yield } || raise "not supported file format: #{format}"
+    to_type?(format) { yield } || raise "Unsupported file format: #{format}"
   end
 
   # Yield the block when the file format is supported, and return the corresponding `Config::Types`.

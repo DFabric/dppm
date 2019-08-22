@@ -9,10 +9,10 @@ module HTTPHelper
     case response.status
     when 200, 301, 302 then response.body
     else
-      raise "status code #{response.status}: " + url
+      raise "Status code #{response.status}: " + url
     end
   rescue ex
-    raise Exception.new "failed to get #{url.colorize.underline}", ex
+    raise Exception.new "Failed to get #{url.colorize.underline}", ex
   end
 
   def get_file(url : String, path : String = File.basename(url))

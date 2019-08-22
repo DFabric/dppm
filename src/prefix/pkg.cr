@@ -24,7 +24,7 @@ class DPPM::Prefix::Pkg
     elsif name.includes? '_'
       @package, _, @version = name.partition '_'
     else
-      raise "no version provided for #{name}"
+      raise "No version provided for #{name}"
     end
     @name = @package + '_' + @version
 
@@ -39,7 +39,7 @@ class DPPM::Prefix::Pkg
   def new_app(app_name : String? = nil) : App
     case pkg_file.type
     when .lib?
-      raise "only applications can be added to the system: #{pkg_file.type}"
+      raise "Only applications can be added to the system: #{pkg_file.type}"
     else
       # Generate a name if none is set
       app_name ||= package + '-' + Random::Secure.hex(8)
@@ -107,7 +107,7 @@ class DPPM::Prefix::Pkg
   end
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
-  def build(deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block)
+  def build(deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block) : Pkg
     if !@pkg_file
       import_pkg_file src.pkg_file
     end
@@ -163,7 +163,7 @@ class DPPM::Prefix::Pkg
         Log.info "building", @name
         Dir.cd(@path.to_s) { Task.new(vars.dup, all_bin_paths).run build_task }
       else
-        raise "missing tasks.build key in " + pkg_file.path.to_s
+        raise "Missing tasks.build key in " + pkg_file.path.to_s
       end
       FileUtils.rm_rf libs_path.to_s
       @libs = @all_bin_paths = nil
@@ -174,7 +174,7 @@ class DPPM::Prefix::Pkg
       begin
         delete false { }
       ensure
-        raise Exception.new "build failed - package deleted: #{@path}", ex
+        raise Exception.new "Build failed - package deleted: #{@path}", ex
       end
     end
   end
@@ -191,17 +191,17 @@ class DPPM::Prefix::Pkg
   end
 
   def delete(confirmation : Bool = true, &block) : Pkg?
-    raise "package doesn't exist: " + @path.to_s if !File.exists? @path.to_s
+    raise "Package doesn't exist: " + @path.to_s if !File.exists? @path.to_s
 
     # Check if the package is still in use by an application
     Log.info "check packages in use", @path.to_s
     prefix.each_app do |app|
       if @path == app.real_app_path
-        raise "application package `#{package}` still in use by an application: " + app.name
+        raise "Application package `#{package}` still in use by an application: " + app.name
       end
       app.libs.each do |library|
         if @path == library.path
-          raise "library package `#{package}` still in use by an application: " + app.name
+          raise "Library package `#{package}` still in use by an application: " + app.name
         end
       end
     end

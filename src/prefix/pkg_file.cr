@@ -20,7 +20,7 @@ struct DPPM::Prefix::PkgFile
       when "TCP"     then TCP
       when "TCP/UDP" then TCP_UDP
       when "UDP"     then UDP
-      else                raise "unknow package type: " + type
+      else                raise "Unknow package type: " + type
       end
     end
 
@@ -42,7 +42,7 @@ struct DPPM::Prefix::PkgFile
 
     # Raises if the application isn't a webapp; not of a `HTML`, `HTTP` or `PHP` type.
     def webapp!
-      webapp? || raise "only HTML, HTTP and PHP applications can be served behind a web server: #{self}"
+      webapp? || raise "Only HTML, HTTP and PHP applications can be served behind a web server: #{self}"
     end
   end
 
@@ -84,7 +84,7 @@ struct DPPM::Prefix::PkgFile
 
   macro finished
   def initialize(@root_path : Path)
-    raise "package directory doesn't exist: " + @root_path.to_s if !Dir.exists? @root_path.to_s
+    raise "Package directory doesn't exist: " + @root_path.to_s if !Dir.exists? @root_path.to_s
 
     # TODO: Replace CON::Any by CON::Serializable
     @any = CON.parse File.read(path)
@@ -127,7 +127,7 @@ struct DPPM::Prefix::PkgFile
       end
       {% end %}
       if @config_import && !@config_origin
-        raise "config.import requires config.origin to be set"
+        raise "Config.import requires config.origin to be set in #{path}"
       end
     end
   end
@@ -142,11 +142,11 @@ struct DPPM::Prefix::PkgFile
 
     if version_kernel = @version[kernel]?
       if !regex
-        raise "unsupported architecure: " + arch if !src
+        raise "Unsupported architecure: " + arch if !src
         regex = version_kernel[arch]
       end
     elsif !src && !regex
-      raise "unsupported kernel: " + kernel
+      raise "Unsupported kernel: " + kernel
     end
 
     if src
@@ -160,7 +160,7 @@ struct DPPM::Prefix::PkgFile
         end
       end
     else
-      raise "no source url"
+      raise "No source url"
     end
   end
 
@@ -177,7 +177,7 @@ struct DPPM::Prefix::PkgFile
       if version = /(#{regex})/.match(HTTPHelper.get_string src).try &.[1]?
         version
       else
-        raise "can't match the regex `#{regex}` with the data from the url `#{src}`"
+        raise "Can't match the regex `#{regex}` with the data from the url `#{src}`"
       end
     else
       src
@@ -193,7 +193,7 @@ struct DPPM::Prefix::PkgFile
         break
       end
     end
-    raise "no available version number: " + version if !available_version
+    raise "No available version number: " + version if !available_version
     version
   end
 end

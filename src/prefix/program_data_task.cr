@@ -34,7 +34,7 @@ struct DPPM::Prefix::ProgramData::Task
           if (output = execute(line_var[2])).is_a? String
             @vars[first_line_var] = output
           else
-            raise "expected String, got #{output}"
+            raise "Expected String, got #{output}"
           end
         else
           cmd = var_reader line
@@ -42,19 +42,19 @@ struct DPPM::Prefix::ProgramData::Task
           case output = execute cmd, last_cond
           when String then Log.info "output", output if !output.empty?
           when Bool   then last_cond = output
-          else             raise "invalid output: #{output}"
+          else             raise "Invalid output: #{output}"
           end
         end
       elsif last_cond
         if array = raw_line.as_a?
           run array
         else
-          raise "expected Array"
+          raise "Expected Array"
         end
       end
     end
   rescue ex
-    raise Exception.new "error at line #{@line_number}", ex
+    raise Exception.new "Error at line #{@line_number}", ex
   end
 
   private def var_reader(cmd : String)
@@ -232,10 +232,10 @@ struct DPPM::Prefix::ProgramData::Task
         if success
           output.to_s
         else
-          raise "execution returned an error: #{command} #{cmd.join ' '}\n#{output}"
+          raise "Execution returned an error: #{command} #{cmd.join ' '}\n#{output}"
         end
       else
-        raise "unknown command or variable: #{cmd.join ' '}"
+        raise "Unknown command or variable: #{cmd.join ' '}"
       end
     end
   end

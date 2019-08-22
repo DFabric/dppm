@@ -19,7 +19,7 @@ module Service
   end
 
   def self.init : Systemd.class | OpenRC.class
-    init? || raise "unsupported init system"
+    init? || raise "Unsupported init system"
   end
 
   def self.exec?(command : String, args : Array(String) | Tuple) : Bool

@@ -35,7 +35,7 @@ module DPPM::Prefix::Base
 
   # Raises if the configuration file doesn't exist.
   def config_file! : Path
-    config_file || raise "config file not available"
+    config_file || raise "Config file not available"
   end
 
   @config_initialized = false
@@ -51,7 +51,7 @@ module DPPM::Prefix::Base
 
   # Raises if no configuration is available.
   def config! : ::Config::Types
-    config || raise "no valid config file: #{conf_path}config.*"
+    config || raise "No valid config file: #{conf_path}config.*"
   end
 
   class ConfigKeyError < Exception
@@ -105,7 +105,7 @@ module DPPM::Prefix::Base
     # No need to parse if the deps list is empty
     deps_with_expr.each do |dep_src, version_expr|
       if !File.exists? (libs_path / dep_src.name).to_s
-        Log.info "calculing dependency", dep_src.name
+        Log.info "calculating dependency", dep_src.name
 
         # If an array of versions is already provided by a dependency
         if dep_vers = dependencies[dep_src.name]?
@@ -121,7 +121,7 @@ module DPPM::Prefix::Base
           end
         end
         # Raise an error if two packages require different versions of a same dependency
-        raise "dependency error for `#{dep_src.pkg_file.package}`: no versions match `#{version_expr}`" if dep_vers.empty?
+        raise "Dependency error for `#{dep_src.pkg_file.package}`: no versions match `#{version_expr}`" if dep_vers.empty?
 
         # Loops inside dependencies of dependencies
         dependencies = dep_src.resolve_deps(dependencies) if dep_src.pkg_file.deps
