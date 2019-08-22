@@ -4,6 +4,7 @@ require "ini"
 # Basic ugly 2-level toml parser for TiDB configuration
 struct Config::TOML
   include Format
+  include INI::Helper
   getter data : Hash(String, Hash(String, String))
 
   def initialize(@data : Hash(String, Hash(String, String)))
@@ -14,17 +15,21 @@ struct Config::TOML
   end
 
   def get(path : Array)
-    case path.size
-    when 1
-      if toml = @data[""]?
-        internal_to_type toml[path[0].to_s]?
-      end
-    when 2
-      if toml = @data[path[0].to_s]?
-        internal_to_type toml[path[1].to_s]?
-      end
+    case key_path = ini_key_path path
+    when String then @data[key_path]?
     else
-      raise "max key path exceeded: #{path.size}"
+      if section = @data[key_path[0]]?
+        internal_to_type section[key_path[1]]?
+      end
+    end
+  end
+
+  def set(path : Array, value)
+    value = to_type value
+    value = '"' + value + '"' if value.is_a? String
+    case key_path = ini_key_path path
+    when String then @data[""][key_path] = value.to_s
+    else             @data[key_path[0]][key_path[1]] = value.to_s
     end
   end
 
@@ -43,24 +48,6 @@ struct Config::TOML
       else
         string
       end
-    end
-  end
-
-  def set(path : Array, value)
-    value = to_type value
-    value = '"' + value + '"' if value.is_a? String
-    case path.size
-    when 1 then @data[""][path[0].to_s] = value.to_s
-    when 2 then @data[path[0].to_s][path[1].to_s] = value.to_s
-    else        raise "max key path exceeded: #{path.size}"
-    end
-  end
-
-  def del(path : Array)
-    case path.size
-    when 1 then @data.delete path[0].to_s
-    when 2 then @data[path[0].to_s].delete path[1].to_s
-    else        raise "max key path exceeded: #{path.size}"
     end
   end
 
