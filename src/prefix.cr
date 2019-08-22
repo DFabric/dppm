@@ -172,11 +172,7 @@ struct DPPM::Prefix
     end
 
     src = Src.new self, package_name
-    if version
-      src.pkg_file.ensure_version version
-    else
-      version = src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
-    end
+    version ||= src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
     Pkg.new self, package_name, version, src.pkg_file, src
   end
 
