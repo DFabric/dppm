@@ -203,15 +203,10 @@ struct DPPM::Prefix
     if File.exists?(@src.to_s) && File.symlink?(@src.to_s)
       update = false
     elsif HTTPHelper.url? source_path
-      if packages_source_date = HTTPHelper.get_string(source_path.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?
-        if Dir.exists? @src.to_s
-          update = !packages_source_date.starts_with? File.info(@src.to_s).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
-        else
-          update = true
-        end
+      if (packages_source_date = HTTPHelper.get_string(source_path.gsub("tarball", "commits")).match(/(?<=datetime=").*T[0-9][0-9]:/).try &.[0]?) && \
+            Dir.exists?(@src.to_s)
+        update = !packages_source_date.starts_with? File.info(@src.to_s).modification_time.to_utc.to_s("%Y-%m-%dT%H:")
       end
-    else
-      update = true
     end
 
     if force || update
