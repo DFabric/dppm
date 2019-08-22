@@ -5,10 +5,11 @@ require "tail"
 struct DPPM::Prefix::App
   include ProgramData
 
-  getter logs_path : Path { path / "logs" }
+  getter logs_path : Path { @path / "logs" }
   getter log_file_output : Path { logs_path / "output.log" }
   getter log_file_error : Path { logs_path / "output.log" }
-  getter web_site_file : Path { conf_path / "web-site" }
+  getter site_path : Path { @path / "site" }
+  getter webserver_sites_path : Path { conf_path / "sites" }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil, @pkg : Pkg? = nil)
     Utils.ascii_alphanumeric_dash? name
@@ -236,12 +237,12 @@ struct DPPM::Prefix::App
   # Write all configurations
   def write_configs : Nil
     if app_config = @config
-      File.write config_file!.to_s, app_config.build
+      File.write config_file!.to_s, app_config.build, 0o700
     end
     config_import
     libs.each do |library|
       if (lib_config_file = library.app_config_file) && (lib_config = library.app_config)
-        File.write lib_config_file, lib_config.build
+        File.write lib_config_file.to_s, lib_config.build
       end
     end
   end
@@ -332,10 +333,14 @@ struct DPPM::Prefix::App
   def set_permissions
     File.chmod(libs_path.to_s, 0o700) if Dir.exists? libs_path.to_s
     File.chmod(app_path.to_s, 0o750) if !File.symlink? app_path.to_s
-    File.chmod conf_path.to_s, 0o710
+    File.chmod conf_path.to_s, 0o700
+    # Directory execution for group is needed for reverse proxies to access their configuration
+    if File.exists?(site_path_str = site_path.to_s)
+      File.chmod site_path_str, 0o010
+    end
     File.chmod @path.to_s, 0o750
     File.chmod logs_path.to_s, 0o700
-    File.chmod data_path.to_s, 0o750
+    File.chmod data_path.to_s, 0o700
   end
 
   # Returns a `PATH` with the directories locations to find the application and libaries binaries.
@@ -349,8 +354,8 @@ struct DPPM::Prefix::App
   end
 
   def webserver? : Prefix::App?
-    if File.exists? web_site_file
-      @prefix.new_app Path[File.real_path(web_site_file.to_s)].parent.parent.basename
+    if File.exists? webserver_sites_path
+      @prefix.new_app Path[File.real_path(webserver_sites_path.to_s)].parent.parent.parent.basename
     end
   end
 
@@ -364,10 +369,10 @@ struct DPPM::Prefix::App
   end
 
   # Adds a new site. Assumes the app is a Web Server.
-  def new_website(app_name : String, build_conf_path : Path) : WebSite::Caddy
+  def new_website(app : App) : WebSite::Caddy
     raise "Web server doesn't exists: #{@path}" if !Dir.exists? @path
-    default_site_file = build_conf_path / "web" / pkg_file.package
-    site = parse_site app_name, default_site_file
+    default_site_file = app.site_path / pkg_file.package
+    site = parse_site app.name, default_site_file
 
     # Add security headers
     if !File.exists? default_site_file.to_s
@@ -377,14 +382,14 @@ struct DPPM::Prefix::App
       site.headers["X-Frame-Options"] = "DENY"
       site.headers["Content-Security-Policy"] = "frame-ancestors 'none';"
     end
-    site.log_file_error = logs_path / (app_name + "-error.log")
-    site.log_file_output = logs_path / (app_name + "-output.log")
-    site.file = conf_path / "sites" / app_name
+    site.log_file_error = logs_path / (app.name + "-error.log")
+    site.log_file_output = logs_path / (app.name + "-output.log")
+    site.file = webserver_sites_path / app.name
     site
   end
 
   protected def parse_site(app_name : String, file : Path? = nil) : WebSite::Caddy
-    file ||= conf_path / "sites" / app_name
+    file ||= webserver_sites_path / app_name
     case pkg_file.package
     when "caddy" then WebSite::Caddy.new file
     else              raise "unsupported web server: " + pkg_file.package
@@ -498,16 +503,15 @@ struct DPPM::Prefix::App
 
     source_package = pkg.exists? || pkg.src
     if web_server
-      if !pkg_file.type.use_url?
-        raise "only HTML, HTTP and PHP applications can be serverd behind a web server: #{pkg_file.type}"
-      end
+      pkg_file.type.webapp!
+
       webserver = @prefix.new_app web_server
       web_server_uid = webserver.file_info.owner
-      @website = webserver.new_website @name, source_package.conf_path
+      @website = webserver.new_website self
       vars["web_server"] = web_server
     end
 
-    if url && pkg_file.type.use_url?
+    if url && pkg_file.type.webapp?
       vars["url"] = url
       vars["domain"] = URI.parse(url).hostname.to_s
     end
@@ -691,7 +695,7 @@ struct DPPM::Prefix::App
         end
         @website = website
         website.write
-        File.symlink website.file.to_s, web_site_file.to_s
+        File.symlink website.file.to_s, webserver_sites_path.to_s
       end
 
       # Create system user and group for the application
@@ -751,6 +755,8 @@ struct DPPM::Prefix::App
       ensure
         raise Exception.new "add failed - application deleted: #{@path}", ex
       end
+    ensure
+      self
     end
   end
 
@@ -781,7 +787,7 @@ struct DPPM::Prefix::App
     end
   end
 
-  def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block)
+  def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block) : App?
     raise "application doesn't exist: #{@path}" if !File.exists? @path.to_s
 
     begin
@@ -823,31 +829,39 @@ struct DPPM::Prefix::App
       end
     end
 
-    if webserver = webserver?
-      website = webserver.parse_site @name
-      Log.info "deleting web site", website.file.to_s
-      File.delete web_site_file.to_s
-      File.delete website.file.to_s
-      if output_file = website.log_file_output.to_s
-        File.delete output_file if File.exists? output_file
+    begin
+      if webserver = webserver?
+        website = webserver.parse_site @name
+        Log.info "deleting web site", website.file.to_s
+        File.delete webserver_sites_path.to_s
+        File.delete website.file.to_s
+        if output_file = website.log_file_output.to_s
+          File.delete output_file if File.exists? output_file
+        end
+        if error_file = website.log_file_error.to_s
+          File.delete error_file if File.exists? error_file
+        end
+        webserver.service.restart if webserver.service.run?
       end
-      if error_file = website.log_file_error.to_s
-        File.delete error_file if File.exists? error_file
-      end
-      webserver.service.restart if webserver.service.run?
+    rescue ex
+      Log.warn "error when removing website", ex.to_s
     end
 
-    if Process.root?
-      libcrown = Libcrown.new
-      # Delete the web server from the group of the user
-      if webserver
-        libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
+    begin
+      if Process.root?
+        libcrown = Libcrown.new
+        # Delete the web server from the group of the user
+        if webserver
+          libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
+        end
+        if !keep_user_group
+          libcrown.del_user file_info.owner if owner.user.name.starts_with? '_' + @name
+          libcrown.del_group file_info.group if owner.group.name.starts_with? '_' + @name
+        end
+        libcrown.write
       end
-      if !keep_user_group
-        libcrown.del_user file_info.owner if owner.user.name.starts_with? '_' + @name
-        libcrown.del_group file_info.group if owner.group.name.starts_with? '_' + @name
-      end
-      libcrown.write
+    rescue ex
+      Log.warn "error when deleting system user/group", ex.to_s
     end
 
     if !preserve_database && (app_database = database)
@@ -859,6 +873,7 @@ struct DPPM::Prefix::App
     self
   ensure
     FileUtils.rm_rf @path.to_s
+    self
   end
 
   def uri? : URI?

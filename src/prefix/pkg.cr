@@ -16,7 +16,7 @@ class DPPM::Prefix::Pkg
   # Path of the application binary.
   getter bin_path : Path
 
-  protected property app_config_file : String? = nil, app_config : ::Config::Types? = nil
+  protected property app_config_file : Path? = nil, app_config : ::Config::Types? = nil
 
   protected def initialize(@prefix : Prefix, name : String, version : String? = nil, pkg_file : PkgFile? = nil, @src : Src? = nil)
     if version

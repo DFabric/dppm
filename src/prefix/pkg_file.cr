@@ -33,11 +33,16 @@ struct DPPM::Prefix::PkgFile
     end
 
     # Returns `true` if the type is usually used along with an url.
-    def use_url? : Bool
+    def webapp? : Bool
       case self
       when HTML, HTTP, PHP then true
       else                      false
       end
+    end
+
+    # Raises if the application isn't a webapp; not of a `HTML`, `HTTP` or `PHP` type.
+    def webapp!
+      webapp? || raise "only HTML, HTTP and PHP applications can be served behind a web server: #{self}"
     end
   end
 
