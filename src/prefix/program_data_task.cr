@@ -136,9 +136,11 @@ struct DPPM::Prefix::ProgramData::Task
     end
 
     cmd = cmdline.split ' '
+    command = cmd[0]
+    arguments = cmdline.lchop(command).lchop
     case command = cmd[0]
-    when "if"              then ifexpr cmdline[3..-1]
-    when "elif"            then last_cond ? false : ifexpr(cmdline[5..-1])
+    when "if"              then ifexpr arguments
+    when "elif"            then last_cond ? false : ifexpr(arguments)
     when "else"            then !last_cond
     when .starts_with? '/' then Host.exec command, cmd[1..-1]
       # use globs while executing a command
@@ -151,14 +153,14 @@ struct DPPM::Prefix::ProgramData::Task
       ""
     when "current" then Dir.current
       # Booleans
-    when "dir_empty?"   then Dir.empty?(cmdline[9..-1]).to_s
-    when "dir_exists?"  then Dir.exists?(cmdline[12..-1]).to_s
-    when "file_empty?"  then File.empty?(cmdline[12..-1]).to_s
-    when "file_exists?" then File.exists?(cmdline[13..-1]).to_s
-    when "file?"        then File.file?(cmdline[6..-1]).to_s
+    when "dir_empty?"   then Dir.empty?(arguments).to_s
+    when "dir_exists?"  then Dir.exists?(arguments).to_s
+    when "file_empty?"  then File.empty?(arguments).to_s
+    when "file_exists?" then File.exists?(arguments).to_s
+    when "file?"        then File.file?(arguments).to_s
     when "root_user?"   then Process.root?.to_s
       # Single arugment
-    when "cd"            then Dir.cd cmdline[3..-1]; "working directory moved"
+    when "cd"            then Dir.cd arguments; "working directory moved"
     when "mkdir"         then FileUtils.mkdir cmd[1..-1]; "directory created"
     when "mkdir_p"       then FileUtils.mkdir_p cmd[1..-1]; "directory created"
     when "mv"            then cmd[3]? ? FileUtils.mv(cmd[1..-2], cmd[-1]) : File.rename cmd[1], cmd[2]; "file moved"
@@ -166,15 +168,15 @@ struct DPPM::Prefix::ProgramData::Task
     when "rm"            then FileUtils.rm cmd[1..-1]; "file removed"
     when "rm_r"          then FileUtils.rm_r cmd[1..-1]; "directory removed"
     when "rm_rf"         then FileUtils.rm_rf cmd[1..-1]; "directory removed"
-    when "dirname"       then File.dirname cmdline[8..-1]
-    when "read"          then File.read cmdline[5..-1]
-    when "file_size"     then File.size(cmdline[5..-1]).to_s
-    when "touch"         then File.touch cmdline[6..-1]; "file created/updated"
-    when "readable?"     then File.readable?(cmdline[10..-1]).to_s
-    when "symlink?"      then File.symlink?(cmdline[9..-1]).to_s
-    when "writable?"     then File.writable?(cmdline[10..-1]).to_s
-    when "expand_path"   then File.expand_path cmdline[12..-1]
-    when "real_path"     then File.real_path cmdline[10..-1]
+    when "dirname"       then File.dirname arguments
+    when "read"          then File.read arguments
+    when "file_size"     then File.size(arguments).to_s
+    when "touch"         then File.touch arguments; "file created/updated"
+    when "readable?"     then File.readable?(arguments).to_s
+    when "symlink?"      then File.symlink?(arguments).to_s
+    when "writable?"     then File.writable?(arguments).to_s
+    when "expand_path"   then File.expand_path arguments
+    when "real_path"     then File.real_path arguments
     when "random_base64" then Random::Secure.urlsafe_base64(cmd[1].to_i).to_s
       # Double argument with space separator
     when "append"  then File.open cmd[1], "a", &.print cmd[2..-1].join(' ').lchop('\'').rchop('\''); "text appended"
@@ -218,10 +220,10 @@ struct DPPM::Prefix::ProgramData::Task
     when "untar_xz"  then Host.exec "/bin/tar", {"Jxf", cmd[1], "-C", cmd[2]}; "xz archive extracted"
     when "unzip"     then Host.exec "/usr/bin/unzip", {"-oq", cmd[1], "-d", cmd[2]}; "zip archive extracted"
     when "un7z"      then Host.exec "/usr/bin/7z", {"e", "-y", cmd[1], "-o" + cmd[2]}; "7z archive extracted"
-    when "error"     then raise cmdline[4..-1].lstrip
+    when "error"     then raise arguments.lstrip
     when "true"      then "true"
     when "false"     then "false"
-    when "puts"      then cmdline[3..-1].lstrip
+    when "puts"      then arguments.lstrip
     else
       # check if the command is available in `bin` of the package and dependencies
       if bin = executable?(command) || Process.find_executable(command)
