@@ -45,8 +45,4 @@ module DPPM::Utils
       end
     end
   end
-
-  def gen_password : String
-    Random::Secure.urlsafe_base64
-  end
 end

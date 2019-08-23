@@ -34,8 +34,7 @@ class Process
 end
 
 struct DPPM::Host
-  class_getter proc_ver : Array(String) = File.read("/proc/version").split(' '),
-    kernel_ver : String = proc_ver[2].split('-')[0]
+  class_getter kernel_ver : String = File.read("/proc/version").partition(" version ")[2].partition('-')[0]
 
   # System's kernel
   {% if flag?(:linux) %}
@@ -60,7 +59,7 @@ struct DPPM::Host
   {% elsif flag?(:aarch64) %}
     class_getter arch = "arm64"
   {% else %}
-    Log.error "unsupported architecure"; exit 1
+    Log.error "Unsupported architecture"; exit 1
   {% end %}
 
   # All system environment variables

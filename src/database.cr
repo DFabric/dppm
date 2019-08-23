@@ -1,4 +1,5 @@
 require "uri"
+require "random"
 require "./database/*"
 
 module DPPM::Database
@@ -35,16 +36,10 @@ module DPPM::Database
 
   def gen_password : String
     # MySQL requires to have at least one special character
-    while password = Utils.gen_password
-      strong_password = false
-      password.each_char do |char|
-        if !char.ascii_alphanumeric?
-          strong_password = true
-          break
-        end
-      end
-      break if strong_password
+    password = Random::Secure.urlsafe_base64
+    password.each_char do |char|
+      return password if !char.ascii_alphanumeric?
     end
-    password
+    gen_password
   end
 end
