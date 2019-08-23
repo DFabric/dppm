@@ -4,8 +4,8 @@ module DPPM::Log
   extend self
   class_property output : IO::FileDescriptor = STDOUT
   class_property error : IO::FileDescriptor = STDERR
-  @@colorize = true
-  @@date = false
+  class_property colorize : Bool = output.tty?
+  class_property date : Bool = false
 
   def print_date(io)
     Time.utc_now.to_s("%F %T%z ", io) if @@date
