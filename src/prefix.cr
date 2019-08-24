@@ -165,13 +165,12 @@ struct DPPM::Prefix
       else
         package_name = package
       end
-
-      if tag_or_version && tag_or_version =~ /^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/
-        version = tag_or_version
-      end
     end
 
     src = Src.new self, package_name
+    if tag_or_version && !src.pkg_file.tags.has_key? tag_or_version
+      version = tag_or_version
+    end
     version ||= src.pkg_file.version_from_tag(tag || tag_or_version || "latest")
     Pkg.new self, package_name, version, src.pkg_file, src
   end

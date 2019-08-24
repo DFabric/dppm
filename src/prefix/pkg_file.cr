@@ -65,10 +65,10 @@ struct DPPM::Prefix::PkgFile
     env : Hash(String, String)?,
     databases : Hash(String, String?)?,
     tasks : Hash(String, Array(CON::Any))?,
+    tags : Hash(String, Hash(String, String)),
     shared : Bool?,
     ipv6_braces : Bool?,
     version : CON::Any,
-    tags : CON::Any,
     any : CON::Any,
     config : Config?
 
@@ -94,7 +94,6 @@ struct DPPM::Prefix::PkgFile
     {% end %}
     @type = Type.new @any["type"].as_s
     @version = @any["version"]
-    @tags = @any["tags"]
     if provides = @any["provides"]?
       @provides = provides.as_s
     end
@@ -110,6 +109,7 @@ struct DPPM::Prefix::PkgFile
       @{{hash.id}} = {{hash.id}}.as_h.transform_values &.as_s
     end
     {% end %}
+    @tags = @any["tags"].as_h.transform_values &.as_h.transform_values &.as_s
     if tasks = @any["tasks"]?
       @tasks = tasks.as_h.transform_values &.as_a
     end
@@ -165,14 +165,16 @@ struct DPPM::Prefix::PkgFile
   end
 
   def version_from_tag(tag : String) : String
-    src = @tags[tag]["src"].as_s
+    pkg_tag = @tags[tag]? || raise "Tag key not present in #{path}: #{tag}"
+    src = pkg_tag["src"]? || raise "'src' key not present in tag #{tag}"
+
     # Test if the src is an URL or a version number
     if HTTPHelper.url? src
       regex = if regex_tag = @tags[tag]["regex"]?
                 regex_tag
               else
                 @tags["self"]["regex"]
-              end.as_s
+              end
 
       if version = /(#{regex})/.match(HTTPHelper.get_string src).try &.[1]?
         version
