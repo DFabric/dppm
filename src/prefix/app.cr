@@ -8,7 +8,6 @@ struct DPPM::Prefix::App
   getter logs_path : Path { @path / "logs" }
   getter log_file_output : Path { logs_path / "output.log" }
   getter log_file_error : Path { logs_path / "output.log" }
-  getter site_path : Path { @path / "site" }
   getter webserver_sites_path : Path { conf_path / "sites" }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil, @pkg : Pkg? = nil)
@@ -672,10 +671,10 @@ struct DPPM::Prefix::App
         Dir.cd(@path.to_s) { Task.new(vars.dup, all_bin_paths).run add_task }
       end
 
-      if website = @website
+      if (website = @website) && web_server
         Log.info "adding web site", website.file.to_s
         dir = website.file.dirname
-        Dir.mkdir dir if !File.exists? dir
+        Dir.mkdir_p dir
 
         app_uri = uri?
         case pkg_file.type
@@ -696,7 +695,11 @@ struct DPPM::Prefix::App
         end
         @website = website
         website.write
-        File.symlink website.file.to_s, webserver_sites_path.to_s
+
+        Dir.mkdir_p site_path.to_s
+        site_file = (site_path / web_server).to_s
+        File.delete site_file if File.exists? site_file
+        File.symlink website.file.to_s, site_file
       end
 
       # Create system user and group for the application
@@ -785,6 +788,10 @@ struct DPPM::Prefix::App
       Log.info "copying from #{pkg.path}", @path.to_s
       FileUtils.cp_r pkg.app_path.to_s, app_path.to_s
       FileUtils.cp_r pkg.pkg_file.path.to_s, pkg_file.path.to_s
+    end
+
+    if Dir.exists?(pkg_site_path = pkg.site_path.to_s)
+      FileUtils.cp_r pkg_site_path, site_path.to_s
     end
   end
 

@@ -21,6 +21,9 @@ module DPPM::Prefix::ProgramData
   # Path of the application binary.
   getter app_bin_path : Path { app_path / "bin" }
 
+  # Path of the web-sites files.
+  getter site_path : Path { @path / "site" }
+
   # Libraries on which the application depend.
   getter libs : Array(Pkg) do
     libs = Array(Pkg).new
