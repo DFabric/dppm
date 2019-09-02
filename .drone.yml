@@ -13,11 +13,42 @@ steps:
 
 - name: build
   image: jrei/crystal-alpine
+  volumes:
+  - name: cache
+    path: /root/.cache
   commands:
   - shards install
   - shards build --static
 
 - name: test
+  volumes:
+  - name: cache
+    path: /root/.cache
   image: jrei/crystal-alpine
   commands:
   - crystal spec
+
+- name: build docs
+  image: jrei/crystal-alpine
+  volumes:
+  - name: docs
+    path: /docs
+  commands:
+  - crystal docs -o /docs
+
+- name: publish docs
+  image: jrei/gh-pages-ci
+  volumes:
+  - name: docs
+    path: /docs
+  environment:
+    GIT_USER: Drone CI
+    DOCS_TEMP_DIR: /docs
+    SSH_PRIVATE_KEY:
+      from_secret: ssh_private_key
+
+volumes:
+- name: cache
+  temp: {}
+- name: docs
+  temp: {}

@@ -18,6 +18,10 @@ Dedicated Platform Package Manager - an easy way to install and manage server ap
 - Standalone installations bundled with all dependencies - DPPM can be safely removed
 - Compatible with manual system administration (like editions "by hand" on the file system)
 
+## Documentation
+
+https://dfabric.github.io/dppm
+
 ## Install
 
 ### 1. Get the `dppm` binary
