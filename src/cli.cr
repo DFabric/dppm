@@ -396,8 +396,8 @@ module DPPM::CLI
       dppm_package.copy_src_to_path
 
       Dir.mkdir dppm_package.app_path.to_s
-      Dir.mkdir (dppm_package.app_path / "bin").to_s
-      dppm_bin_path = dppm_package.app_path / "bin/dppm"
+      Dir.mkdir dppm_package.bin_path.to_s
+      dppm_bin_path = dppm_package.bin_path / "bin/dppm"
       FileUtils.cp PROGRAM_NAME, dppm_bin_path.to_s
       app = dppm_package.new_app "dppm"
 
