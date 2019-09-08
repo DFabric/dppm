@@ -26,7 +26,7 @@ steps:
     path: /root/.cache
   image: jrei/crystal-alpine
   commands:
-  - crystal spec
+  - crystal spec -D allow_root
 
 - name: build docs
   image: jrei/crystal-alpine

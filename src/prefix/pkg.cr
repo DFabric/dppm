@@ -88,7 +88,7 @@ class DPPM::Prefix::Pkg
   def create_global_bin_symlinks(force : Bool = false)
     each_binary_with_path do |path, binary|
       global_bin = Path["/usr/local/bin", binary].to_s
-      File.delete global_bin if File.exists? global_bin
+      File.delete global_bin if File.symlink?(global_bin) || File.exists?(global_bin)
       File.symlink (path / binary).to_s, global_bin
     end
   end

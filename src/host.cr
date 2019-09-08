@@ -62,9 +62,14 @@ struct DPPM::Host
     Log.error "Unsupported architecture"; exit 1
   {% end %}
 
+  def self.service_available?
+    Service.init? || Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
+    Service.init?
+  end
+
   # All system environment variables
   class_getter vars : Hash(String, String) do
-    Service.init? || DPPM::Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
+    service_available?
     {
       "arch"        => @@arch,
       "kernel"      => @@kernel,

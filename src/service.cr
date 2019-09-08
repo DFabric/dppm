@@ -2,10 +2,12 @@ require "exec"
 require "./service/*"
 
 module Service
+  extend self
+
   @@init : Systemd.class | OpenRC.class | Nil
   @@initialized = false
 
-  def self.init? : Systemd.class | OpenRC.class | Nil
+  def init? : Systemd.class | OpenRC.class | Nil
     if !@@initialized
       init_system = File.basename File.real_path "/sbin/init"
       if init_system == "systemd"
@@ -18,11 +20,11 @@ module Service
     @@init
   end
 
-  def self.init : Systemd.class | OpenRC.class
+  def init : Systemd.class | OpenRC.class
     init? || raise "Unsupported init system"
   end
 
-  def self.exec?(command : String, args : Array(String) | Tuple) : Bool
+  def exec?(command : String, args : Array(String) | Tuple) : Bool
     success = false
     Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
       success = process.wait.success?

@@ -402,7 +402,8 @@ module DPPM::CLI
       app.add(
         vars: {"uid" => Process.uid.to_s, "gid" => Process.gid.to_s},
         shared: true,
-        confirmation: !no_confirm
+        confirmation: !no_confirm,
+        add_service: !!Host.service_available?
       ) do
         no_confirm || CLI.confirm_prompt { raise "DPPM installation canceled." }
       end
