@@ -1,6 +1,16 @@
 require "spec"
 require "../src/logger"
 
+{% if !flag?(:allow_root) %}
+  if LibC.getgid == 0
+    abort <<-E
+      Running specs as root is not recommended, unless in a test VM/container.
+      They will interact with your system, with a risk to break it.
+      Use the `-D allow_root` flag to allow specs to run as root.
+    E
+  end
+{% end %}
+
 DPPM_CONFIG_FILE = File.expand_path __DIR__ + "/../config.con"
 SAMPLES_DIR      = __DIR__ + "/samples"
 # Comment to debug
