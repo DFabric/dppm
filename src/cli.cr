@@ -384,8 +384,7 @@ module DPPM::CLI
     root_prefix = Prefix.new prefix, group: group, source_name: source_name, source_path: source_path
 
     if root_prefix.dppm.exists?
-      Log.info "DPPM already installed", root_prefix.path.to_s
-      return root_prefix
+      raise "DPPM already installed: #{root_prefix.path}"
     end
     root_prefix.create
 
@@ -395,9 +394,8 @@ module DPPM::CLI
       dppm_package = root_prefix.new_pkg "dppm", DPPM.version
       dppm_package.copy_src_to_path
 
-      Dir.mkdir dppm_package.app_path.to_s
-      Dir.mkdir dppm_package.bin_path.to_s
-      dppm_bin_path = dppm_package.bin_path / "bin/dppm"
+      Dir.mkdir_p dppm_package.app_bin_path.to_s
+      dppm_bin_path = dppm_package.app_bin_path / "dppm"
       FileUtils.cp PROGRAM_NAME, dppm_bin_path.to_s
       app = dppm_package.new_app "dppm"
 
@@ -414,7 +412,6 @@ module DPPM::CLI
     end
     dppm_package.create_global_bin_symlinks(force: true) if Process.root?
     Log.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
-    File.delete PROGRAM_NAME
   end
 
   def uninstall_dppm(no_confirm, config, prefix, group, source_name, source_path)

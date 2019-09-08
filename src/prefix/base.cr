@@ -102,7 +102,6 @@ module DPPM::Prefix::Base
 
   # Resolves semver expressions recursively.
   def resolve_deps(dependencies : Hash(String, Array(SemanticVersion)) = Hash(String, Array(SemanticVersion)).new) : Hash(String, Array(SemanticVersion))
-    # No need to parse if the deps list is empty
     deps_with_expr.each do |dep_src, version_expr|
       if !File.exists? (libs_path / dep_src.name).to_s
         Log.info "calculating dependency", dep_src.name

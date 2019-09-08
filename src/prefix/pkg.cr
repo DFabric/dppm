@@ -109,18 +109,6 @@ class DPPM::Prefix::Pkg
 
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
   def build(deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block) : Pkg
-    if !@pkg_file
-      import_pkg_file src.pkg_file
-    end
-    pkg_file.ensure_version @version
-
-    vars = Host.vars.dup
-    arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
-                   version_alias
-                 else
-                   Host.arch
-                 end
-
     # keep the latest ones for each dependency
     Log.info "calculing package dependencies", @name
     src.resolve_deps.each do |dep_name, versions|
@@ -132,6 +120,29 @@ class DPPM::Prefix::Pkg
                 end
       deps << dep_src.new_pkg dep_name, version
     end
+
+    # Needs to be after dependencies calculation to populate `deps`,
+    # that can be used in the yielded block
+    if exists?
+      Log.info "already present", @path.to_s
+      return self if confirmation
+      yield
+      return self
+    end
+
+    if !@pkg_file
+      import_pkg_file src.pkg_file
+    end
+
+    pkg_file.ensure_version @version
+
+    vars = Host.vars.dup
+    arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
+                   version_alias
+                 else
+                   Host.arch
+                 end
+
     vars["prefix"] = @prefix.path.to_s
     vars["version"] = @version
     vars["package"] = @package
@@ -141,20 +152,9 @@ class DPPM::Prefix::Pkg
       vars.merge! env
     end
 
-    if exists?
-      Log.info "already present", @path.to_s
-      return self if confirmation
-      yield
-      return self
-    else
-      simulate vars, deps, "build", confirmation, Log.output, &block
-    end
+    simulate vars, deps, "build", confirmation, Log.output, &block
 
     begin
-      if exists?
-        Log.info "package already present", @path.to_s
-        return self
-      end
       copy_src_to_path
 
       # Build dependencies

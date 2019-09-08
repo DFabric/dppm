@@ -7,7 +7,7 @@ end
 
 describe IntegrationSpec do
   package = TEST_APP_PACKAGE_NAME
-  prefix = IntegrationSpec.create_prefix File.tempname("_temp_dppm_prefix")
+  prefix = IntegrationSpec.create_prefix spec_root_prefix
 
   begin
     it "adds an application with a version and no package built" do
