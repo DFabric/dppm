@@ -295,7 +295,7 @@ struct DPPM::Prefix::App
       yield
 
       File.chown origin_file, origin_file_info.owner, origin_file_info.group
-      time = Time.utc_now
+      time = Time.utc
       File.touch origin_file, time
       File.touch config_file!.to_s, time
     end
