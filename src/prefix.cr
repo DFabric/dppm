@@ -26,7 +26,7 @@ struct DPPM::Prefix
   end
 
   # Default DPPM configuration.
-  class_getter default_dppm_config = Config.new {{ read_file "./config.con" }}
+  class_getter default_dppm_config = Config.new {{ read_file __DIR__ + "/../config.con" }}
 
   # Default group namespace where installing applications.
   class_getter default_group : String = "default-group"

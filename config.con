@@ -1,5 +1,5 @@
 host "[::1]"
 port 8994
 sources {
-  default "https://github.com/DFabric/packages-source/tarball/master"
+  default "https://github.com/DFabric/dppm-packages-source/tarball/master"
 }
