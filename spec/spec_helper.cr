@@ -1,8 +1,9 @@
 require "spec"
 require "../src/logger"
+require "../src/host"
 
 {% if !flag?(:allow_root) %}
-  if LibC.getgid == 0
+  if Process.root?
     abort <<-E
       Running specs as root is not recommended, unless in a test VM/container.
       They will interact with your system, with a risk to break it.
