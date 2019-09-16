@@ -32,7 +32,7 @@ struct WebSite::Caddy
           when "log"     then @log_file_output = Path[line[0]]
           when "errors"  then @log_file_error = Path[line[0]]
           when "proxy"   then @proxy = URI.parse "//" + line[1]
-          when "fastcgi" then @fastcgi = line[1].lchop "unix:"
+          when "fastcgi" then @fastcgi = URI.parse line[1]
           when "gzip"    then @gzip = true
           when "header"  then header_block = true
           else
@@ -57,7 +57,7 @@ struct WebSite::Caddy
       if proxy = @proxy
         io << "\n    proxy / " << proxy.to_s.lchop("//")
       end
-      io << "\n    fastcgi / unix:" << @fastcgi << " php" if @fastcgi
+      io << "\n    fastcgi / " << @fastcgi << " php" if @fastcgi
       io << "\n    log " << @log_file_output
       io << "\n    errors " << @log_file_error
       io << "\n    gzip" if @gzip

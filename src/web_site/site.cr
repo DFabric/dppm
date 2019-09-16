@@ -6,7 +6,7 @@ module WebSite::Site
     log_file_error : Path? = nil,
     headers : Hash(String, String) = Hash(String, String).new,
     gzip : Bool = false,
-    fastcgi : String? = nil,
+    fastcgi : URI? = nil,
     proxy : URI? = nil,
     hosts : Array(URI) = Array(URI).new,
     file : Path

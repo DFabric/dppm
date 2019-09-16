@@ -682,7 +682,7 @@ struct DPPM::Prefix::App
           website.root = app_path
         when .php?
           website.root = app_path
-          website.fastcgi = vars["socket"]
+          website.fastcgi = URI.new path: vars["socket"]
         else
           website.proxy = app_uri.dup
         end

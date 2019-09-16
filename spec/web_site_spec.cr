@@ -65,7 +65,7 @@ describe WebSite do
   end
 
   it "parses fastcgi" do
-    caddy_site.fastcgi.should eq "/php-fpm.sock"
+    caddy_site.fastcgi.should eq URI.new scheme: "unix", path: "/php-fpm.sock"
   end
 
   it "parses headers" do
