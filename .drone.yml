@@ -20,6 +20,11 @@ steps:
   - shards install
   - shards build --static
 
+- name: lint
+  image: jrei/crystal-alpine
+  commands:
+  - bin/ameba
+
 - name: test
   volumes:
   - name: cache
