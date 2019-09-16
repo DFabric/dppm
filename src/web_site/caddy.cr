@@ -1,10 +1,12 @@
 require "./site"
 
-# Limited Caddy parser
+# Limited Caddyfile parser/builder
 struct WebSite::Caddy
   include Site
   @extra : IO::Memory = IO::Memory.new
 
+  # Parses a Caddyfile from a path.
+  #
   # ameba:disable Metrics/CyclomaticComplexity
   def initialize(@file : Path)
     if File.exists? @file.to_s
@@ -12,27 +14,28 @@ struct WebSite::Caddy
       header_block = false
 
       File.each_line @file do |raw_line|
+        stripped_line = raw_line.strip "\t "
+
         if line_number == 0
-          line = raw_line.strip("\t ").rchop(" {").split ' '
-          line.each do |host|
-            @hosts << URI.parse "//" + host
+          stripped_line.split(' ') do |host|
+            @hosts << URI.parse "//" + host if host != "{"
           end
         elsif header_block
-          line = raw_line.strip("\t ").partition " \""
-          if line.first == "}"
+          header, _, value = stripped_line.partition " \""
+          if header == "}"
             header_block = false
           else
-            @headers[line.first] = line[2].rchop '"'
+            @headers[header] = value.rchop '"'
           end
           next
         else
-          line = raw_line.strip("\t ").split ' '
-          case line.shift
-          when "root"    then @root = Path[line[0]]
-          when "log"     then @log_file_output = Path[line[0]]
-          when "errors"  then @log_file_error = Path[line[0]]
-          when "proxy"   then @proxy = URI.parse "//" + line[1]
-          when "fastcgi" then @fastcgi = URI.parse line[1]
+          directive, _, value = stripped_line.partition ' '
+          case directive
+          when "root"    then @root = Path[value]
+          when "log"     then @log_file_output = Path[value]
+          when "errors"  then @log_file_error = Path[value]
+          when "proxy"   then @proxy = URI.parse "//" + value.partition(' ')[2]
+          when "fastcgi" then @fastcgi = URI.parse value.partition(' ')[2].rchop " php"
           when "gzip"    then @gzip = true
           when "header"  then header_block = true
           else
@@ -47,6 +50,7 @@ struct WebSite::Caddy
     end
   end
 
+  # Writes to the Caddyfile path.
   def write
     File.open @file.to_s, "w" do |io|
       @hosts.try &.each do |host|
