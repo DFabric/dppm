@@ -111,7 +111,7 @@ struct DPPM::Prefix
 
   # DPPM configuration.
   property dppm_config : Config do
-    if config_file = dppm.config_file
+    if config_file = dppm.config_file?
       Config.new File.read(config_file)
     else
       @@default_dppm_config

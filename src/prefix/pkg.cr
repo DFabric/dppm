@@ -113,7 +113,9 @@ class DPPM::Prefix::Pkg
     Log.info "calculing package dependencies", @name
     src.resolve_deps.each do |dep_name, versions|
       dep_src = @prefix.new_src(dep_name)
-      version = if versions.includes?(latest = dep_src.pkg_file.version_from_tag "latest")
+      latest = dep_src.pkg_file.version_from_tag "latest"
+
+      version = if versions.includes? latest
                   latest
                 else
                   versions.first.to_s
@@ -137,7 +139,7 @@ class DPPM::Prefix::Pkg
     pkg_file.ensure_version @version
 
     vars = Host.vars.dup
-    arch_alias = if (aliases = pkg_file.aliases) && (version_alias = aliases[Host.arch]?)
+    arch_alias = if version_alias = pkg_file.aliases.try &.[Host.arch]?
                    version_alias
                  else
                    Host.arch

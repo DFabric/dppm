@@ -29,6 +29,6 @@ module Service
     Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
       success = process.wait.success?
     end
-    return success
+    success
   end
 end

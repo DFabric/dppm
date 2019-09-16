@@ -120,7 +120,7 @@ struct DPPM::Prefix::App
 
   # Returns a database, if any.
   getter database : Database::MySQL | Nil do
-    if config_vars = pkg_file.config_vars
+    if pkg_file.config_vars
       if database_type = get_config?("database_type")
         type = database_type.to_s
       elsif databases = pkg_file.databases
@@ -450,6 +450,7 @@ struct DPPM::Prefix::App
     self
   end
 
+  # ameba:disable Metrics/CyclomaticComplexity
   def add(
     vars : Hash(String, String) = Hash(String, String).new,
     shared : Bool = true,
@@ -480,11 +481,10 @@ struct DPPM::Prefix::App
       database_app = @prefix.new_app database
       Log.info "initialize database", database
 
-      (database_create database_app).tap do |database|
-        database.clean
-        database.check_user
-        vars.merge! database.vars
-      end
+      new_database = database_create database_app
+      new_database.clean
+      new_database.check_user
+      vars.merge! new_database.vars
     end
 
     # Default variables
@@ -639,7 +639,7 @@ struct DPPM::Prefix::App
 
       # Build and add missing dependencies and copy library configurations
       install_deps deps, shared do |dep_pkg|
-        if dep_config = dep_pkg.config
+        if dep_pkg.config?
           Log.info "copying library configuration files", dep_pkg.name
           dep_conf_path = conf_path / dep_pkg.package
           Dir.mkdir_p dep_conf_path.to_s
@@ -658,10 +658,10 @@ struct DPPM::Prefix::App
       write_configs
       set_permissions
 
-      if (real_database = database?) && database_app && database_password
+      if (current_database = database?) && database_app && database_password
         Log.info "configure database", database_app.name
-        real_database.ensure_root_password database_app
-        real_database.create database_password
+        current_database.ensure_root_password database_app
+        current_database.create database_password
       end
 
       # Running the add task
@@ -795,6 +795,7 @@ struct DPPM::Prefix::App
     end
   end
 
+  # ameba:disable Metrics/CyclomaticComplexity
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block) : App?
     raise "Application doesn't exist: #{@path}" if !File.exists? @path.to_s
 
@@ -805,7 +806,7 @@ struct DPPM::Prefix::App
     end
 
     # Checks
-    if service = service?
+    if service?
       if service.exists?
         Log.info "a system service is found", @name
         service.check_delete
@@ -821,7 +822,7 @@ struct DPPM::Prefix::App
       Log.output << "\nbasedir: " << @path
       Log.output << "\nuser: " << owner.user.name
       Log.output << "\ngroup: " << owner.group.name
-      service?.try do |service|
+      if service?
         Log.output << "\nservice: " << service.file
       end
       Log.output << '\n'

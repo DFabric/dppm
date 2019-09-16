@@ -103,9 +103,9 @@ struct DPPM::Host
   end
 
   # Returns an available port
-  def self.available_port(port : UInt16 = 0_u16) : UInt16
+  def self.available_port(start_port : UInt16 = 0_u16) : UInt16
     ports_used = Set(UInt16).new
-    (port..UInt16::MAX).each do |port|
+    (start_port..UInt16::MAX).each do |port|
       begin
         tcp_port_available port
         return port

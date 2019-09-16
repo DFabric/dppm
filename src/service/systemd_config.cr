@@ -49,6 +49,7 @@ class Service::Config
     service
   end
 
+  # ameba:disable Metrics/CyclomaticComplexity
   def to_systemd : String
     # Transform the hash to a systemd service
     systemd = {"Unit"    => Hash(String, String).new,

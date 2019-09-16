@@ -5,6 +5,7 @@ struct WebSite::Caddy
   include Site
   @extra : IO::Memory = IO::Memory.new
 
+  # ameba:disable Metrics/CyclomaticComplexity
   def initialize(@file : Path)
     if File.exists? @file.to_s
       line_number = 0
@@ -51,7 +52,7 @@ struct WebSite::Caddy
       @hosts.try &.each do |host|
         io << host.to_s.lchop("//") << ' '
       end
-      io << "{"
+      io << '{'
       io << "\n    root " << @root if @root
       if proxy = @proxy
         io << "\n    proxy / " << proxy.to_s.lchop("//")

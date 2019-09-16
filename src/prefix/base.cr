@@ -18,13 +18,12 @@ module DPPM::Prefix::Base
   @config_file_initialized = false
 
   # Raises if the configuration file if it exists.
-  getter config_file : Path? do
+  getter? config_file : Path? do
     if !@config_file_initialized
       if Dir.exists? conf_path.to_s
         Dir.each_child conf_path.to_s do |file|
-          file_path = conf_path / file
           if file.starts_with? "config."
-            @config_file = file_path
+            @config_file = conf_path / file
           end
         end
       end
@@ -35,15 +34,15 @@ module DPPM::Prefix::Base
 
   # Raises if the configuration file doesn't exist.
   def config_file! : Path
-    config_file || raise "Config file not available"
+    config_file? || raise "Config file not available"
   end
 
   @config_initialized = false
 
   # Returns the main configuration.
-  getter config : ::Config::Types? do
-    if !@config_initialized && (config_path = config_file)
-      @config = ::Config.read? config_path
+  getter? config : ::Config::Types? do
+    if !@config_initialized && config_file?
+      @config = ::Config.read? config_file!
       @config_initialized = true
     end
     @config
@@ -51,7 +50,7 @@ module DPPM::Prefix::Base
 
   # Raises if no configuration is available.
   def config! : ::Config::Types
-    config || raise "No valid config file: #{conf_path}config.*"
+    config? || raise "No valid config file: #{conf_path}config.*"
   end
 
   class ConfigKeyError < Exception
@@ -74,7 +73,7 @@ module DPPM::Prefix::Base
   abstract def get_config(key : String, &block)
 
   protected def config_from_pkg_file(key : String, &block)
-    if app_config = config
+    if app_config = config?
       if config_vars = pkg_file.config_vars
         if config_key = config_vars[key]?
           yield app_config, config_key

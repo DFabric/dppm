@@ -190,7 +190,7 @@ module DPPM::CLI::App
         end
       end
       if follow
-        while true
+        loop do
           yield channel.receive
         end
       else

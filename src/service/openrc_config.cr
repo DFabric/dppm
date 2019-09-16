@@ -8,6 +8,7 @@ class Service::Config
   private OPENRC_ENV_VARS_PREFIX = "supervise_daemon_args=\"--env '"
   private OPENRC_NETWORK_SERVICE = "net"
 
+  # ameba:disable Metrics/CyclomaticComplexity
   def self.from_openrc(data : String)
     service = new
     line_number = 1
@@ -70,6 +71,7 @@ class Service::Config
     service
   end
 
+  # ameba:disable Metrics/CyclomaticComplexity
   def to_openrc : String
     String.build do |str|
       str << OPENRC_SHEBANG << "\n\n"
@@ -110,7 +112,7 @@ class Service::Config
         \t#{OPENRC_RELOAD_COMMAND}#{@reload_signal}
         \teend $? "Failed to reload $RC_SVCNAME"
         }
-        
+
         E
       end
     end

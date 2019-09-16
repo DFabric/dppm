@@ -27,16 +27,7 @@ struct DPPM::Prefix::ProgramData::Task
       if line = raw_line.as_s?
         @line_number += 1
         # # New variable assignation
-        if line.size > 4 &&
-           (line_var = line.partition(" = ")) &&
-           (first_line_var = line_var[0]) &&
-           Utils.ascii_alphanumeric_underscore? first_line_var
-          if (output = execute(line_var[2])).is_a? String
-            @vars[first_line_var] = output
-          else
-            raise "Expected String, got #{output}"
-          end
-        else
+        if !assign_variable? line
           cmd = var_reader line
           Log.info "execute", cmd
           case output = execute cmd, last_cond
@@ -55,6 +46,18 @@ struct DPPM::Prefix::ProgramData::Task
     end
   rescue ex
     raise Exception.new "Error at line #{@line_number}", ex
+  end
+
+  # Assigns a value to a variable from a line string if it corresponds to an assignment.
+  private def assign_variable?(line : String) : String?
+    return if line.size < 5
+    var, _, value = line.partition(" = ")
+    return if !Utils.ascii_alphanumeric_underscore? var
+    if (output = execute value).is_a? String
+      @vars[var] = output
+    else
+      raise "Expected String, got #{output}"
+    end
   end
 
   private def var_reader(cmd : String)
@@ -125,8 +128,10 @@ struct DPPM::Prefix::ProgramData::Task
   end
 
   # Methods from
-  # https://crystal-lang.org/api/Dir.html
+  # https://crystal-lang.org/api/Dir.html and
   # https://crystal-lang.org/api/File.html
+  #
+  # ameba:disable Metrics/CyclomaticComplexity
   def execute(cmdline : String, last_cond : Bool = false) : String | Bool
     # Check if it's a variable
     if line = cmdline.lchop?('\'').try &.rchop?('\'')
@@ -234,7 +239,7 @@ struct DPPM::Prefix::ProgramData::Task
         if success
           output.to_s
         else
-          raise "Execution returned an error: #{command} #{cmd.join ' '}\n#{output}"
+          raise "Execution returned an error: #{command} #{cmd.join ' '}\n#{output}\n#{error}"
         end
       else
         raise "Unknown command or variable: #{cmd.join ' '}"
