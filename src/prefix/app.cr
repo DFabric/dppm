@@ -601,7 +601,7 @@ struct DPPM::Prefix::App
       uid = Process.uid
       gid = Process.gid
       user = libcrown.users[uid].name
-      group = libcrown.users[gid].name
+      group = libcrown.groups[gid].name
     end
 
     vars["uid"] = uid.to_s
