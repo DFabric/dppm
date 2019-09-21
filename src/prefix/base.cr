@@ -108,14 +108,14 @@ module DPPM::Prefix::Base
         # If an array of versions is already provided by a dependency
         if dep_vers = dependencies[dep_src.name]?
           dep_vers.select! do |semantic_version|
-            SemanticCompare.expression semantic_version, version_expr
+            SemanticCompare.complex_expression semantic_version, version_expr
           end
         else
           # HTTPget all versions, parse and test if the versions available match
           dep_vers = dependencies[dep_src.name] = Array(SemanticVersion).new
           dep_src.pkg_file.each_version do |ver|
             semantic_version = SemanticVersion.parse ver
-            dep_vers << semantic_version if SemanticCompare.expression semantic_version, version_expr
+            dep_vers << semantic_version if SemanticCompare.complex_expression semantic_version, version_expr
           end
         end
         # Raise an error if two packages require different versions of a same dependency
