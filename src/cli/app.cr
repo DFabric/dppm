@@ -173,18 +173,18 @@ module DPPM::CLI::App
     app.write_configs
   end
 
-  def self.logs(prefix : String, group : String, log_names : Array(String), lines : String?, follow : Bool, application : String, &block : String ->)
+  def self.logs(prefix : String, group : String, stream_names : Array(String), lines : String?, follow : Bool, application : String, &block : String ->)
     app = Prefix.new(prefix, group: group).new_app application
-    if log_names.empty?
+    if stream_names.empty?
       Log.output << "LOG NAMES\n"
-      app.each_log_file do |log_file|
-        Log.output << log_file.rchop(".log") << '\n'
+      app.each_log_stream do |stream|
+        Log.output << stream << '\n'
       end
     else
       channel = Channel(String).new
-      log_names.each do |log_name|
+      stream_names.each do |stream_name|
         spawn do
-          app.get_logs log_name + ".log", follow, lines.try(&.to_i) do |line|
+          app.get_logs stream_name, follow, lines.try(&.to_i) do |line|
             channel.send line
           end
         end
@@ -194,7 +194,7 @@ module DPPM::CLI::App
           yield channel.receive
         end
       else
-        log_names.size.times do
+        stream_names.size.times do
           yield channel.receive
         end
       end

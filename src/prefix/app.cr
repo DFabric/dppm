@@ -5,9 +5,10 @@ require "tail"
 struct DPPM::Prefix::App
   include ProgramData
 
+  private LOG_EXTENSION = ".log"
   getter logs_path : Path { @path / "logs" }
-  getter log_file_output : Path { logs_path / "output.log" }
-  getter log_file_error : Path { logs_path / "output.log" }
+  getter log_file_output : Path { logs_path / ("output" + LOG_EXTENSION) }
+  getter log_file_error : Path { logs_path / ("error" + LOG_EXTENSION) }
   getter webserver_sites_path : Path { conf_path / "sites" }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil, @pkg : Pkg? = nil)
@@ -313,13 +314,16 @@ struct DPPM::Prefix::App
     File.symlink? app_path_str
   end
 
-  def each_log_file(&block : String ->)
-    Dir.each_child logs_path.to_s, &block
+  # Yields each log stream.
+  def each_log_stream(&block : String ->)
+    Dir.each_child logs_path.to_s do |log_name|
+      yield log_name.rchop LOG_EXTENSION
+    end
   end
 
-  # Get application logs
-  def get_logs(file_name : String, follow : Bool = true, lines : Int32? = nil, &block : String ->)
-    log_file = (logs_path / file_name).to_s
+  # Get application logs.
+  def get_logs(stream_name : String, follow : Bool = true, lines : Int32? = nil, &block : String ->)
+    log_file = (logs_path / stream_name).to_s + LOG_EXTENSION
     if follow
       Tail::File.new(log_file).follow(lines: (lines || 10), &block)
     elsif lines

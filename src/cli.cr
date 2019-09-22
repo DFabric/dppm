@@ -163,7 +163,7 @@ module DPPM::CLI
               alias:     'L',
               info:      "Read logs of the application's service - list log names if empty",
               action:    "App.logs() { |log| Log.output << log }",
-              arguments: \%w(application log_names...),
+              arguments: \%w(application stream_names...),
               inherit:   \%w(prefix group),
               options:   {
                 follow: {
