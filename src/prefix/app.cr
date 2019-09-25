@@ -114,40 +114,40 @@ struct DPPM::Prefix::App
     service.link service_file.to_s
   end
 
-  # Returns a database if already initialized.
-  def database? : Database::MySQL | Nil
-    @database
-  end
-
+  @database_initialized = false
   # Returns a database, if any.
-  getter database : Database::MySQL | Nil do
-    if pkg_file.config_vars
-      if database_type = get_config?("database_type")
-        type = database_type.to_s
-      elsif databases = pkg_file.databases
-        type = databases.first.first
+  getter? database : Database::MySQL | Nil do
+    if !@database_initialized
+      @database_initialized = true
+
+      if pkg_file.config_vars
+        if database_type = get_config?("database_type")
+          type = database_type.to_s
+        elsif databases = pkg_file.databases
+          type = databases.first.first
+        else
+          return
+        end
+        return if !Database.supported? type
+
+        if database_address = get_config?("database_address")
+          uri = URI.parse "//#{database_address}"
+        elsif database_host = get_config?("database_host")
+          uri = URI.new(
+            host: database_host.to_s,
+            port: get_config("database_port").to_s.to_i?,
+          )
+        end
       else
         return
       end
-      return if !Database.supported? type
 
-      if database_address = get_config?("database_address")
-        uri = URI.parse "//#{database_address}"
-      elsif database_host = get_config?("database_host")
-        uri = URI.new(
-          host: database_host.to_s,
-          port: get_config("database_port").to_s.to_i?,
-        )
+      if uri
+        uri.password = get_config("database_password").to_s
+        uri.user = user = get_config("database_user").to_s
+
+        Database.new uri, user, type
       end
-    else
-      return
-    end
-
-    if uri
-      uri.password = get_config("database_password").to_s
-      uri.user = user = get_config("database_user").to_s
-
-      Database.new uri, user, type
     end
   end
 
@@ -454,6 +454,8 @@ struct DPPM::Prefix::App
     self
   end
 
+  # Adds a new application to the system.
+  #
   # ameba:disable Metrics/CyclomaticComplexity
   def add(
     vars : Hash(String, String) = Hash(String, String).new,
@@ -799,12 +801,14 @@ struct DPPM::Prefix::App
     end
   end
 
+  # Deletes an existing application from the system.
+  #
   # ameba:disable Metrics/CyclomaticComplexity
   def delete(confirmation : Bool = true, preserve_database : Bool = false, keep_user_group : Bool = false, &block) : App?
     raise "Application doesn't exist: #{@path}" if !File.exists? @path.to_s
 
     begin
-      database.try(&.check_connection) if !preserve_database
+      database?.try(&.check_connection) if !preserve_database
     rescue ex
       raise Exception.new "Either start the database or use the preseve database option", ex
     end
@@ -877,7 +881,7 @@ struct DPPM::Prefix::App
       Log.warn "error when deleting system user/group", ex.to_s
     end
 
-    if !preserve_database && (app_database = database)
+    if !preserve_database && (app_database = database?)
       Log.info "deleting database", app_database.user
       app_database.delete
     end
