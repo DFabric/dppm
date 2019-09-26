@@ -5,7 +5,7 @@ class Service::Config
   private SYSTEMD_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
   private SYSTEMD_NETWORK_SERVICE    = "network.target"
 
-  def self.from_systemd(data : String)
+  def self.parse(data : String | IO)
     service = new
     ini = INI.parse data
     if reload = ini["Service"]["ExecReload"]?
@@ -49,8 +49,14 @@ class Service::Config
     service
   end
 
+  def build : String
+    String.build do |str|
+      build str
+    end
+  end
+
   # ameba:disable Metrics/CyclomaticComplexity
-  def to_systemd : String
+  def build(io : IO) : Nil
     # Transform the hash to a systemd service
     systemd = {"Unit"    => Hash(String, String).new,
                "Service" => {
@@ -111,6 +117,6 @@ class Service::Config
     if !@env_vars.empty?
       systemd["Service"]["Environment"] = build_env_vars
     end
-    INI.build systemd
+    INI.build io, systemd
   end
 end

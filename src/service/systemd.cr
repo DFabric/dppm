@@ -20,18 +20,6 @@ class Service::Systemd
     @boot_file = Path["/etc/systemd/system/multi-user.target.wants/#{@name}.service"]
   end
 
-  getter config : Config do
-    if @file && File.exists? @file.to_s
-      Config.from_systemd File.read(@file.to_s)
-    else
-      Config.new
-    end
-  end
-
-  def config_build : String
-    config.to_systemd
-  end
-
   def self.each(&block : String -> _)
     {"/lib/systemd/system", "/etc/systemd/system"}.each do |service_dir|
       Dir.each_child service_dir do |service|

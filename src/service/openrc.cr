@@ -16,18 +16,6 @@ class Service::OpenRC
     @boot_file = Path["/etc/runlevels/default", @name]
   end
 
-  getter config : Config do
-    if @file && File.exists? @file.to_s
-      Config.from_openrc File.read(@file.to_s)
-    else
-      Config.new
-    end
-  end
-
-  def config_build : String
-    config.to_openrc
-  end
-
   def self.each(&block : String -> _)
     Dir.each_child "/etc/init.d" do |service|
       yield service

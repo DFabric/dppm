@@ -3,6 +3,16 @@ module Service::InitSystem
     file : Path,
     boot_file : Path
 
+  getter config : Config do
+    if @file && File.exists? @file.to_s
+      File.open @file.to_s do |io|
+        Config.parse io
+      end
+    else
+      Config.new
+    end
+  end
+
   def type : String
     self.class.type
   end

@@ -9,7 +9,7 @@ class Service::Config
   private OPENRC_NETWORK_SERVICE = "net"
 
   # ameba:disable Metrics/CyclomaticComplexity
-  def self.from_openrc(data : String)
+  def self.parse(data : String | IO)
     service = new
     line_number = 1
     function_name = ""
@@ -71,50 +71,54 @@ class Service::Config
     service
   end
 
-  # ameba:disable Metrics/CyclomaticComplexity
-  def to_openrc : String
+  def build : String
     String.build do |str|
-      str << OPENRC_SHEBANG << "\n\n"
-      str << OPENRC_SUPERVISOR << '\n'
-      str << OPENRC_PIDFILE
-      str << "\nextra_started_commands=reload" if @reload_signal
-      str << "\ncommand_user='#{@user}:#{@group}'" if @user || @group
-      str << "\ndirectory='" << @directory << '\'' if @directory
-      if command = @command
-        command_elements = command.partition ' '
-        str << "\ncommand='" << command_elements[0] << '\''
-        if !command_elements[2].empty?
-          str << "\ncommand_args='" << command_elements[2] << '\''
-        end
+      build str
+    end
+  end
+
+  # ameba:disable Metrics/CyclomaticComplexity
+  def build(io : IO) : Nil
+    io << OPENRC_SHEBANG << "\n\n"
+    io << OPENRC_SUPERVISOR << '\n'
+    io << OPENRC_PIDFILE
+    io << "\nextra_started_commands=reload" if @reload_signal
+    io << "\ncommand_user='#{@user}:#{@group}'" if @user || @group
+    io << "\ndirectory='" << @directory << '\'' if @directory
+    if command = @command
+      command_elements = command.partition ' '
+      io << "\ncommand='" << command_elements[0] << '\''
+      if !command_elements[2].empty?
+        io << "\ncommand_args='" << command_elements[2] << '\''
       end
-      str << "\noutput_log='" << @log_output << '\'' if @log_output
-      str << "\nerror_log='" << @log_error << '\'' if @log_error
-      str << "\ndescription='" << @description << '\'' if @description
-      str << "\nrespawn_delay=" << @restart_delay if @restart_delay
-      str << "\numask=" << @umask if @umask
+    end
+    io << "\noutput_log='" << @log_output << '\'' if @log_output
+    io << "\nerror_log='" << @log_error << '\'' if @log_error
+    io << "\ndescription='" << @description << '\'' if @description
+    io << "\nrespawn_delay=" << @restart_delay if @restart_delay
+    io << "\numask=" << @umask if @umask
 
-      if !@env_vars.empty?
-        str << '\n' << OPENRC_ENV_VARS_PREFIX
-        build_env_vars str
-        str << "'\""
-      end
+    if !@env_vars.empty?
+      io << '\n' << OPENRC_ENV_VARS_PREFIX
+      build_env_vars io
+      io << "'\""
+    end
 
-      str << "\n\ndepend() {\n\tafter "
-      @after << OPENRC_NETWORK_SERVICE
-      @after.join ' ', str
-      str << "}\n"
+    io << "\n\ndepend() {\n\tafter "
+    @after << OPENRC_NETWORK_SERVICE
+    @after.join ' ', io
+    io << "}\n"
 
-      if @reload_signal
-        str << <<-E
+    if @reload_signal
+      io << <<-E
 
-        reload() {
-        \tebegin "Reloading $RC_SVCNAME"
-        \t#{OPENRC_RELOAD_COMMAND}#{@reload_signal}
-        \teend $? "Failed to reload $RC_SVCNAME"
-        }
+      reload() {
+      \tebegin "Reloading $RC_SVCNAME"
+      \t#{OPENRC_RELOAD_COMMAND}#{@reload_signal}
+      \teend $? "Failed to reload $RC_SVCNAME"
+      }
 
-        E
-      end
+      E
     end
   end
 end
