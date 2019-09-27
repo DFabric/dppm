@@ -1,11 +1,10 @@
 require "./spec_helper"
 require "../src/utils"
+require "file_utils"
 
 describe DPPM::Utils do
   it "changes the permissions of the directory recursively" do
-    path = __DIR__ + "/chmod_r_test"
-    begin
-      Dir.mkdir path
+    spec_with_tempdir do |path|
       Dir.mkdir File.join(path, "a")
       File.write File.join(path, "a/b"), ""
 
@@ -13,8 +12,6 @@ describe DPPM::Utils do
       DPPM::Utils.chmod_r path, permission.value
       File.info(File.join path, "a").permissions.should eq permission
       File.info(File.join path, "a/b").permissions.should eq permission
-    ensure
-      FileUtils.rm_r(path)
     end
   end
 

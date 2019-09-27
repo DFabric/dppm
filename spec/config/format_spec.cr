@@ -1,3 +1,4 @@
+require "spec"
 require "../../src/config/format"
 
 module Config::Format

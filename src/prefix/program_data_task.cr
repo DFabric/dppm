@@ -156,7 +156,7 @@ struct DPPM::Prefix::ProgramData::Task
         Dir[cmd[2]].each { |entry| execute cmd[1] + ' ' + entry }
       end
       ""
-    when "current" then Dir.current
+    when "dir_current" then Dir.current
       # Booleans
     when "dir_empty?"   then Dir.empty?(arguments).to_s
     when "dir_exists?"  then Dir.exists?(arguments).to_s

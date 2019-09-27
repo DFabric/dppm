@@ -19,46 +19,57 @@ module Service
   end
 end
 
-def assert_service(service, file = __FILE__, line = __LINE__)
+def spec_with_service_app(service, &block)
   Service.init = service
 
-  test_prefix = DPPM::Prefix.new File.tempname("_dppm_service_test")
-  test_prefix.create
-  test_prefix.ensure_app_dir
-  test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
-  FileUtils.cp_r Path[SAMPLES_DIR, TEST_APP_PACKAGE_NAME].to_s, test_app.path.to_s
+  spec_with_tempdir do |path|
+    test_prefix = DPPM::Prefix.new path
+    test_prefix.create
+    test_prefix.ensure_app_dir
+    test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
+    FileUtils.cp_r Path[SAMPLES_DIR, TEST_APP_PACKAGE_NAME].to_s, test_app.path.to_s
 
-  test_app.service.file = test_app.service_file
+    test_app.service.file = test_app.service_file
+    test_app.service_create.config
+    begin
+      yield test_app
+    ensure
+      Service.init = nil
+    end
+  end
+end
 
-  it "creates a service", file, line do
-    config = test_app.service_create.config
-    config.user.should be_a String
-    config.group.should be_a String
-    config.directory.should be_a String
-    config.command.should be_a String
-    config.reload_signal.should be_a String
-    config.description.should be_a String
-    config.log_output.should be_a String
+def assert_service(service, file = __FILE__, line = __LINE__)
+  spec_with_service_app service do |app|
+    it "creates a service config", file, line do
+      config = app.service.config
+      config.user.should be_a String
+      config.group.should be_a String
+      config.directory.should be_a String
+      config.command.should be_a String
+      config.reload_signal.should be_a String
+      config.description.should be_a String
+      config.log_output.should be_a String
+    end
+
+    it "parses the service", file, line do
+      app.service.config
+    end
+
+    it "gets user value", file, line do
+      app.service.config.user.should eq app.owner.user.name
+    end
+
+    it "verifies PATH environment variable", file, line do
+      app.service.config.env_vars["PATH"].should eq app.path_env_var
+    end
   end
 
-  it "parses the service", file, line do
-    test_app.service.config
+  it "creates a service file building", file, line do
+    spec_with_service_app service do |app|
+      File.read(app.service_file).should eq app.service.config.build
+    end
   end
-
-  it "gets user value", file, line do
-    test_app.service.config.user.should eq test_app.owner.user.name
-  end
-
-  it "checks service file building", file, line do
-    File.read(test_app.service_file).should eq test_app.service.config_build
-  end
-
-  it "verifies PATH environment variable", file, line do
-    test_app.service.config.env_vars["PATH"].should eq test_app.path_env_var
-  end
-
-  test_prefix.delete
-  Service.init = nil
 end
 
 describe Service do
