@@ -106,7 +106,7 @@ struct DPPM::Prefix::App
       service.config.env_vars.merge! pkg_env
     end
     File.open service_file, "w" do |io|
-      service.config.build io
+      service.config_build io
     end
     service
   end

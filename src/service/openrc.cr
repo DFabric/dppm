@@ -40,6 +40,14 @@ class Service::OpenRC
     Service.exec? "/sbin/rc-service", {@name, {{action}}}
   end
   {% end %}
+
+  private def config_parse(io : IO)
+    Config.from_openrc io
+  end
+
+  def config_build(io : IO)
+    config.to_openrc io
+  end
 end
 
 require "./openrc_config"

@@ -17,7 +17,7 @@ class Service::Config
 
   def parse_env_vars(env_vars : String)
     env_vars.rchop.split("\" ").each do |env|
-      var, val = env.split("=\"")
+      var, _, val = env.partition "=\""
       @env_vars[var] = val
     end
   rescue

@@ -3,10 +3,13 @@ module Service::InitSystem
     file : Path,
     boot_file : Path
 
+  private abstract def config_parse(io : IO)
+  private abstract def config_build(io : IO)
+
   getter config : Config do
     if @file && File.exists? @file.to_s
       File.open @file.to_s do |io|
-        Config.parse io
+        config_parse io
       end
     else
       Config.new

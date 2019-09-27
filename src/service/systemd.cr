@@ -49,6 +49,14 @@ class Service::Systemd
     Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", {{action}}, @name}
   end
   {% end %}
+
+  private def config_parse(io : IO)
+    Config.from_systemd io
+  end
+
+  def config_build(io : IO)
+    config.to_systemd io
+  end
 end
 
 require "./systemd_config"

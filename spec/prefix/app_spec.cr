@@ -6,7 +6,7 @@ def spec_with_app(&block)
   spec_with_prefix do |prefix|
     pkg = prefix.new_pkg TEST_APP_PACKAGE_NAME
     app = pkg.new_app TEST_APP_PACKAGE_NAME
-    app.add confirmation: false { }
+    app.add confirmation: false, add_service: false { }
     begin
       yield app
     ensure

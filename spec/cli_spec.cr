@@ -122,6 +122,7 @@ describe DPPM::CLI do
     it "adds an application" do
       spec_with_prefix do |prefix|
         add_application prefix_path: prefix.path.to_s
+        delete_application prefix.path.to_s
       end
     end
 

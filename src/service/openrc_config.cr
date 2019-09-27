@@ -9,7 +9,7 @@ class Service::Config
   private OPENRC_NETWORK_SERVICE = "net"
 
   # ameba:disable Metrics/CyclomaticComplexity
-  def self.parse(data : String | IO)
+  def self.from_openrc(data : String | IO)
     service = new
     line_number = 1
     function_name = ""
@@ -71,14 +71,8 @@ class Service::Config
     service
   end
 
-  def build : String
-    String.build do |str|
-      build str
-    end
-  end
-
   # ameba:disable Metrics/CyclomaticComplexity
-  def build(io : IO) : Nil
+  def to_openrc(io : IO) : Nil
     io << OPENRC_SHEBANG << "\n\n"
     io << OPENRC_SUPERVISOR << '\n'
     io << OPENRC_PIDFILE

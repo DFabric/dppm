@@ -31,6 +31,7 @@ def spec_with_service_app(service, &block)
 
     test_app.service.file = test_app.service_file
     test_app.service_create.config
+
     begin
       yield test_app
     ensure
@@ -67,7 +68,10 @@ def assert_service(service, file = __FILE__, line = __LINE__)
 
   it "creates a service file building", file, line do
     spec_with_service_app service do |app|
-      File.read(app.service_file).should eq app.service.config.build
+      service_config = String.build do |str|
+        app.service.config_build str
+      end
+      File.read(app.service_file).should eq service_config
     end
   end
 end
