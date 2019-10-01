@@ -19,7 +19,7 @@ module DPPM::CLI::Pkg
   end
 
   def build(no_confirm, config, prefix, source_name, source_path, package, custom_vars, version = nil, tag = nil)
-    Log.info "initializing", "build"
+    Logger.info "initializing", "build"
 
     # Update cache
     root_prefix = Prefix.new prefix, source_name: source_name, source_path: source_path

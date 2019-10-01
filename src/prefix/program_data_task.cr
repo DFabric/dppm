@@ -29,9 +29,9 @@ struct DPPM::Prefix::ProgramData::Task
         # # New variable assignation
         if !assign_variable? line
           cmd = var_reader line
-          Log.info "execute", cmd
+          Logger.info "execute", cmd
           case output = execute cmd, last_cond
-          when String then Log.info "output", output if !output.empty?
+          when String then Logger.info "output", output if !output.empty?
           when Bool   then last_cond = output
           else             raise "Invalid output: #{output}"
           end
@@ -233,7 +233,7 @@ struct DPPM::Prefix::ProgramData::Task
       # check if the command is available in `bin` of the package and dependencies
       if bin = executable?(command) || Process.find_executable(command)
         success = false
-        output, error = Exec.new bin, cmd[1..-1], error: Log.error, env: @vars do |process|
+        output, error = Exec.new bin, cmd[1..-1], error: Logger.error, env: @vars do |process|
           success = true if process.wait.success?
         end
         if success

@@ -18,14 +18,14 @@ module DPPM::CLI::Service
   end
 
   def status(prefix : String, all : Bool, noboot : Bool, norun : Bool, services : Array(String)) : Nil
-    Log.output << "RUN   " if !norun
-    Log.output << "BOOT  " if !noboot
-    Log.output.puts "SERVICE\n"
+    Logger.output << "RUN   " if !norun
+    Logger.output << "BOOT  " if !noboot
+    Logger.output.puts "SERVICE\n"
     if services.empty?
       get_status(prefix, all) do |service|
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
-        Log.output.puts service.name
+        Logger.output.puts service.name
       end
     else
       root_prefix = Prefix.new prefix
@@ -33,24 +33,24 @@ module DPPM::CLI::Service
         service = root_prefix.new_app(service_name).service
         print_run_state(service) if !norun
         print_boot_state(service) if !noboot
-        Log.output.puts service.name
+        Logger.output.puts service.name
       end
     end
   end
 
   private def print_run_state(service : ::Service::OpenRC | ::Service::Systemd)
     if run = service.run?
-      Log.output << run.colorize.green << "  "
+      Logger.output << run.colorize.green << "  "
     else
-      Log.output << run.colorize.red << ' '
+      Logger.output << run.colorize.red << ' '
     end
   end
 
   private def print_boot_state(service : ::Service::OpenRC | ::Service::Systemd)
     if boot = service.boot?
-      Log.output << boot.colorize.green << "  "
+      Logger.output << boot.colorize.green << "  "
     else
-      Log.output << boot.colorize.red << ' '
+      Logger.output << boot.colorize.red << ' '
     end
   end
 

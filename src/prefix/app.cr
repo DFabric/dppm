@@ -257,7 +257,7 @@ struct DPPM::Prefix::App
         command = splitted_command[0]
         args = splitted_command[1..-1]
 
-        Exec.new command, args, output: Log.output, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
+        Exec.new command, args, output: Logger.output, error: Logger.error, chdir: @path.to_s, env: pkg_file.env do |process|
           raise "Can't import configuration: " + full_command if !process.wait.success?
         end
       end
@@ -275,7 +275,7 @@ struct DPPM::Prefix::App
         args = splitted_command[1..-1]
 
         File.open config_path.to_s, "w" do |io|
-          Exec.new command, args, output: io, error: Log.error, chdir: @path.to_s, env: pkg_file.env do |process|
+          Exec.new command, args, output: io, error: Logger.error, chdir: @path.to_s, env: pkg_file.env do |process|
             raise "Can't export configuration: " + full_command if !process.wait.success?
           end
         end
@@ -414,14 +414,14 @@ struct DPPM::Prefix::App
 
     case new_pkg.semantic_version
     when .< pkg.semantic_version
-      Log.warn "downgrading is not recommended", "from `#{pkg.version}` to `#{new_pkg.version}`"
+      Logger.warn "downgrading is not recommended", "from `#{pkg.version}` to `#{new_pkg.version}`"
     when .== pkg.semantic_version
       current_shared_state = shared?
       if current_shared_state == shared
-        Log.info "nothing to do", pkg.version
+        Logger.info "nothing to do", pkg.version
         return self
       else
-        Log.info "changing application's package shared state", "from `#{current_shared_state}` to `#{shared}`"
+        Logger.info "changing application's package shared state", "from `#{current_shared_state}` to `#{shared}`"
       end
     end
 
@@ -437,7 +437,7 @@ struct DPPM::Prefix::App
 
     deps = Set(Prefix::Pkg).new
     new_pkg.build deps, false do
-      simulate vars, deps, "upgrade", confirmation, Log.output, &block
+      simulate vars, deps, "upgrade", confirmation, Logger.output, &block
     end
 
     # Replace current application's package by the new one
@@ -452,7 +452,7 @@ struct DPPM::Prefix::App
       Utils.chown_r @path.to_s, file_info.owner, file_info.group
     end
 
-    Log.info "upgrade completed", @path.to_s
+    Logger.info "upgrade completed", @path.to_s
     self
   end
 
@@ -475,7 +475,7 @@ struct DPPM::Prefix::App
         add_service = false
       elsif app_service = service?
         if !app_service.creatable?
-          Log.warn "service creation not available - root permissions missing?", app_service.file.to_s
+          Logger.warn "service creation not available - root permissions missing?", app_service.file.to_s
           add_service = false
         elsif app_service.exists?
           raise "System service already exist: " + app_service.name
@@ -487,7 +487,7 @@ struct DPPM::Prefix::App
     database_app = nil
     if database
       database_app = @prefix.new_app database
-      Log.info "initialize database", database
+      Logger.info "initialize database", database
 
       new_database = database_create database_app
       new_database.clean
@@ -499,7 +499,7 @@ struct DPPM::Prefix::App
     unset_vars = Set(String).new
 
     if !socket && (port = vars["port"]?)
-      Log.info "checking port availability", port
+      Logger.info "checking port availability", port
       if pkg_file.type.udp? || pkg_file.type.tcp_udp?
         Host.udp_port_available port.to_u16
       end
@@ -549,7 +549,7 @@ struct DPPM::Prefix::App
             else
               vars[var] = key
             end
-            Log.info "default value set '#{var}'", key
+            Logger.info "default value set '#{var}'", key
           end
         end
       end
@@ -581,9 +581,9 @@ struct DPPM::Prefix::App
         end
       end
     end
-    Log.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
+    Logger.warn "default value not available for unset variables", unset_vars.join ", " if !unset_vars.empty?
 
-    Log.info "setting system user and group", @name
+    Logger.info "setting system user and group", @name
     # Take an user uid and a group gid is required
     if Process.root?
       libcrown = Libcrown.new
@@ -627,10 +627,10 @@ struct DPPM::Prefix::App
 
     deps = Set(Prefix::Pkg).new
     pkg.build deps, false do
-      simulate vars, deps, "add", confirmation, Log.output, &block
+      simulate vars, deps, "add", confirmation, Logger.output, &block
     end
     begin
-      Log.info "adding to the system", @name
+      Logger.info "adding to the system", @name
       raise "Application directory already exists: #{@path}" if File.exists? @path.to_s
 
       # Create the new application
@@ -639,7 +639,7 @@ struct DPPM::Prefix::App
       create_application_dir shared
 
       # Copy configurations and data
-      Log.info "copying configurations and data", @name
+      Logger.info "copying configurations and data", @name
 
       copy_dir pkg.conf_path.to_s, conf_path.to_s
       copy_dir pkg.data_path.to_s, data_path.to_s
@@ -648,7 +648,7 @@ struct DPPM::Prefix::App
       # Build and add missing dependencies and copy library configurations
       install_deps deps, shared do |dep_pkg|
         if dep_pkg.config?
-          Log.info "copying library configuration files", dep_pkg.name
+          Logger.info "copying library configuration files", dep_pkg.name
           dep_conf_path = conf_path / dep_pkg.package
           Dir.mkdir_p dep_conf_path.to_s
           FileUtils.cp dep_pkg.config_file!.to_s, (dep_conf_path / dep_pkg.config_file!.basename).to_s
@@ -656,7 +656,7 @@ struct DPPM::Prefix::App
       end
 
       # Set configuration variables
-      Log.info "setting configuration variables", @name
+      Logger.info "setting configuration variables", @name
       each_config_key do |var|
         if var_value = vars[var]?
           set_config var, var_value
@@ -667,20 +667,20 @@ struct DPPM::Prefix::App
       set_permissions
 
       if (current_database = database?) && database_app && database_password
-        Log.info "configure database", database_app.name
+        Logger.info "configure database", database_app.name
         current_database.ensure_root_password database_app
         current_database.create database_password
       end
 
       # Running the add task
-      Log.info "running configuration tasks", @name
+      Logger.info "running configuration tasks", @name
 
       if (tasks = pkg_file.tasks) && (add_task = tasks["add"]?)
         Dir.cd(@path.to_s) { Task.new(vars.dup, all_bin_paths).run add_task }
       end
 
       if (website = @website) && web_server
-        Log.info "adding web site", website.file.to_s
+        Logger.info "adding web site", website.file.to_s
         dir = website.file.dirname
         Dir.mkdir_p dir
 
@@ -716,7 +716,7 @@ struct DPPM::Prefix::App
         add_group_member = false
         # Add a new group
         if !libcrown.groups.has_key? gid
-          Log.info "system group created", group
+          Logger.info "system group created", group
           libcrown.add_group Libcrown::Group.new(group), gid
           add_group_member = true
         end
@@ -731,7 +731,7 @@ struct DPPM::Prefix::App
             home_directory: data_path.to_s
           )
           libcrown.add_user system_user, uid
-          Log.info "system user created", user
+          Logger.info "system user created", user
         else
           !libcrown.user_group_member? uid, gid
           add_group_member = true
@@ -751,16 +751,16 @@ struct DPPM::Prefix::App
           if database_app
             database_name = database_app.name
           end
-          Log.info "creating system service", service.name
+          Logger.info "creating system service", service.name
           service_create database_name
           service_enable
-          Log.info service.type + " system service added", service.name
+          Logger.info service.type + " system service added", service.name
         end
         Utils.chown_r @path.to_s, uid, gid
       end
 
-      Log.info "add completed", @path.to_s
-      Log.info "application information", pkg_file.info
+      Logger.info "add completed", @path.to_s
+      Logger.info "application information", pkg_file.info
     rescue ex
       begin
         delete false { }
@@ -784,16 +784,16 @@ struct DPPM::Prefix::App
 
   private def create_application_dir(shared : Bool)
     if !pkg_file.shared
-      Log.warn "can't be shared, must be self-contained", pkg_file.package
+      Logger.warn "can't be shared, must be self-contained", pkg_file.package
       shared = false
     end
 
     if shared
-      Log.info "creating symlinks from #{pkg.path}", @path.to_s
+      Logger.info "creating symlinks from #{pkg.path}", @path.to_s
       File.symlink pkg.app_path.to_s, app_path.to_s
       File.symlink pkg.pkg_file.path.to_s, pkg_file.path.to_s
     else
-      Log.info "copying from #{pkg.path}", @path.to_s
+      Logger.info "copying from #{pkg.path}", @path.to_s
       FileUtils.cp_r pkg.app_path.to_s, app_path.to_s
       FileUtils.cp_r pkg.pkg_file.path.to_s, pkg_file.path.to_s
     end
@@ -818,32 +818,32 @@ struct DPPM::Prefix::App
     # Checks
     if service?
       if service.exists?
-        Log.info "a system service is found", @name
+        Logger.info "a system service is found", @name
         service.check_delete
       else
-        Log.warn "no system service found", @name
+        Logger.warn "no system service found", @name
       end
     end
 
     if confirmation
-      Log.output << "task: delete"
-      Log.output << "\nname: " << @name
-      Log.output << "\npackage: " << pkg_file.package
-      Log.output << "\nbasedir: " << @path
-      Log.output << "\nuser: " << owner.user.name
-      Log.output << "\ngroup: " << owner.group.name
+      Logger.output << "task: delete"
+      Logger.output << "\nname: " << @name
+      Logger.output << "\npackage: " << pkg_file.package
+      Logger.output << "\nbasedir: " << @path
+      Logger.output << "\nuser: " << owner.user.name
+      Logger.output << "\ngroup: " << owner.group.name
       if service?
-        Log.output << "\nservice: " << service.file
+        Logger.output << "\nservice: " << service.file
       end
-      Log.output << '\n'
+      Logger.output << '\n'
       return if !yield
     end
 
-    Log.info "deleting", @path.to_s
+    Logger.info "deleting", @path.to_s
 
     if service = service?
       if service.exists?
-        Log.info "deleting system service", service.name
+        Logger.info "deleting system service", service.name
         service.delete
       end
     end
@@ -851,7 +851,7 @@ struct DPPM::Prefix::App
     begin
       if webserver = webserver?
         website = webserver.parse_site @name
-        Log.info "deleting web site", website.file.to_s
+        Logger.info "deleting web site", website.file.to_s
         File.delete webserver_sites_path.to_s
         File.delete website.file.to_s
         if output_file = website.log_file_output.to_s
@@ -863,7 +863,7 @@ struct DPPM::Prefix::App
         webserver.service.restart if webserver.service.run?
       end
     rescue ex
-      Log.warn "error when removing website", ex.to_s
+      Logger.warn "error when removing website", ex.to_s
     end
 
     begin
@@ -880,15 +880,15 @@ struct DPPM::Prefix::App
         libcrown.write
       end
     rescue ex
-      Log.warn "error when deleting system user/group", ex.to_s
+      Logger.warn "error when deleting system user/group", ex.to_s
     end
 
     if !preserve_database && (app_database = database?)
-      Log.info "deleting database", app_database.user
+      Logger.info "deleting database", app_database.user
       app_database.delete
     end
 
-    Log.info "delete completed", @path.to_s
+    Logger.info "delete completed", @path.to_s
     self
   ensure
     FileUtils.rm_rf @path.to_s

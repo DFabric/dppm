@@ -46,7 +46,7 @@ struct DPPM::Host
   {% elsif flag?(:darwin) %}
     class_getter kernel = "darwin"
   {% else %}
-    Log.error "unsupported system"; exit 1
+    Logger.error "unsupported system"; exit 1
   {% end %}
 
   # Architecture
@@ -59,11 +59,11 @@ struct DPPM::Host
   {% elsif flag?(:aarch64) %}
     class_getter arch = "arm64"
   {% else %}
-    Log.error "Unsupported architecture"; exit 1
+    Logger.error "Unsupported architecture"; exit 1
   {% end %}
 
   def self.service_available?
-    Service.init? || Log.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
+    Service.init? || Logger.warn "services management unavailable", "DPPM is still usable. Consider OpenRC or systemd init systems"
     Service.init?
   end
 
@@ -117,7 +117,7 @@ struct DPPM::Host
   end
 
   def self.exec(command : String, args : Array(String) | Tuple) : String
-    Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
+    Exec.new command, args, output: DPPM::Logger.output, error: DPPM::Logger.error do |process|
       raise "Execution returned an error: #{command} #{args.join ' '}" if !process.wait.success?
     end
     "success"

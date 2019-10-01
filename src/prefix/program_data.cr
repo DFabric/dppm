@@ -60,26 +60,26 @@ module DPPM::Prefix::ProgramData
 
   # Install the package dependencies.
   def install_deps(deps : Set(Pkg), shared : Bool = true, &block)
-    Log.info "bulding dependencies", libs_path.to_s
+    Logger.info "bulding dependencies", libs_path.to_s
     Dir.mkdir_p libs_path.to_s
 
     # Build each dependency
     deps.each do |dep_pkg|
       dest_pkg_dep_dir = (libs_path / dep_pkg.package).to_s
       if !Dir.exists? dep_pkg.path.to_s
-        Log.info "building dependency", dep_pkg.path.to_s
+        Logger.info "building dependency", dep_pkg.path.to_s
         dep_pkg.build
       end
       if !File.exists? dest_pkg_dep_dir
         if shared
-          Log.info "adding symlink to dependency", dep_pkg.name
+          Logger.info "adding symlink to dependency", dep_pkg.name
           File.symlink dep_pkg.path.to_s, dest_pkg_dep_dir
         else
-          Log.info "copying dependency", dep_pkg.name
+          Logger.info "copying dependency", dep_pkg.name
           FileUtils.cp_r dep_pkg.path.to_s, dest_pkg_dep_dir
         end
       end
-      Log.info "dependency added", dep_pkg.name
+      Logger.info "dependency added", dep_pkg.name
       yield dep_pkg
     end
   end

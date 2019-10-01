@@ -110,7 +110,7 @@ class DPPM::Prefix::Pkg
   # Build the package. Yields a block before writing on disk. When confirmation is set, the block must be true to continue.
   def build(deps : Set(Pkg) = Set(Pkg).new, confirmation : Bool = true, &block) : Pkg
     # keep the latest ones for each dependency
-    Log.info "calculing package dependencies", @name
+    Logger.info "calculing package dependencies", @name
     src.resolve_deps.each do |dep_name, versions|
       dep_src = @prefix.new_src(dep_name)
       latest = dep_src.pkg_file.version_from_tag "latest"
@@ -126,7 +126,7 @@ class DPPM::Prefix::Pkg
     # Needs to be after dependencies calculation to populate `deps`,
     # that can be used in the yielded block
     if exists?
-      Log.info "already present", @path.to_s
+      Logger.info "already present", @path.to_s
       return self if confirmation
       yield
       return self
@@ -154,7 +154,7 @@ class DPPM::Prefix::Pkg
       vars.merge! env
     end
 
-    simulate vars, deps, "build", confirmation, Log.output, &block
+    simulate vars, deps, "build", confirmation, Logger.output, &block
 
     begin
       copy_src_to_path
@@ -162,7 +162,7 @@ class DPPM::Prefix::Pkg
       # Build dependencies
       install_deps(deps) { }
       if (tasks = pkg_file.tasks) && (build_task = tasks["build"]?)
-        Log.info "building", @name
+        Logger.info "building", @name
         Dir.cd(@path.to_s) { Task.new(vars.dup, all_bin_paths).run build_task }
       else
         raise "Missing tasks.build key in " + pkg_file.path.to_s
@@ -170,7 +170,7 @@ class DPPM::Prefix::Pkg
       FileUtils.rm_rf libs_path.to_s
       @libs = @all_bin_paths = nil
 
-      Log.info "build completed", @path.to_s
+      Logger.info "build completed", @path.to_s
       self
     rescue ex
       begin
@@ -196,7 +196,7 @@ class DPPM::Prefix::Pkg
     raise "Package doesn't exist: " + @path.to_s if !File.exists? @path.to_s
 
     # Check if the package is still in use by an application
-    Log.info "check packages in use", @path.to_s
+    Logger.info "check packages in use", @path.to_s
     prefix.each_app do |app|
       if @path == app.real_app_path
         raise "Application package `#{package}` still in use by an application: " + app.name
@@ -209,17 +209,17 @@ class DPPM::Prefix::Pkg
     end
 
     if confirmation
-      Log.output << "task: delete"
-      Log.output << "\npackage: " << @package
-      Log.output << "\nversion: " << @version
-      Log.output << "\nbasedir: " << @path
-      Log.output << '\n'
+      Logger.output << "task: delete"
+      Logger.output << "\npackage: " << @package
+      Logger.output << "\nversion: " << @version
+      Logger.output << "\nbasedir: " << @path
+      Logger.output << '\n'
       return if !yield
     end
 
     delete_global_bin_symlinks if Process.root?
     FileUtils.rm_rf @path.to_s
-    Log.info "package deleted", @path.to_s
+    Logger.info "package deleted", @path.to_s
     self
   end
 end

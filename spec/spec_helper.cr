@@ -33,5 +33,5 @@ def spec_with_tempdir(directory : String = spec_temp_prefix, &block)
 end
 
 Spec.before_each do
-  DPPM::Log.output = DPPM::Log.error = File.open File::NULL, "w"
+  DPPM::Logger.output = DPPM::Logger.error = File.open File::NULL, "w"
 end

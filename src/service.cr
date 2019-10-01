@@ -26,7 +26,7 @@ module Service
 
   def exec?(command : String, args : Array(String) | Tuple) : Bool
     success = false
-    Exec.new command, args, output: DPPM::Log.output, error: DPPM::Log.error do |process|
+    Exec.new command, args, output: DPPM::Logger.output, error: DPPM::Logger.error do |process|
       success = process.wait.success?
     end
     success

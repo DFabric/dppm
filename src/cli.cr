@@ -105,13 +105,13 @@ module DPPM::CLI
                 },
                 set: {
                   info:      "Set a value",
-                  action:    \%(App.config_set() && Log.output.puts "done"),
+                  action:    \%(App.config_set() && Logger.output.puts "done"),
                   arguments: \%w(application path value),
                   inherit:   \%w(group nopkg prefix),
                 },
                 del: {
                   info:      "Delete a path",
-                  action:    \%(App.config_del() && Log.output.puts "done"),
+                  action:    \%(App.config_del() && Logger.output.puts "done"),
                   arguments: \%w(application path),
                   inherit:   \%w(group nopkg prefix),
                 },
@@ -143,7 +143,7 @@ module DPPM::CLI
             },
             query: {
               info:      "Get information of an application - `.` for the whole document",
-              action:    "Log.output.puts App.info",
+              action:    "Logger.output.puts App.info",
               arguments: \%w(application path),
               inherit:   \%w(prefix group),
             },
@@ -162,7 +162,7 @@ module DPPM::CLI
             logs: {
               alias:     'L',
               info:      "Read logs of the application's service - list log names if empty",
-              action:    "App.logs() { |log| Log.output << log }",
+              action:    "App.logs() { |log| Logger.output << log }",
               arguments: \%w(application stream_names...),
               inherit:   \%w(prefix group),
               options:   {
@@ -207,7 +207,7 @@ module DPPM::CLI
             version: {
               alias:     'v',
               info:      "Returns application's version",
-              action:    "Log.output.puts App.version",
+              action:    "Logger.output.puts App.version",
               arguments: \%w(application),
               inherit:   \%w(group prefix),
             },
@@ -254,7 +254,7 @@ module DPPM::CLI
             },
             info: {
               info:      "Get information of a package - `.` for the whole document.",
-              action:    "Log.output.puts Pkg.info",
+              action:    "Logger.output.puts Pkg.info",
               arguments: \%w(package path),
               inherit:   \%w(prefix source_name),
             },
@@ -329,7 +329,7 @@ module DPPM::CLI
             },
             info: {
               info:      "Get information of a source package - `.` for the whole document",
-              action:    "Log.output.puts Src.info",
+              action:    "Logger.output.puts Src.info",
               arguments: \%w(package path),
               inherit:   \%w(prefix source_name),
             },
@@ -350,14 +350,14 @@ module DPPM::CLI
       }
     )
   rescue ex : Help
-    Log.output.puts ex
+    Logger.output.puts ex
   rescue ex : ArgumentRequired | UnknownCommand | UnknownOption | UnknownVariable
     abort ex
   rescue ex
     if ENV["DEBUG"]?
-      ex.inspect_with_backtrace Log.error
+      ex.inspect_with_backtrace Logger.error
     else
-      Log.error ex
+      Logger.error ex
     end
     exit 1
   end
@@ -365,11 +365,11 @@ module DPPM::CLI
   end
 
   def version(**args)
-    Log.output << "DPPM version: " << DPPM.version << '\n'
-    Log.output << "DPPM build commit: " << DPPM.build_commit << '\n'
-    Log.output << "DPPM build date: " << DPPM.build_date << '\n'
+    Logger.output << "DPPM version: " << DPPM.version << '\n'
+    Logger.output << "DPPM build commit: " << DPPM.build_commit << '\n'
+    Logger.output << "DPPM build date: " << DPPM.build_date << '\n'
     Host.vars.each do |variable, value|
-      Log.output << variable << ": " << value << '\n'
+      Logger.output << variable << ": " << value << '\n'
     end
   end
 
@@ -412,7 +412,7 @@ module DPPM::CLI
       raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted", ex
     end
     dppm_package.create_global_bin_symlinks(force: true) if Process.root?
-    Log.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
+    Logger.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
   end
 
   def uninstall_dppm(no_confirm, config, prefix, group, source_name, source_path)
@@ -433,14 +433,14 @@ module DPPM::CLI
 
     if (apps = Dir.children(root_prefix.app.to_s).join ", ").empty?
       root_prefix.delete
-      Log.info "DPPM uninstallation complete", root_prefix.path.to_s
+      Logger.info "DPPM uninstallation complete", root_prefix.path.to_s
     else
-      Log.warn "DPPM uninstallation not complete, there are remaining applications", apps
+      Logger.warn "DPPM uninstallation not complete, there are remaining applications", apps
     end
   end
 
   def confirm_prompt(&block)
-    Log.output.puts "\nContinue? [N/y]"
+    Logger.output.puts "\nContinue? [N/y]"
     case gets
     when "Y", "y" then true
     else               yield

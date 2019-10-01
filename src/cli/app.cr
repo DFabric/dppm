@@ -25,7 +25,7 @@ module DPPM::CLI::App
     version = nil,
     tag = nil
   )
-    Log.info "initializing", "upgrade"
+    Logger.info "initializing", "upgrade"
     vars = vars_parser custom_vars
 
     # Update cache
@@ -69,7 +69,7 @@ module DPPM::CLI::App
     url = nil,
     web_server = nil
   )
-    Log.info "initializing", "add"
+    Logger.info "initializing", "add"
     vars = vars_parser custom_vars
 
     # Update cache
@@ -124,15 +124,15 @@ module DPPM::CLI::App
     env_vars["PATH"] = app.path_env_var
 
     exec_start = app.exec["start"]
-    Log.info "executing command", exec_start
+    Logger.info "executing command", exec_start
 
     if port = app.get_config("port")
-      Log.info "listening on port", port.to_s
+      Logger.info "listening on port", port.to_s
     end
     Exec.run cmd: exec_start,
       env: env_vars,
-      output: Log.output,
-      error: Log.error,
+      output: Logger.output,
+      error: Logger.error,
       chdir: app.path.to_s, &.wait
   end
 
@@ -140,16 +140,16 @@ module DPPM::CLI::App
     app = Prefix.new(prefix, group: group).new_app application
     if nopkg
       if nopkg && path == "."
-        Log.output.puts app.config!.data
+        Logger.output.puts app.config!.data
       else
-        Log.output.puts app.config!.get path
+        Logger.output.puts app.config!.get path
       end
     elsif path == "."
       app.each_config_key do |key|
-        Log.output << key << ": " << app.get_config(key) << '\n'
+        Logger.output << key << ": " << app.get_config(key) << '\n'
       end
     else
-      Log.output.puts app.get_config path
+      Logger.output.puts app.get_config path
     end
   end
 
@@ -176,9 +176,9 @@ module DPPM::CLI::App
   def self.logs(prefix : String, group : String, stream_names : Array(String), lines : String?, follow : Bool, application : String, &block : String ->)
     app = Prefix.new(prefix, group: group).new_app application
     if stream_names.empty?
-      Log.output << "LOG NAMES\n"
+      Logger.output << "LOG NAMES\n"
       app.each_log_stream do |stream|
-        Log.output << stream << '\n'
+        Logger.output << stream << '\n'
       end
     else
       channel = Channel(String).new

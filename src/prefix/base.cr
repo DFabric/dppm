@@ -103,7 +103,7 @@ module DPPM::Prefix::Base
   def resolve_deps(dependencies : Hash(String, Array(SemanticVersion)) = Hash(String, Array(SemanticVersion)).new) : Hash(String, Array(SemanticVersion))
     deps_with_expr.each do |dep_src, version_expr|
       if !File.exists? (libs_path / dep_src.name).to_s
-        Log.info "calculating dependency", dep_src.name
+        Logger.info "calculating dependency", dep_src.name
 
         # If an array of versions is already provided by a dependency
         if dep_vers = dependencies[dep_src.name]?

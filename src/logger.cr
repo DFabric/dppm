@@ -1,10 +1,10 @@
 require "colorize"
 
-module DPPM::Log
+module DPPM::Logger
   extend self
   class_property output : IO::FileDescriptor = STDOUT
   class_property error : IO::FileDescriptor = STDERR
-  class_property colorize : Bool = output.tty?
+  class_property colorize : Bool = @@output.tty?
   class_property date : Bool = false
 
   def print_date(io)

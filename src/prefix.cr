@@ -211,31 +211,31 @@ struct DPPM::Prefix
     if force || update
       delete_src
       if packages_source_date
-        Log.info "downloading packages source", source_path
+        Logger.info "downloading packages source", source_path
         file = @root_src / File.basename(source_path)
         HTTPHelper.get_file source_path, file.to_s
         Host.exec "/bin/tar", {"zxf", file.to_s, "-C", @root_src.to_s}
         File.delete file
         File.rename Dir[(@root_src / "*packages-source*").to_s][0], @src.to_s
         File.touch @src.to_s, Time.parse_utc(packages_source_date, "%Y-%m-%dT%H:")
-        Log.info "cache updated", @src.to_s
+        Logger.info "cache updated", @src.to_s
       else
         FileUtils.mkdir_p @root_src.to_s
         real_source_path = File.real_path source_path
         File.symlink real_source_path, @src.to_s
-        Log.info "symlink added from `#{real_source_path}`", @src.to_s
+        Logger.info "symlink added from `#{real_source_path}`", @src.to_s
       end
     else
-      Log.info "cache up-to-date", @src.to_s
+      Logger.info "cache up-to-date", @src.to_s
     end
   end
 
   def clean_unused_packages(confirmation : Bool = true, &block) : Set(String)
     packages = Set(String).new
-    Log.info "retrieving available packages", @pkg.to_s
+    Logger.info "retrieving available packages", @pkg.to_s
     each_pkg { |pkg| packages << pkg.name }
 
-    Log.info "excluding used packages by applications", @pkg.to_s
+    Logger.info "excluding used packages by applications", @pkg.to_s
     each_app do |app|
       packages.delete app.real_app_path.basename.to_s
       app.libs.each do |library|
@@ -244,26 +244,26 @@ struct DPPM::Prefix
     end
 
     if packages.empty?
-      Log.info "No packages to clean", @path.to_s
+      Logger.info "No packages to clean", @path.to_s
       return packages
     elsif confirmation
-      Log.output << "task: clean"
-      Log.output << "\nbasedir: " << @pkg
-      Log.output << "\nunused packages: \n"
+      Logger.output << "task: clean"
+      Logger.output << "\nbasedir: " << @pkg
+      Logger.output << "\nunused packages: \n"
       packages.each do |pkg|
-        Log.output << pkg << '\n'
+        Logger.output << pkg << '\n'
       end
       return packages if !yield
     end
 
-    Log.info "deleting packages", @pkg.to_s
+    Logger.info "deleting packages", @pkg.to_s
     packages.each do |package|
       pkg = new_pkg package
       pkg.delete confirmation: false { }
-      Log.info "package deleted", package
+      Logger.info "package deleted", package
     end
 
-    Log.info "packages cleaned", @pkg.to_s
+    Logger.info "packages cleaned", @pkg.to_s
     packages
   end
 end
