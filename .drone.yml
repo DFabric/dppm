@@ -48,7 +48,8 @@ steps:
     path: /docs
   environment:
     GIT_USER: Drone CI
-    DOCS_TEMP_DIR: /docs
+    GIT_COMMIT_MESSAGE: Update docs
+    SITE_TEMP_DIR: /docs
     SSH_PRIVATE_KEY:
       from_secret: ssh_private_key
 
