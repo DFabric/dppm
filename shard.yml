@@ -26,7 +26,7 @@ dependencies:
   mysql:
     github: crystal-lang/crystal-mysql
   tail:
-    github: j8r/tail
+    github: j8r/tail.cr
   semantic_compare:
     github: j8r/semantic_compare
 

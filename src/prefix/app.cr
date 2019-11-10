@@ -327,9 +327,9 @@ struct DPPM::Prefix::App
   def get_logs(stream_name : String, follow : Bool = true, lines : Int32? = nil, &block : String ->)
     log_file = (logs_path / stream_name).to_s + LOG_EXTENSION
     if follow
-      Tail::File.new(log_file).follow(lines: (lines || 10), &block)
+      Tail::File.open log_file, &.follow(lines: (lines || 10), &block)
     elsif lines
-      yield Tail::File.new(log_file).last_lines(lines: lines.to_i).join '\n'
+      yield Tail::File.open log_file, &.last_lines(lines: lines.to_i).join '\n'
     else
       yield File.read log_file
     end
