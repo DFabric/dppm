@@ -1,4 +1,7 @@
 module DPPM
+  class Error < Exception
+  end
+
   extend self
 
   def build_date : String

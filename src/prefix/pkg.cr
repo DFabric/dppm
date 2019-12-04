@@ -176,7 +176,7 @@ class DPPM::Prefix::Pkg
       begin
         delete false { }
       ensure
-        raise Exception.new "Build failed - package deleted: #{@path}", ex
+        raise Error.new "Build failed - package deleted: #{@path}", ex
       end
     end
   end

@@ -2,6 +2,9 @@ require "exec"
 require "./service/*"
 
 module Service
+  class Error < Exception
+  end
+
   extend self
 
   @@init : Systemd.class | OpenRC.class | Nil

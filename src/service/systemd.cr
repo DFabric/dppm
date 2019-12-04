@@ -8,7 +8,7 @@ class Service::Systemd
     output, error = Exec.new "/bin/systemctl", {"--version"}, &.wait
     output.to_s.lchop("systemd ").partition('\n')[0].partition(' ')[0].to_i
   rescue ex
-    raise Exception.new "Can't retrieve the systemd version (#{output}#{error})", ex
+    raise Error.new "Can't retrieve the systemd version (#{output}#{error})", ex
   end
 
   def initialize(@name : String)

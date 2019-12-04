@@ -66,7 +66,7 @@ class Service::Config
       end
       line_number += 1
     rescue ex
-      raise Exception.new "Parse error line at #{line_number}: #{full_line}", ex
+      raise Error.new "Parse error line at #{line_number}: #{full_line}", ex
     end
     service
   end

@@ -45,7 +45,7 @@ struct DPPM::Prefix::ProgramData::Task
       end
     end
   rescue ex
-    raise Exception.new "Error at line #{@line_number}", ex
+    raise Error.new "Error at line #{@line_number}", ex
   end
 
   # Assigns a value to a variable from a line string if it corresponds to an assignment.

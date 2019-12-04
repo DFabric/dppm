@@ -1,7 +1,7 @@
 require "cossack"
 
 # Method for redirections using the cossack http client
-module HTTPHelper
+module DPPM::HTTPHelper
   extend self
 
   def get_string(url)
@@ -12,7 +12,7 @@ module HTTPHelper
       raise "Status code #{response.status}: " + url
     end
   rescue ex
-    raise Exception.new "Failed to get #{url.colorize.underline}", ex
+    raise Error.new "Failed to get #{url.colorize.underline}", ex
   end
 
   def get_file(url : String, path : String = File.basename(url))

@@ -409,7 +409,7 @@ module DPPM::CLI
       end
     rescue ex
       root_prefix.delete
-      raise Exception.new "DPPM installation failed, #{root_prefix.path} deleted", ex
+      raise Error.new "DPPM installation failed, #{root_prefix.path} deleted", ex
     end
     dppm_package.create_global_bin_symlinks(force: true) if Process.root?
     Logger.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
