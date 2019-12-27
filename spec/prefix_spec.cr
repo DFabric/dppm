@@ -2,7 +2,7 @@ require "./prefix_helper"
 require "../src/prefix"
 
 describe DPPM::Prefix do
-  it "downloads packages source with cli using config file mirror" do
+  it "downloads packages source using config file mirror" do
     spec_with_prefix do |prefix|
       prefix.update
       children = Dir.new(prefix.path.to_s).children

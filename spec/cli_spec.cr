@@ -75,6 +75,9 @@ describe DPPM::CLI do
   it "installs DPPM" do
     spec_with_tempdir do |prefix|
       install_dppm prefix
+      dppm_prefix = DPPM::Prefix.new prefix
+      dppm_prefix.dppm.config_file?.should_not be_nil
+      dppm_prefix.dppm_config
     end
   end
 
