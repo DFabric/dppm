@@ -50,7 +50,44 @@ module DPPM::Prefix::Base
 
   # Raises if no configuration is available.
   def config! : ::Config::Types
-    config? || raise "No valid config file: #{conf_path}config.*"
+    config? || raise "No valid config file: #{conf_path}/config.*"
+  end
+
+  @database_initialized = false
+  # Returns a database, if any.
+  getter? database : Database::MySQL | Nil do
+    if !@database_initialized
+      @database_initialized = true
+
+      if pkg_file.config_vars
+        if database_type = get_config?("database_type")
+          type = database_type.to_s
+        elsif databases = pkg_file.databases
+          type = databases.first.first
+        else
+          return
+        end
+        return if !Database.supported? type
+
+        if database_address = get_config?("database_address")
+          uri = URI.parse "//#{database_address}"
+        elsif database_host = get_config?("database_host")
+          uri = URI.new(
+            host: database_host.to_s,
+            port: get_config("database_port").to_s.to_i?,
+          )
+        end
+      else
+        return
+      end
+
+      if uri
+        uri.password = get_config("database_password").to_s
+        uri.user = user = get_config("database_user").to_s
+
+        Database.new uri, user, type
+      end
+    end
   end
 
   class ConfigKeyError < Exception

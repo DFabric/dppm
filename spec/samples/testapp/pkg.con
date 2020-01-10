@@ -16,14 +16,22 @@ version {
     src [ "0.3.0" "0.2.0" ]
   }
 }
-config {
-  vars {
-    port "vars.port"
-  }
-}
 tags {
   beta   { src "0.3.0" }
   latest { src "0.2.0" }
+}
+config {
+  vars {
+    port          "vars.port"
+    database_type     "dbType"
+    database_host     "database.host"
+    database_user     "database.user"
+    database_password "database.password"
+    database_name     "database.database"
+  }
+}
+databases {
+  sqlite3 nil
 }
 exec {
   start  "test start"
