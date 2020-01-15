@@ -302,7 +302,8 @@ struct DPPM::Prefix::App
   def set_permissions
     File.chmod(libs_path.to_s, 0o700) if Dir.exists? libs_path.to_s
     File.chmod(app_path.to_s, 0o750) if !File.symlink? app_path.to_s
-    File.chmod conf_path.to_s, 0o700
+    # HTML application may have configarations which have to be accessible by the web server
+    File.chmod conf_path.to_s, (pkg_file.type.html? ? 0o710 : 0o700)
     # Directory execution for group is needed for reverse proxies to access their configuration
     if File.exists?(site_path_str = site_path.to_s)
       File.chmod site_path_str, 0o010
