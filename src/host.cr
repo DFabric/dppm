@@ -1,5 +1,3 @@
-require "socket"
-
 lib LibC
   fun getegid : GidT
   fun getgid : GidT
@@ -33,7 +31,7 @@ class Process
   end
 end
 
-struct DPPM::Host
+module DPPM::Host
   class_getter kernel_ver : String = File.read("/proc/version").partition(" version ")[2].partition('-')[0]
 
   # System's kernel
@@ -46,7 +44,7 @@ struct DPPM::Host
   {% elsif flag?(:darwin) %}
     class_getter kernel = "darwin"
   {% else %}
-    Logger.error "unsupported system"; exit 1
+    {{ raise "Unsupported system" }}
   {% end %}
 
   # Architecture
@@ -59,7 +57,7 @@ struct DPPM::Host
   {% elsif flag?(:aarch64) %}
     class_getter arch = "arm64"
   {% else %}
-    Logger.error "Unsupported architecture"; exit 1
+    {{ raise "Unsupported architecture" }}
   {% end %}
 
   def self.service_available?
@@ -77,43 +75,6 @@ struct DPPM::Host
       "sysinit"     => (Service.init.type if Service.init?).to_s,
       "sysinit_ver" => (Service.init.version if Service.init?).to_s,
     }
-  end
-
-  def self.tcp_port_available(port_num : UInt16) : UInt16?
-    TCPServer.new(port_num).close
-    port_num
-  end
-
-  def self.udp_port_available(port_num : UInt16) : UInt16?
-    udp_ipv4_port_available(port_num) || udp_ipv6_port_available(port_num)
-  end
-
-  def self.udp_ipv4_port_available(port_num : UInt16) : UInt16?
-    sock = UDPSocket.new Socket::Family::INET
-    sock.bind "127.0.0.1", port_num
-    sock.close
-    port_num
-  end
-
-  def self.udp_ipv6_port_available(port_num : UInt16) : UInt16?
-    sock = UDPSocket.new Socket::Family::INET6
-    sock.bind "::1", port_num
-    sock.close
-    port_num
-  end
-
-  # Returns an available port
-  def self.available_port(start_port : UInt16 = 0_u16) : UInt16
-    ports_used = Set(UInt16).new
-    (start_port..UInt16::MAX).each do |port|
-      begin
-        tcp_port_available port
-        return port
-      rescue ex : Errno
-        ports_used << port
-      end
-    end
-    raise "Limit of #{UInt16::MAX} for port numbers is reached, no ports available"
   end
 
   def self.exec(command : String, args : Array(String) | Tuple) : String

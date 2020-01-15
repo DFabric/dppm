@@ -11,7 +11,7 @@ module DPPM::Logger
     Time.utc.to_s("%F %T%z ", io) if @@date
   end
 
-  def info(title : String, message : String)
+  def info(title : String, message) : Nil
     print_date @@output
     if @@colorize
       @@output << "INFO".colorize.blue.mode(:bold) << ' ' << title.colorize.white << ": " << message << '\n'
@@ -21,7 +21,7 @@ module DPPM::Logger
     @@output.flush
   end
 
-  def warn(title : String, message : String)
+  def warn(title : String, message) : Nil
     print_date @@error
     if @@colorize
       @@error << "WARN".colorize.yellow.mode(:bold) << ' ' << title.colorize.white.mode(:bold) << ": " << message << '\n'
@@ -31,7 +31,7 @@ module DPPM::Logger
     @@error.flush
   end
 
-  def error(message : String)
+  def error(message)
     print_error message
   end
 

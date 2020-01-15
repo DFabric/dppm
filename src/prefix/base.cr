@@ -1,5 +1,6 @@
 require "./pkg_file"
 require "semantic_compare"
+require "socket"
 
 module DPPM::Prefix::Base
   # Root path of the package.
@@ -169,5 +170,15 @@ module DPPM::Prefix::Base
     foreign_pkg_file.path = nil
     foreign_pkg_file.root_path = @path
     @pkg_file = foreign_pkg_file
+  end
+
+  # Returns a port checker.
+  def port_checker(host : String) : PortChecker
+    case pkg_file.type
+    when .http?, .tcp?, .php?, .tcp_udp? then PortChecker.new host, tcp: true
+    when .udp?                           then PortChecker.new host, udp: true
+    when .tcp_udp?                       then PortChecker.new host, tcp: true, udp: true
+    else                                      raise "Not an application that can listen to an address with a host and port: #{pkg_file.type}"
+    end
   end
 end

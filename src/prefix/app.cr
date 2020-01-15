@@ -462,17 +462,6 @@ struct DPPM::Prefix::App
     # Default variables
     unset_vars = Set(String).new
 
-    if !socket && (port = vars["port"]?)
-      Logger.info "checking port availability", port
-      if pkg_file.type.udp? || pkg_file.type.tcp_udp?
-        Host.udp_port_available port.to_u16
-      end
-
-      if !pkg_file.type.udp?
-        Host.tcp_port_available port.to_u16
-      end
-    end
-
     source_package = pkg.exists? || pkg.src
     if web_server
       pkg_file.type.webapp!
@@ -491,6 +480,8 @@ struct DPPM::Prefix::App
     set_url = false
     has_socket = false
     database_password = nil
+    default_host = false
+    default_port = false
     source_package.each_config_key do |var|
       # Skip if the var is set, or port if a socket is used
       if var == "socket"
@@ -508,29 +499,67 @@ struct DPPM::Prefix::App
           if key.empty?
             unset_vars << var
           else
-            if var == "port"
-              vars["port"] = Host.available_port(key.to_u16).to_s
-            else
-              vars[var] = key
+            case var
+            when "port" then default_port = true
+            when "host" then default_host = true
             end
-            Logger.info "default value set '#{var}'", key
+            vars[var] = key
+            Logger.info "Default value set '#{var}'", key
           end
         end
       end
     end
     raise "Socket not supported by #{pkg_file.name}" if socket && !has_socket
 
+    # Determine a port (and host)
+    if (host = vars["host"]?) && (port = vars["port"]?.try &.to_i)
+      local_port_checker = port_checker host
+
+      available_port = port_checker local_port_checker, port, default_port
+
+      # If the default host is :1 and no available port is found, it may be blocked - try 127.0.0.1
+      if !available_port
+        Logger.warn "Limit of #{UInt16::MAX} for port numbers is reached, no ports available for the address", host
+        if default_host && local_port_checker.ipaddress.address == Socket::IPAddress::LOOPBACK6
+          local_port_checker.address = Socket::IPAddress::LOOPBACK
+          vars["host"] = Socket::IPAddress::LOOPBACK
+          available_port = port_checker local_port_checker, port, default_port
+        end
+      end
+
+      # Perhaps UDP is blocked/not available
+      if !available_port && local_port_checker.udp
+        local_port_checker.udp = false
+        available_port = port_checker local_port_checker, port, default_port
+      end
+
+      if available_port
+        vars["port"] = available_port.to_s
+      else
+        raise "No available port for host #{host}"
+      end
+    end
+
+    # Set url
     if url
       vars["url"] = url
       vars["domain"] = URI.parse(url).hostname.to_s
       # A web server needs an url
     elsif set_url || web_server
+      uri = URI.new
       if !(domain = vars["domain"]?)
         domain = vars["host"]?
       end
       domain ||= "[::1]"
-      # Add the application name as a path by default if behind a webserver
-      vars["url"] = "http://" + domain + (web_server ? '/' + @name : '/')
+      uri.host = domain
+      uri.scheme = "http"
+      if port = vars["port"]?
+        uri.port = port.to_i
+      else
+        uri.path = web_server ? '/' + @name : "/"
+      end
+      # Add the application name as a path by default if behind a web server
+      vars["url"] = uri.to_s
       vars["domain"] = domain
     end
 
@@ -541,7 +570,7 @@ struct DPPM::Prefix::App
         raise "Database name required: " + database_type if !vars.has_key?("database_name")
         raise "Database user required: " + database_type if !vars.has_key?("database_user")
         if !vars.has_key?("database_address") || !(vars.has_key?("database_host") && vars.has_key?("database_port"))
-          raise "Database address or host and port required:" + database_type
+          raise "Database address, or host and port required:" + database_type
         end
       end
     end
@@ -736,6 +765,17 @@ struct DPPM::Prefix::App
     end
   end
 
+  private def port_checker(local_port_checker : PortChecker, port : Int32, find_port : Bool) : Int32?
+    if local_port_checker.available_port? port
+      return port
+    else
+      Logger.warn "Port not available on host '#{local_port_checker.ipaddress.address}'", port
+    end
+    if find_port
+      return local_port_checker.first_available_port port + 1
+    end
+  end
+
   private def copy_dir(src : String, dest : String)
     if !File.exists? dest
       if File.exists? src
@@ -753,11 +793,11 @@ struct DPPM::Prefix::App
     end
 
     if shared
-      Logger.info "creating symlinks from #{pkg.path}", @path.to_s
+      Logger.info "creating symlinks from #{pkg.path}", @path
       File.symlink pkg.app_path.to_s, app_path.to_s
       File.symlink pkg.pkg_file.path.to_s, pkg_file.path.to_s
     else
-      Logger.info "copying from #{pkg.path}", @path.to_s
+      Logger.info "copying from #{pkg.path}", @path
       FileUtils.cp_r pkg.app_path.to_s, app_path.to_s
       FileUtils.cp_r pkg.pkg_file.path.to_s, pkg_file.path.to_s
     end
@@ -815,7 +855,7 @@ struct DPPM::Prefix::App
     begin
       if webserver = webserver?
         website = webserver.parse_site @name
-        Logger.info "deleting web site", website.file.to_s
+        Logger.info "deleting web site", website.file
         File.delete webserver_sites_path.to_s
         File.delete website.file.to_s
         if output_file = website.log_file_output.to_s
@@ -844,7 +884,7 @@ struct DPPM::Prefix::App
         libcrown.write
       end
     rescue ex
-      Logger.warn "error when deleting system user/group", ex.to_s
+      Logger.warn "error when deleting system user/group", ex
     end
 
     if !preserve_database && (app_database = database?)
@@ -852,7 +892,7 @@ struct DPPM::Prefix::App
       app_database.delete
     end
 
-    Logger.info "delete completed", @path.to_s
+    Logger.info "delete completed", @path
     self
   ensure
     FileUtils.rm_rf @path.to_s

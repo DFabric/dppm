@@ -24,11 +24,11 @@ struct DPPM::Prefix::PkgFile
       end
     end
 
-    def to_s : String
+    def to_s(io : IO) : Nil
       case self
-      when Lib     then "lib"
-      when TCP_UDP then "TCP/UDP"
-      else              value.to_s
+      when Lib     then "lib".to_s io
+      when TCP_UDP then "TCP/UDP".to_s io
+      else              value.to_s(io)
       end
     end
 
@@ -87,7 +87,10 @@ struct DPPM::Prefix::PkgFile
     raise "Package directory doesn't exist: " + @root_path.to_s if !Dir.exists? @root_path.to_s
 
     # TODO: Replace CON::Any by CON::Serializable
-    @any = CON.parse File.read(path)
+    @any = CON::Any.new ""
+    File.open path.to_s do |io|
+      @any = CON.parse io
+    end
 
     {% for string in %w(name package license url docs description info) %}\
     @{{string.id}} = @any[{{string}}].as_s
