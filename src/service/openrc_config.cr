@@ -1,6 +1,6 @@
 require "./config"
 
-class Service::Config
+class Service::OpenRC::Config < Service::Config
   private OPENRC_RELOAD_COMMAND  = "supervise-daemon --pidfile \"$pidfile\" --signal "
   private OPENRC_PIDFILE         = "pidfile=\"/run/${RC_SVCNAME}.pid\""
   private OPENRC_SHEBANG         = "#!/sbin/openrc-run"
@@ -8,9 +8,11 @@ class Service::Config
   private OPENRC_ENV_VARS_PREFIX = "supervise_daemon_args=\"--env '"
   private OPENRC_NETWORK_SERVICE = "net"
 
+  def initialize
+  end
+
   # ameba:disable Metrics/CyclomaticComplexity
-  def self.from_openrc(data : String | IO)
-    service = new
+  def initialize(data : String | IO)
     line_number = 1
     function_name = ""
 
@@ -19,21 +21,21 @@ class Service::Config
       if line.ends_with? '}'
         function_name = ""
       elsif function_name = line.rchop? "() {"
-      elsif service.description = line.lchop?("description='").try &.rchop
-      elsif service.directory = line.lchop?("directory='").try &.rchop
-      elsif service.umask = line.lchop? "umask="
-      elsif service.log_output = line.lchop?("output_log='").try &.rchop
-      elsif service.log_error = line.lchop?("error_log='").try &.rchop
-      elsif service.restart_delay = line.lchop?("respawn_delay=").try &.to_u32
-      elsif service.command = line.lchop?("command='").try &.rchop.+ service.command.to_s
+      elsif @description = line.lchop?("description='").try &.rchop
+      elsif @directory = line.lchop?("directory='").try &.rchop
+      elsif @umask = line.lchop? "umask="
+      elsif @log_output = line.lchop?("output_log='").try &.rchop
+      elsif @log_error = line.lchop?("error_log='").try &.rchop
+      elsif @restart_delay = line.lchop?("respawn_delay=").try &.to_u32
+      elsif @command = line.lchop?("command='").try &.rchop.+ @command.to_s
       elsif command_args = line.lchop?("command_args='")
-        service.command = service.command.to_s + ' ' + command_args.rchop
+        @command = @command.to_s + ' ' + command_args.rchop
       elsif command_user = line.lchop?("command_user='")
         user_and_group = command_user.rchop.partition ':'
-        service.user = user_and_group[0].empty? ? nil : user_and_group[0]
-        service.group = user_and_group[2].empty? ? nil : user_and_group[2]
+        @user = user_and_group[0].empty? ? nil : user_and_group[0]
+        @group = user_and_group[2].empty? ? nil : user_and_group[2]
       elsif openrc_env_vars = line.lchop?(OPENRC_ENV_VARS_PREFIX)
-        service.parse_env_vars openrc_env_vars.rchop("'\"")
+        parse_env_vars openrc_env_vars.rchop("'\"")
       else
         case line
         when .empty?,
@@ -48,17 +50,17 @@ class Service::Config
         case function_name
         when "depend"
           directive = true
-          line.split(' ') do |element|
+          line.split ' ' do |element|
             if directive
               raise "Unsupported line depend directive: " + element if element != "after"
               directive = false
             elsif element != OPENRC_NETWORK_SERVICE
-              service.after << element
+              @after << element
             end
           end
         when "reload"
           if reload_signal = line.lchop? OPENRC_RELOAD_COMMAND
-            service.reload_signal = reload_signal
+            @reload_signal = reload_signal
           end
         else
           raise "Unsupported line"
@@ -68,11 +70,10 @@ class Service::Config
     rescue ex
       raise Error.new "Parse error line at #{line_number}: #{full_line}", ex
     end
-    service
   end
 
   # ameba:disable Metrics/CyclomaticComplexity
-  def to_openrc(io : IO) : Nil
+  def build(io : IO) : Nil
     io << OPENRC_SHEBANG << "\n\n"
     io << OPENRC_SUPERVISOR << '\n'
     io << OPENRC_PIDFILE

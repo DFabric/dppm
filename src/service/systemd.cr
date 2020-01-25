@@ -2,6 +2,7 @@ require "./init_system"
 
 class Service::Systemd
   include InitSystem
+  @config_class = Systemd::Config
   class_getter type : String = "systemd"
 
   class_getter version : Int32 do
@@ -34,14 +35,14 @@ class Service::Systemd
     Service.exec? "/bin/systemctl", {"-q", "--no-ask-password", "is-active", @name}
   end
 
-  def delete : Bool
-    delete_internal
-    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
+  def delete
+    internal_delete
+    daemon_reload
   end
 
-  def link(service_file : String)
-    File.symlink service_file, @file.to_s
-    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
+  def write_config
+    internal_write_config
+    daemon_reload
   end
 
   {% for action in %w(start stop restart reload) %}
@@ -50,12 +51,8 @@ class Service::Systemd
   end
   {% end %}
 
-  private def config_parse(io : IO)
-    Config.from_systemd io
-  end
-
-  def config_build(io : IO)
-    config.to_systemd io
+  private def daemon_reload
+    Service.exec? "/bin/systemctl", {"--no-ask-password", "daemon-reload"}
   end
 end
 

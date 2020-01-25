@@ -51,17 +51,24 @@ struct DPPM::Prefix::App
     exec || raise "No `exec` key present in #{pkg_file.path}"
   end
 
-  @service_intialized = false
+  # Service directory.
+  getter service_path : Path { conf_path / "init" }
+
+  # Default service file location.
+  getter service_default_file : Path { service_path / service.type }
+
+  # Service file location.
+  getter service_file : Path { service_path / "service" }
 
   # Returns the system service, if available.
-  def service? : Service::OpenRC | Service::Systemd | Nil
-    if !@service_intialized
-      if service = Service.init?
-        @service = service.new @name
+  getter? service : Service::OpenRC | Service::Systemd | Nil do
+    if service_init = Service.init?
+      service_symlink = service_file.to_s
+      service = service_init.new @name
+      if File.exists?(service_symlink) && service.exists? && File.real_path(service_symlink) == service.file.to_s
+        service
       end
-      @service_intialized = true
     end
-    @service
   end
 
   # Returns the system service of the application. Raise if not present.
@@ -69,19 +76,15 @@ struct DPPM::Prefix::App
     service? || raise "Service not available"
   end
 
-  # Service directory.
-  getter service_path : Path do
-    conf_path / "init"
-  end
-
-  # Service file location.
-  getter service_file : Path do
-    service_path / service.type
-  end
-
   # Creates a new system service
-  def service_create(database_name : String? = nil) : Service::OpenRC | Service::Systemd
+  def service_create(service_dependency : String? = nil) : Service::OpenRC | Service::Systemd
+    @service ||= Service.init.new @name
+    Logger.info "Creating system service", service.name
+
     Dir.mkdir_p service_path.to_s
+    if File.exists? service_default_file
+      FileUtils.cp service_default_file.to_s, service.file.to_s
+    end
 
     # Set service options
     service.config.user = owner.user.name
@@ -91,7 +94,7 @@ struct DPPM::Prefix::App
     service.config.log_output = log_file_output.to_s
     service.config.log_error = log_file_error.to_s
     service.config.command = (path / exec["start"]).to_s
-    service.config.after << database_name if database_name
+    service.config.after << service_dependency if service_dependency
 
     # add a reload directive if available
     if exec_reload = exec["reload"]?
@@ -105,15 +108,12 @@ struct DPPM::Prefix::App
     if pkg_env = pkg_file.env
       service.config.env_vars.merge! pkg_env
     end
-    File.open service_file, "w" do |io|
-      service.config_build io
-    end
-    service
-  end
 
-  # Enable system service by creating a symlink.
-  def service_enable
-    service.link service_file.to_s
+    service.write_config
+    File.symlink service.file.to_s, service_file.to_s
+    Logger.info service.type + " system service added", service.name
+
+    service
   end
 
   # Creates a new database for this application.
@@ -744,10 +744,7 @@ struct DPPM::Prefix::App
           if database_app
             database_name = database_app.name
           end
-          Logger.info "creating system service", service.name
-          service_create database_name
-          service_enable
-          Logger.info service.type + " system service added", service.name
+          service_create service_dependency: database_name
         end
         Utils.chown_r @path.to_s, uid, gid
       end
@@ -821,12 +818,8 @@ struct DPPM::Prefix::App
 
     # Checks
     if service?
-      if service.exists?
-        Logger.info "a system service is found", @name
-        service.check_delete
-      else
-        Logger.warn "no system service found", @name
-      end
+      Logger.info "a system service is found", @name
+      service.check_delete
     end
 
     if confirmation
@@ -846,10 +839,8 @@ struct DPPM::Prefix::App
     Logger.info "deleting", @path.to_s
 
     if service = service?
-      if service.exists?
-        Logger.info "deleting system service", service.name
-        service.delete
-      end
+      Logger.info "deleting system service", service.name
+      service.delete
     end
 
     begin

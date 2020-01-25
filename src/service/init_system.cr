@@ -3,16 +3,22 @@ module Service::InitSystem
     file : Path,
     boot_file : Path
 
-  private abstract def config_parse(io : IO)
-  private abstract def config_build(io : IO)
-
   getter config : Config do
     if @file && File.exists? @file.to_s
       File.open @file.to_s do |io|
-        config_parse io
+        @config_class.new io
       end
     else
-      Config.new
+      @config_class.new
+    end
+  end
+
+  abstract def write_config
+  abstract def delete
+
+  private def internal_write_config
+    File.open @file, "w" do |io|
+      config.build io
     end
   end
 
@@ -49,7 +55,7 @@ module Service::InitSystem
     File.real_path @file.to_s
   end
 
-  private def delete_internal
+  private def internal_delete
     stop if run?
     boot false if boot?
     File.delete @file.to_s if exists?

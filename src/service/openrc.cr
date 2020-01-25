@@ -2,6 +2,7 @@ require "./init_system"
 
 class Service::OpenRC
   include InitSystem
+  @config_class = OpenRC::Config
   class_getter type : String = "openrc"
 
   class_getter version : String do
@@ -27,11 +28,11 @@ class Service::OpenRC
   end
 
   def delete
-    delete_internal
+    internal_delete
   end
 
-  def link(service_file : String)
-    File.symlink service_file, @file.to_s
+  def write_config
+    internal_write_config
     File.chmod @file.to_s, 0o750
   end
 
@@ -40,14 +41,6 @@ class Service::OpenRC
     Service.exec? "/sbin/rc-service", {@name, {{action}}}
   end
   {% end %}
-
-  private def config_parse(io : IO)
-    Config.from_openrc io
-  end
-
-  def config_build(io : IO)
-    config.to_openrc io
-  end
 end
 
 require "./openrc_config"

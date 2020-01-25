@@ -1,4 +1,4 @@
-class Service::Config
+abstract class Service::Config
   property user : String? = nil,
     group : String? = nil,
     directory : String? = nil,
@@ -9,11 +9,11 @@ class Service::Config
     log_error : String? = nil,
     env_vars : Hash(String, String) = Hash(String, String).new,
     after : Set(String) = Set(String).new,
+    want : Set(String) = Set(String).new,
     umask : String? = "007",
     restart_delay : UInt32? = 9_u32
 
-  def initialize
-  end
+  abstract def build(io : IO)
 
   def parse_env_vars(env_vars : String)
     env_vars.rchop.split("\" ").each do |env|

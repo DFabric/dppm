@@ -1,56 +1,61 @@
 require "ini"
 require "./config"
 
-class Service::Config
+class Service::Systemd::Config < Service::Config
+  # class Service::Config
   private SYSTEMD_SHELL_LOG_REDIRECT = "/bin/sh -c '2>>"
   private SYSTEMD_NETWORK_SERVICE    = "network.target"
 
-  def self.from_systemd(data : String | IO)
-    service = new
+  @extra_service_options : Hash(String, String) = Hash(String, String).new
+
+  def initialize
+  end
+
+  def initialize(data : String | IO)
     ini = INI.parse data
-    if reload = ini["Service"]["ExecReload"]?
-      service.reload_signal = reload.lchop("/bin/kill -").rchop(" $MAINPID")
+    if reload = ini["Service"].delete "ExecReload"
+      @reload_signal = reload.lchop("/bin/kill -").rchop(" $MAINPID")
     end
-    if restart_delay = ini["Service"]["RestartSec"]?
-      service.restart_delay = restart_delay.to_u32
+    if restart_delay = ini["Service"].delete "RestartSec"
+      @restart_delay = restart_delay.to_u32
     end
     if after = ini["Unit"]["After"]?
-      after.split(' ') do |service_name|
+      after.split ' ' do |service_name|
         if service_name != SYSTEMD_NETWORK_SERVICE
-          service.after << service_name.rchop ".service"
+          @after << service_name.rchop ".service"
         end
       end
     end
-    if env_vars = ini["Service"]["Environment"]?
-      service.parse_env_vars env_vars
+    if env_vars = ini["Service"].delete "Environment"
+      parse_env_vars env_vars
     end
 
-    if log_output = ini["Service"]["StandardOutput"]?
-      service.log_output = log_output.lstrip "file:"
+    if log_output = ini["Service"].delete "StandardOutput"
+      @log_output = log_output.lstrip "file:"
     end
-    if log_error = ini["Service"]["StandardError"]?
-      service.log_error = log_error.lstrip "file:"
+    if log_error = ini["Service"].delete "StandardError"
+      @log_error = log_error.lstrip "file:"
     end
 
-    if command = ini["Service"]["ExecStart"]?
+    if command = ini["Service"].delete "ExecStart"
       if shell_command = command.lchop? SYSTEMD_SHELL_LOG_REDIRECT
-        service.log_error, _, output_with_command = shell_command.partition " >>"
-        service.log_output, _, service.command = output_with_command.rchop.partition ' '
+        @log_error, _, output_with_command = shell_command.partition " >>"
+        @log_output, _, @command = output_with_command.rchop.partition ' '
       else
-        service.command = command
+        @command = command
       end
     end
 
-    service.user = ini["Service"]["User"]?
-    service.group = ini["Service"]["Group"]?
-    service.directory = ini["Service"]["WorkingDirectory"]?
-    service.description = ini["Unit"]["Description"]?
-    service.umask = ini["Service"]["UMask"]?
-    service
+    @description = ini["Unit"]["Description"]?
+    @user = ini["Service"].delete "User"
+    @group = ini["Service"].delete "Group"
+    @directory = ini["Service"].delete "WorkingDirectory"
+    @umask = ini["Service"].delete "UMask"
+    @extra_service_options = ini["Service"]
   end
 
   # ameba:disable Metrics/CyclomaticComplexity
-  def to_systemd(io : IO) : Nil
+  def build(io : IO) : Nil
     # Transform the hash to a systemd service
     systemd = {"Unit"    => Hash(String, String).new,
                "Service" => {
@@ -60,7 +65,7 @@ class Service::Config
                "Install" => {
                  "WantedBy" => "multi-user.target",
                }}
-
+    systemd["Service"].merge! @extra_service_options
     systemd["Service"]["ExecReload"] = "/bin/kill -#{@reload_signal} $MAINPID" if @reload_signal
     if user = @user
       systemd["Service"]["User"] = user

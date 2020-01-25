@@ -62,7 +62,9 @@ module DPPM::CLI::Service
 
   def app_status(prefix : String = PREFIX, &block)
     Prefix.new(prefix).each_app do |app|
-      yield app.service
+      if service = app.service?
+        yield service
+      end
     end
   end
 end
