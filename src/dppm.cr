@@ -13,6 +13,6 @@ module DPPM
   end
 
   def version : String
-    {{ `git show -s --format=%ci`.split(' ')[0] }}
+    {{ `git show -s --format=%ci`.split(' ')[0].gsub(/-/, ".") }}
   end
 end
