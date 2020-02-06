@@ -751,14 +751,13 @@ struct DPPM::Prefix::App
 
       Logger.info "add completed", @path.to_s
       Logger.info "application information", pkg_file.info
+      self
     rescue ex
       begin
         delete false { }
       ensure
         raise Error.new "Add failed - application deleted: #{@path}", ex
       end
-    ensure
-      self
     end
   end
 

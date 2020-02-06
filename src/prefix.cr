@@ -91,12 +91,12 @@ struct DPPM::Prefix
   end
 
   # Ensure the presence of the `pkg` directory.
-  def ensure_pkg_dir
+  protected def ensure_pkg_dir
     Dir.mkdir(@pkg.to_s) if !File.exists? @pkg.to_s
   end
 
   # Ensure the presence of the `app` directory.
-  def ensure_app_dir
+  protected def ensure_app_dir
     Dir.mkdir(@app.to_s) if !File.exists? @app.to_s
   end
 
