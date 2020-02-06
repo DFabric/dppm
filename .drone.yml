@@ -52,6 +52,8 @@ steps:
     SITE_TEMP_DIR: /docs
     SSH_PRIVATE_KEY:
       from_secret: ssh_private_key
+  when:
+    branch: [ master ]
 
 volumes:
 - name: cache
