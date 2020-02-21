@@ -83,21 +83,12 @@ struct DPPM::Prefix
     @src = @root_src / @source_name
   end
 
-  # Create `@path` and all its subdirectories needed.
+  # Create `#path` and all its subdirectories needed.
   def create
-    {@path, @root_app, @root_pkg, @root_src}.each do |dir|
-      Dir.mkdir dir.to_s if !Dir.exists? dir.to_s
+    {@path, @root_app, @root_pkg, @root_src, @app, @pkg}.each do |dir|
+      dir_str = dir.to_s
+      Dir.mkdir dir_str if !Dir.exists? dir_str
     end
-  end
-
-  # Ensure the presence of the `pkg` directory.
-  protected def ensure_pkg_dir
-    Dir.mkdir(@pkg.to_s) if !File.exists? @pkg.to_s
-  end
-
-  # Ensure the presence of the `app` directory.
-  protected def ensure_app_dir
-    Dir.mkdir(@app.to_s) if !File.exists? @app.to_s
   end
 
   # Raises if DPPM isn't installated.

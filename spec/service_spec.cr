@@ -30,11 +30,11 @@ end
 
 def spec_with_service_app(service, &block)
   spec_with_tempdir do |path|
-    test_prefix = DPPM::Prefix.new path, source_path: SAMPLES_DIR
+    test_prefix = DPPM::Prefix.new path
     test_prefix.create
-    test_prefix.update
-    test_pkg = test_prefix.new_pkg TEST_APP_PACKAGE_NAME
-    test_app = test_pkg.new_app.add { }
+    test_app = test_prefix.new_app(TEST_APP_PACKAGE_NAME)
+    FileUtils.cp_r Path[SAMPLES_DIR, TEST_APP_PACKAGE_NAME].to_s, test_app.path.to_s
+
     test_app.service = service.new test_app.name
     test_app.service.file = test_app.service_path / "test_service"
     test_app.service_create

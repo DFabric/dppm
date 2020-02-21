@@ -627,7 +627,6 @@ struct DPPM::Prefix::App
       raise "Application directory already exists: #{@path}" if File.exists? @path.to_s
 
       # Create the new application
-      @prefix.ensure_app_dir
       Dir.mkdir @path.to_s
       create_application_dir shared
 

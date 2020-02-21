@@ -54,7 +54,6 @@ class DPPM::Prefix::Pkg
 
   # Copy the source to this package directory path
   def copy_src_to_path
-    @prefix.ensure_pkg_dir
     FileUtils.cp_r src.path.to_s, @path.to_s
   end
 
