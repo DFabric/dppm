@@ -81,9 +81,10 @@ describe DPPM::CLI do
     end
   end
 
-  it "uninstalls DPPM" do
+  it "uninstalls DPPM and removes applications" do
     spec_with_tempdir do |prefix|
       install_dppm prefix
+      add_application prefix_path: prefix
 
       DPPM::CLI.uninstall_dppm(
         no_confirm: true,

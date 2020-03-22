@@ -10,6 +10,8 @@ struct DPPM::Prefix::App
   getter log_file_output : Path { logs_path / ("output" + LOG_EXTENSION) }
   getter log_file_error : Path { logs_path / ("error" + LOG_EXTENSION) }
   getter webserver_sites_path : Path { conf_path / "sites" }
+  # The application is self-contained.
+  getter? contained : Bool { real_app_path == app_path }
 
   protected def initialize(@prefix : Prefix, @name : String, pkg_file : PkgFile? = nil, @pkg : Pkg? = nil)
     Utils.ascii_alphanumeric_dash? name
@@ -38,8 +40,16 @@ struct DPPM::Prefix::App
     conf_path / ".password"
   end
 
-  getter pkg : Pkg do
-    Pkg.new @prefix, File.basename(File.dirname(File.real_path(app_path.to_s))), nil, @pkg_file
+  # Base `Pkg` package of this application.
+  def pkg : Pkg
+    pkg? || raise "Cannot get the base package - the application `#{@name}` is self-contained."
+  end
+
+  # :ditto:
+  getter? pkg : Pkg? do
+    if !contained?
+      Pkg.new @prefix, real_app_path.basename, nil, @pkg_file
+    end
   end
 
   getter exec : Hash(String, String) do

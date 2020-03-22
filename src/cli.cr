@@ -411,7 +411,7 @@ module DPPM::CLI
       root_prefix.delete
       raise Error.new "DPPM installation failed, #{root_prefix.path} deleted", ex
     end
-    dppm_package.create_global_bin_symlinks(force: true) if Process.root?
+    app.pkg?.try &.create_global_bin_symlinks(force: true) if Process.root?
     Logger.info "DPPM installation complete", "you can now manage applications with the `#{Process.root? ? "dppm" : dppm_bin_path}` command"
   end
 
@@ -425,7 +425,7 @@ module DPPM::CLI
     root_prefix.each_app do |app|
       app.delete(confirmation: !no_confirm, preserve_database: false, keep_user_group: false) do
         if no_confirm || CLI.confirm_prompt
-          app.pkg.delete_global_bin_symlinks
+          app.pkg?.try &.delete_global_bin_symlinks
           true
         end
       end
