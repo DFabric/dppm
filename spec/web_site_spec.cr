@@ -18,12 +18,12 @@ example.com {
     redir /.well-known /remote.php 301
 
     rewrite {
-        r /uploads\/(.*)\.php
+        r /uploads/(.*).php
         to /
     }
 
     rewrite {
-        if {path} not_match ^\/admin
+        if {path} not_match ^/admin
         to {path} {path}/ /index.php?{query}
     }
 
