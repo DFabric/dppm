@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Crystal Docs 0.34.0">
+<meta name="crystal_docs.project_version" content="master">
+<meta name="crystal_docs.project_name" content="dppm">
+
+
+<link href="../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../js/doc.js"></script>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+
+  <meta id="repository-name" content="dppm">
+  <title>DPPM::Prefix - dppm master</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "../";
+  </script>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="../index.html">
+          dppm
+        </a>
+      </h1>
+
+      <span class="project-version">
+        master
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results" class="hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class=" " data-id="dppm/toplevel" data-name="top level namespace">
+      <a href="../toplevel.html">Top Level Namespace</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Config" data-name="config">
+      <a href="../Config.html">Config</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Config/CON" data-name="config::con">
+      <a href="../Config/CON.html">CON</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/Format" data-name="config::format">
+      <a href="../Config/Format.html">Format</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Config/INI" data-name="config::ini">
+      <a href="../Config/INI.html">INI</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Config/INI/Helper" data-name="config::ini::helper">
+      <a href="../Config/INI/Helper.html">Helper</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/JSON" data-name="config::json">
+      <a href="../Config/JSON.html">JSON</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/TOML" data-name="config::toml">
+      <a href="../Config/TOML.html">TOML</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/Types" data-name="config::types">
+      <a href="../Config/Types.html">Types</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/YAML" data-name="config::yaml">
+      <a href="../Config/YAML.html">YAML</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent open current" data-id="dppm/DPPM" data-name="dppm">
+      <a href="../DPPM.html">DPPM</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="dppm/DPPM/CLI" data-name="dppm::cli">
+      <a href="../DPPM/CLI.html">CLI</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/App" data-name="dppm::cli::app">
+      <a href="../DPPM/CLI/App.html">App</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/List" data-name="dppm::cli::list">
+      <a href="../DPPM/CLI/List.html">List</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/Pkg" data-name="dppm::cli::pkg">
+      <a href="../DPPM/CLI/Pkg.html">Pkg</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/Service" data-name="dppm::cli::service">
+      <a href="../DPPM/CLI/Service.html">Service</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/Src" data-name="dppm::cli::src">
+      <a href="../DPPM/CLI/Src.html">Src</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Database" data-name="dppm::database">
+      <a href="../DPPM/Database.html">Database</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Database/Base" data-name="dppm::database::base">
+      <a href="../DPPM/Database/Base.html">Base</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/ConnectionError" data-name="dppm::database::connectionerror">
+      <a href="../DPPM/Database/ConnectionError.html">ConnectionError</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/DatabasePresentException" data-name="dppm::database::databasepresentexception">
+      <a href="../DPPM/Database/DatabasePresentException.html">DatabasePresentException</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/MySQL" data-name="dppm::database::mysql">
+      <a href="../DPPM/Database/MySQL.html">MySQL</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/UserPresentException" data-name="dppm::database::userpresentexception">
+      <a href="../DPPM/Database/UserPresentException.html">UserPresentException</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Error" data-name="dppm::error">
+      <a href="../DPPM/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Host" data-name="dppm::host">
+      <a href="../DPPM/Host.html">Host</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/HTTPHelper" data-name="dppm::httphelper">
+      <a href="../DPPM/HTTPHelper.html">HTTPHelper</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Logger" data-name="dppm::logger">
+      <a href="../DPPM/Logger.html">Logger</a>
+      
+    </li>
+  
+  <li class="parent open current" data-id="dppm/DPPM/Prefix" data-name="dppm::prefix">
+      <a href="../DPPM/Prefix.html">Prefix</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/App" data-name="dppm::prefix::app">
+      <a href="../DPPM/Prefix/App.html">App</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/App/Owner" data-name="dppm::prefix::app::owner">
+      <a href="../DPPM/Prefix/App/Owner.html">Owner</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/Base" data-name="dppm::prefix::base">
+      <a href="../DPPM/Prefix/Base.html">Base</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Base/ConfigKeyError" data-name="dppm::prefix::base::configkeyerror">
+      <a href="../DPPM/Prefix/Base/ConfigKeyError.html">ConfigKeyError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Config" data-name="dppm::prefix::config">
+      <a href="../DPPM/Prefix/Config.html">Config</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Pkg" data-name="dppm::prefix::pkg">
+      <a href="../DPPM/Prefix/Pkg.html">Pkg</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/PkgFile" data-name="dppm::prefix::pkgfile">
+      <a href="../DPPM/Prefix/PkgFile.html">PkgFile</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/PkgFile/Type" data-name="dppm::prefix::pkgfile::type">
+      <a href="../DPPM/Prefix/PkgFile/Type.html">Type</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/ProgramData" data-name="dppm::prefix::programdata">
+      <a href="../DPPM/Prefix/ProgramData.html">ProgramData</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/ProgramData/Task" data-name="dppm::prefix::programdata::task">
+      <a href="../DPPM/Prefix/ProgramData/Task.html">Task</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Src" data-name="dppm::prefix::src">
+      <a href="../DPPM/Prefix/Src.html">Src</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Utils" data-name="dppm::utils">
+      <a href="../DPPM/Utils.html">Utils</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/PortChecker" data-name="portchecker">
+      <a href="../PortChecker.html">PortChecker</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Process" data-name="process">
+      <a href="../Process.html">Process</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Service" data-name="service">
+      <a href="../Service.html">Service</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Service/Config" data-name="service::config">
+      <a href="../Service/Config.html">Config</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Service/Error" data-name="service::error">
+      <a href="../Service/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Service/InitSystem" data-name="service::initsystem">
+      <a href="../Service/InitSystem.html">InitSystem</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Service/OpenRC" data-name="service::openrc">
+      <a href="../Service/OpenRC.html">OpenRC</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Service/OpenRC/Config" data-name="service::openrc::config">
+      <a href="../Service/OpenRC/Config.html">Config</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Service/Systemd" data-name="service::systemd">
+      <a href="../Service/Systemd.html">Systemd</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Service/Systemd/Config" data-name="service::systemd::config">
+      <a href="../Service/Systemd/Config.html">Config</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/WebSite" data-name="website">
+      <a href="../WebSite.html">WebSite</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/WebSite/Caddy" data-name="website::caddy">
+      <a href="../WebSite/Caddy.html">Caddy</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/WebSite/Error" data-name="website::error">
+      <a href="../WebSite/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/WebSite/Site" data-name="website::site">
+      <a href="../WebSite/Site.html">Site</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">struct</span> DPPM::Prefix
+
+</h1>
+
+
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../DPPM/Prefix.html">DPPM::Prefix</a></li><li class="superclass">Struct</li><li class="superclass">Value</li><li class="superclass">Object</li></ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      <a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L13" target="_blank">
+        prefix.cr
+      </a>
+    
+    <br/>
+  
+
+
+
+
+
+  <h2>
+    <a id="constructors" class="anchor" href="#constructors">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructors
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#new(path:String,group:String=@@default_group,source_name:String=@@default_source_name,source_path:String?=nil)-class-method" class="signature"><strong>.new</strong>(path : String, group : String = @@default_group, source_name : String = @@default_source_name, source_path : String? = <span class="n">nil</span>)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>
+    <a id="class-method-summary" class="anchor" href="#class-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Class Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#default-class-method" class="signature"><strong>.default</strong></a>
+        
+          <div class="summary"><p>Default prefix for a DPPM installation.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#default_dppm_config-class-method" class="signature"><strong>.default_dppm_config</strong></a>
+        
+          <div class="summary"><p>Default DPPM configuration.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#default_group:String-class-method" class="signature"><strong>.default_group</strong> : String</a>
+        
+          <div class="summary"><p>Default group namespace where installing applications.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#default_source_name:String-class-method" class="signature"><strong>.default_source_name</strong> : String</a>
+        
+          <div class="summary"><p>Default source name to get packages.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>
+    <a id="instance-method-summary" class="anchor" href="#instance-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#app:Path-instance-method" class="signature"><strong>#app</strong> : Path</a>
+        
+          <div class="summary"><p>Application path, including the <code><a href="../DPPM/Prefix.html#group:String-instance-method">#group</a></code> namespace.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#check-instance-method" class="signature"><strong>#check</strong></a>
+        
+          <div class="summary"><p>Raises if DPPM isn't installated.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#clean_unused_packages(confirmation:Bool=true,&):Set(String)-instance-method" class="signature"><strong>#clean_unused_packages</strong>(confirmation : Bool = <span class="n">true</span>, &) : Set(String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#create-instance-method" class="signature"><strong>#create</strong></a>
+        
+          <div class="summary"><p>Create <code><a href="../DPPM/Prefix.html#path:Path-instance-method">#path</a></code> and all its subdirectories needed.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete-instance-method" class="signature"><strong>#delete</strong></a>
+        
+          <div class="summary"><p>Delete the prefix directory path.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete_src-instance-method" class="signature"><strong>#delete_src</strong></a>
+        
+          <div class="summary"><p>Delete the packages source <code>@src</code> directory.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dppm:App-instance-method" class="signature"><strong>#dppm</strong> : App</a>
+        
+          <div class="summary"><p>Returns the DPPM application.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dppm_config:Config?-instance-method" class="signature"><strong>#dppm_config</strong> : Config?</a>
+        
+          <div class="summary"><p>DPPM configuration.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dppm_config=(dppm_config:Config)-instance-method" class="signature"><strong>#dppm_config=</strong>(dppm_config : Config)</a>
+        
+          <div class="summary"><p>DPPM configuration.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_app(&block:App-%3E)-instance-method" class="signature"><strong>#each_app</strong>(&block : App -> )</a>
+        
+          <div class="summary"><p>Yields each application in the group.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_pkg(&block:Pkg-%3E)-instance-method" class="signature"><strong>#each_pkg</strong>(&block : Pkg -> )</a>
+        
+          <div class="summary"><p>Yields each built package of the source.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_src(&block:Src-%3E)-instance-method" class="signature"><strong>#each_src</strong>(&block : Src -> )</a>
+        
+          <div class="summary"><p>Yields each source package of the source.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#group:String-instance-method" class="signature"><strong>#group</strong> : String</a>
+        
+          <div class="summary"><p>Application group namespace used.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new_app(name:String):App-instance-method" class="signature"><strong>#new_app</strong>(name : String) : App</a>
+        
+          <div class="summary"><p>Creates a new <code><a href="../DPPM/Prefix/App.html">App</a></code> application object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new_pkg(package:String,version:String?=nil,tag:String?=nil):Pkg-instance-method" class="signature"><strong>#new_pkg</strong>(package : String, version : String? = <span class="n">nil</span>, tag : String? = <span class="n">nil</span>) : Pkg</a>
+        
+          <div class="summary"><p>Creates a new <code><a href="../DPPM/Prefix/Pkg.html">Pkg</a></code> package object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new_src(name:String):Src-instance-method" class="signature"><strong>#new_src</strong>(name : String) : Src</a>
+        
+          <div class="summary"><p>Creates a new <code><a href="../DPPM/Prefix/Src.html">Src</a></code> source package object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path:Path-instance-method" class="signature"><strong>#path</strong> : Path</a>
+        
+          <div class="summary"><p>Path of the prefix on the filesystem.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pkg:Path-instance-method" class="signature"><strong>#pkg</strong> : Path</a>
+        
+          <div class="summary"><p>Package path, including the <code><a href="../DPPM/Prefix.html#source_name:String-instance-method">#source_name</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#root_app:Path-instance-method" class="signature"><strong>#root_app</strong> : Path</a>
+        
+          <div class="summary"><p>Base path for applications.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#root_pkg:Path-instance-method" class="signature"><strong>#root_pkg</strong> : Path</a>
+        
+          <div class="summary"><p>Base path for packages.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#root_src:Path-instance-method" class="signature"><strong>#root_src</strong> : Path</a>
+        
+          <div class="summary"><p>Base path for packages sources.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#source_name:String-instance-method" class="signature"><strong>#source_name</strong> : String</a>
+        
+          <div class="summary"><p>Source name to use when building packages and creating applications.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#source_path-instance-method" class="signature"><strong>#source_path</strong></a>
+        
+          <div class="summary"><p>Source path used, which can be an URL or a filesystem path.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#src:Path-instance-method" class="signature"><strong>#src</strong> : Path</a>
+        
+          <div class="summary"><p>Package path, including the <code><a href="../DPPM/Prefix.html#source_name:String-instance-method">#source_name</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#update(force:Bool=false)-instance-method" class="signature"><strong>#update</strong>(force : Bool = <span class="n">false</span>)</a>
+        
+          <div class="summary"><p>Download, or update a packages source cache.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+<div class="methods-inherited">
+  
+    
+
+
+    
+
+
+    
+
+
+  
+    
+
+
+    
+
+
+    
+
+
+  
+    
+
+
+    
+
+
+    
+
+
+  
+</div>
+
+
+  <h2>
+    <a id="constructor-detail" class="anchor" href="#constructor-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructor Detail
+  </h2>
+  
+    <div class="entry-detail" id="new(path:String,group:String=@@default_group,source_name:String=@@default_source_name,source_path:String?=nil)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(path : String, group : String = @@default_group, source_name : String = @@default_source_name, source_path : String? = <span class="n">nil</span>)
+
+        <a class="method-permalink" href="#new(path:String,group:String=@@default_group,source_name:String=@@default_source_name,source_path:String?=nil)-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L70" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+
+  <h2>
+    <a id="class-method-detail" class="anchor" href="#class-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Class Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="default-class-method">
+      <div class="signature">
+        
+        def self.<strong>default</strong>
+
+        <a class="method-permalink" href="#default-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Default prefix for a DPPM installation.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L15" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="default_dppm_config-class-method">
+      <div class="signature">
+        
+        def self.<strong>default_dppm_config</strong>
+
+        <a class="method-permalink" href="#default_dppm_config-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Default DPPM configuration.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L30" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="default_group:String-class-method">
+      <div class="signature">
+        
+        def self.<strong>default_group</strong> : String
+
+        <a class="method-permalink" href="#default_group:String-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Default group namespace where installing applications.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L33" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="default_source_name:String-class-method">
+      <div class="signature">
+        
+        def self.<strong>default_source_name</strong> : String
+
+        <a class="method-permalink" href="#default_source_name:String-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Default source name to get packages.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L36" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+
+  <h2>
+    <a id="instance-method-detail" class="anchor" href="#instance-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="app:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>app</strong> : Path
+
+        <a class="method-permalink" href="#app:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Application path, including the <code><a href="../DPPM/Prefix.html#group:String-instance-method">#group</a></code> namespace.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L57" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="check-instance-method">
+      <div class="signature">
+        
+        def <strong>check</strong>
+
+        <a class="method-permalink" href="#check-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Raises if DPPM isn't installated.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L95" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="clean_unused_packages(confirmation:Bool=true,&):Set(String)-instance-method">
+      <div class="signature">
+        
+        def <strong>clean_unused_packages</strong>(confirmation : Bool = <span class="n">true</span>, &) : Set(String)
+
+        <a class="method-permalink" href="#clean_unused_packages(confirmation:Bool=true,&):Set(String)-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L225" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="create-instance-method">
+      <div class="signature">
+        
+        def <strong>create</strong>
+
+        <a class="method-permalink" href="#create-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Create <code><a href="../DPPM/Prefix.html#path:Path-instance-method">#path</a></code> and all its subdirectories needed.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L87" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="delete-instance-method">
+      <div class="signature">
+        
+        def <strong>delete</strong>
+
+        <a class="method-permalink" href="#delete-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Delete the prefix directory path.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L185" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="delete_src-instance-method">
+      <div class="signature">
+        
+        def <strong>delete_src</strong>
+
+        <a class="method-permalink" href="#delete_src-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Delete the packages source <code>@src</code> directory.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L176" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="dppm:App-instance-method">
+      <div class="signature">
+        
+        def <strong>dppm</strong> : <a href="../DPPM/Prefix/App.html">App</a>
+
+        <a class="method-permalink" href="#dppm:App-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Returns the DPPM application.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L100" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="dppm_config:Config?-instance-method">
+      <div class="signature">
+        
+        def <strong>dppm_config</strong> : <a href="../DPPM/Prefix/Config.html">Config</a>?
+
+        <a class="method-permalink" href="#dppm_config:Config?-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>DPPM configuration.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L105" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="dppm_config=(dppm_config:Config)-instance-method">
+      <div class="signature">
+        
+        def <strong>dppm_config=</strong>(dppm_config : <a href="../DPPM/Prefix/Config.html">Config</a>)
+
+        <a class="method-permalink" href="#dppm_config=(dppm_config:Config)-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>DPPM configuration.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L105" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_app(&block:App->)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_app</strong>(&block : <a href="../DPPM/Prefix/App.html">App</a> -> )
+
+        <a class="method-permalink" href="#each_app(&block:App-%3E)-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Yields each application in the group.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L114" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_pkg(&block:Pkg->)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_pkg</strong>(&block : <a href="../DPPM/Prefix/Pkg.html">Pkg</a> -> )
+
+        <a class="method-permalink" href="#each_pkg(&block:Pkg-%3E)-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Yields each built package of the source.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L123" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_src(&block:Src->)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_src</strong>(&block : <a href="../DPPM/Prefix/Src.html">Src</a> -> )
+
+        <a class="method-permalink" href="#each_src(&block:Src-%3E)-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Yields each source package of the source.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L132" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="group:String-instance-method">
+      <div class="signature">
+        
+        def <strong>group</strong> : String
+
+        <a class="method-permalink" href="#group:String-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Application group namespace used.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L39" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new_app(name:String):App-instance-method">
+      <div class="signature">
+        
+        def <strong>new_app</strong>(name : String) : <a href="../DPPM/Prefix/App.html">App</a>
+
+        <a class="method-permalink" href="#new_app(name:String):App-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Creates a new <code><a href="../DPPM/Prefix/App.html">App</a></code> application object.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L141" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new_pkg(package:String,version:String?=nil,tag:String?=nil):Pkg-instance-method">
+      <div class="signature">
+        
+        def <strong>new_pkg</strong>(package : String, version : String? = <span class="n">nil</span>, tag : String? = <span class="n">nil</span>) : <a href="../DPPM/Prefix/Pkg.html">Pkg</a>
+
+        <a class="method-permalink" href="#new_pkg(package:String,version:String?=nil,tag:String?=nil):Pkg-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Creates a new <code><a href="../DPPM/Prefix/Pkg.html">Pkg</a></code> package object.
+A package name includes the package and optionally a version/tag separated by either a <code>_</code> or <code>:</code>.
+If no version is provided, latest one will be used.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L148" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new_src(name:String):Src-instance-method">
+      <div class="signature">
+        
+        def <strong>new_src</strong>(name : String) : <a href="../DPPM/Prefix/Src.html">Src</a>
+
+        <a class="method-permalink" href="#new_src(name:String):Src-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Creates a new <code><a href="../DPPM/Prefix/Src.html">Src</a></code> source package object.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L171" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="path:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>path</strong> : Path
+
+        <a class="method-permalink" href="#path:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Path of the prefix on the filesystem.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L45" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="pkg:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>pkg</strong> : Path
+
+        <a class="method-permalink" href="#pkg:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Package path, including the <code><a href="../DPPM/Prefix.html#source_name:String-instance-method">#source_name</a></code>.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L60" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="root_app:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>root_app</strong> : Path
+
+        <a class="method-permalink" href="#root_app:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Base path for applications.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L48" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="root_pkg:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>root_pkg</strong> : Path
+
+        <a class="method-permalink" href="#root_pkg:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Base path for packages.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L51" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="root_src:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>root_src</strong> : Path
+
+        <a class="method-permalink" href="#root_src:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Base path for packages sources.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L54" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="source_name:String-instance-method">
+      <div class="signature">
+        
+        def <strong>source_name</strong> : String
+
+        <a class="method-permalink" href="#source_name:String-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Source name to use when building packages and creating applications.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L42" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="source_path-instance-method">
+      <div class="signature">
+        
+        def <strong>source_path</strong>
+
+        <a class="method-permalink" href="#source_path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Source path used, which can be an URL or a filesystem path.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L66" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="src:Path-instance-method">
+      <div class="signature">
+        
+        def <strong>src</strong> : Path
+
+        <a class="method-permalink" href="#src:Path-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Package path, including the <code><a href="../DPPM/Prefix.html#source_name:String-instance-method">#source_name</a></code>.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L63" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="update(force:Bool=false)-instance-method">
+      <div class="signature">
+        
+        def <strong>update</strong>(force : Bool = <span class="n">false</span>)
+
+        <a class="method-permalink" href="#update(force:Bool=false)-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Download, or update a packages source cache.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/DFabric/dppm/blob/4a1bc37bc6872377dbc36759a4d46e84ec35bbb5/src/prefix.cr#L191" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+
+
+</div>
+
+</body>
+</html>

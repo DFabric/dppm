@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Crystal Docs 0.34.0">
+<meta name="crystal_docs.project_version" content="master">
+<meta name="crystal_docs.project_name" content="dppm">
+
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/doc.js"></script>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+
+  <meta id="repository-name" content="dppm">
+  <title>dppm master</title>
+  <script type="text/javascript">
+  CrystalDocs.base_path = "";
+  </script>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="index.html">
+          dppm
+        </a>
+      </h1>
+
+      <span class="project-version">
+        master
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results" class="hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class=" " data-id="dppm/toplevel" data-name="top level namespace">
+      <a href="toplevel.html">Top Level Namespace</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Config" data-name="config">
+      <a href="Config.html">Config</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Config/CON" data-name="config::con">
+      <a href="Config/CON.html">CON</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/Format" data-name="config::format">
+      <a href="Config/Format.html">Format</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Config/INI" data-name="config::ini">
+      <a href="Config/INI.html">INI</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Config/INI/Helper" data-name="config::ini::helper">
+      <a href="Config/INI/Helper.html">Helper</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/JSON" data-name="config::json">
+      <a href="Config/JSON.html">JSON</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/TOML" data-name="config::toml">
+      <a href="Config/TOML.html">TOML</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/Types" data-name="config::types">
+      <a href="Config/Types.html">Types</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Config/YAML" data-name="config::yaml">
+      <a href="Config/YAML.html">YAML</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM" data-name="dppm">
+      <a href="DPPM.html">DPPM</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="dppm/DPPM/CLI" data-name="dppm::cli">
+      <a href="DPPM/CLI.html">CLI</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/App" data-name="dppm::cli::app">
+      <a href="DPPM/CLI/App.html">App</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/List" data-name="dppm::cli::list">
+      <a href="DPPM/CLI/List.html">List</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/Pkg" data-name="dppm::cli::pkg">
+      <a href="DPPM/CLI/Pkg.html">Pkg</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/Service" data-name="dppm::cli::service">
+      <a href="DPPM/CLI/Service.html">Service</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/CLI/Src" data-name="dppm::cli::src">
+      <a href="DPPM/CLI/Src.html">Src</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Database" data-name="dppm::database">
+      <a href="DPPM/Database.html">Database</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Database/Base" data-name="dppm::database::base">
+      <a href="DPPM/Database/Base.html">Base</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/ConnectionError" data-name="dppm::database::connectionerror">
+      <a href="DPPM/Database/ConnectionError.html">ConnectionError</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/DatabasePresentException" data-name="dppm::database::databasepresentexception">
+      <a href="DPPM/Database/DatabasePresentException.html">DatabasePresentException</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/MySQL" data-name="dppm::database::mysql">
+      <a href="DPPM/Database/MySQL.html">MySQL</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Database/UserPresentException" data-name="dppm::database::userpresentexception">
+      <a href="DPPM/Database/UserPresentException.html">UserPresentException</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Error" data-name="dppm::error">
+      <a href="DPPM/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Host" data-name="dppm::host">
+      <a href="DPPM/Host.html">Host</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/HTTPHelper" data-name="dppm::httphelper">
+      <a href="DPPM/HTTPHelper.html">HTTPHelper</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Logger" data-name="dppm::logger">
+      <a href="DPPM/Logger.html">Logger</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix" data-name="dppm::prefix">
+      <a href="DPPM/Prefix.html">Prefix</a>
+      
+        <ul>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/App" data-name="dppm::prefix::app">
+      <a href="DPPM/Prefix/App.html">App</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/App/Owner" data-name="dppm::prefix::app::owner">
+      <a href="DPPM/Prefix/App/Owner.html">Owner</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/Base" data-name="dppm::prefix::base">
+      <a href="DPPM/Prefix/Base.html">Base</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Base/ConfigKeyError" data-name="dppm::prefix::base::configkeyerror">
+      <a href="DPPM/Prefix/Base/ConfigKeyError.html">ConfigKeyError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Config" data-name="dppm::prefix::config">
+      <a href="DPPM/Prefix/Config.html">Config</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Pkg" data-name="dppm::prefix::pkg">
+      <a href="DPPM/Prefix/Pkg.html">Pkg</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/PkgFile" data-name="dppm::prefix::pkgfile">
+      <a href="DPPM/Prefix/PkgFile.html">PkgFile</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/PkgFile/Type" data-name="dppm::prefix::pkgfile::type">
+      <a href="DPPM/Prefix/PkgFile/Type.html">Type</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/DPPM/Prefix/ProgramData" data-name="dppm::prefix::programdata">
+      <a href="DPPM/Prefix/ProgramData.html">ProgramData</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/ProgramData/Task" data-name="dppm::prefix::programdata::task">
+      <a href="DPPM/Prefix/ProgramData/Task.html">Task</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Prefix/Src" data-name="dppm::prefix::src">
+      <a href="DPPM/Prefix/Src.html">Src</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/DPPM/Utils" data-name="dppm::utils">
+      <a href="DPPM/Utils.html">Utils</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="dppm/PortChecker" data-name="portchecker">
+      <a href="PortChecker.html">PortChecker</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Process" data-name="process">
+      <a href="Process.html">Process</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Service" data-name="service">
+      <a href="Service.html">Service</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Service/Config" data-name="service::config">
+      <a href="Service/Config.html">Config</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Service/Error" data-name="service::error">
+      <a href="Service/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/Service/InitSystem" data-name="service::initsystem">
+      <a href="Service/InitSystem.html">InitSystem</a>
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Service/OpenRC" data-name="service::openrc">
+      <a href="Service/OpenRC.html">OpenRC</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Service/OpenRC/Config" data-name="service::openrc::config">
+      <a href="Service/OpenRC/Config.html">Config</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/Service/Systemd" data-name="service::systemd">
+      <a href="Service/Systemd.html">Systemd</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/Service/Systemd/Config" data-name="service::systemd::config">
+      <a href="Service/Systemd/Config.html">Config</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="dppm/WebSite" data-name="website">
+      <a href="WebSite.html">WebSite</a>
+      
+        <ul>
+  
+  <li class=" " data-id="dppm/WebSite/Caddy" data-name="website::caddy">
+      <a href="WebSite/Caddy.html">Caddy</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/WebSite/Error" data-name="website::error">
+      <a href="WebSite/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="dppm/WebSite/Site" data-name="website::site">
+      <a href="WebSite/Site.html">Site</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<p><img src="https://avatars.githubusercontent.com/u/19499073" alt="DP logo"/></p>
+
+<h1><a id="dppm" class="anchor" href="#dppm">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>DPPM</h1>
+
+<p><a href="https://cloud.drone.io/DFabric/dppm" target="_blank"><img src="https://cloud.drone.io/api/badges/DFabric/dppm/status.svg" alt="Build Status"/></a>
+<a href="https://gitter.im/DFabric/Lobby" target="_blank"><img src="https://img.shields.io/badge/chat-on_gitter-red.svg?style=flat-square" alt="Gitter"/></a>
+<a href="https://en.wikipedia.org/wiki/ISC_license" target="_blank"><img src="https://img.shields.io/badge/License-ISC-blue.svg?style=flat-square" alt="ISC"/></a></p>
+
+<p>Dedicated Platform Package Manager - an easy way to install and manage server applications.</p>
+
+<h2><a id="features" class="anchor" href="#features">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Features</h2>
+
+<ul><li>Choice among <a href="https://github.com/DFabric/packages-source" target="_blank">dozens of applications</a></li><li>Unified interface for easy install, backup and modification of configurations</li><li>Support a wide range of systems (UN*Xes, x86, ARM) - distribution agnostic</li><li>Can use systemd or OpenRC system services with dedicated users/groups</li><li>Independent of the OS package manager - self-contained, statically linked binaries</li><li>Standalone installations bundled with all dependencies - DPPM can be safely removed</li><li>Compatible with manual system administration (like editions "by hand" on the file system)</li></ul>
+
+<h2><a id="documentation" class="anchor" href="#documentation">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Documentation</h2>
+
+<p>https://dfabric.github.io/dppm</p>
+
+<h2><a id="install" class="anchor" href="#install">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Install</h2>
+
+<h3><a id="1.-get-the-dppm-binary" class="anchor" href="#1.-get-the-dppm-binary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>1. Get the <code>dppm</code> binary</h3>
+
+<p>There are 3 methods:</p>
+
+<ul><li>Automatic</li></ul>
+
+<p>Download <code>dppm</code> with the helper:</p>
+
+<p><code>sh -c "APP=dppm-static $(wget -qO- https://raw.githubusercontent.com/DFabric/apps-static/master/helper.sh)"</code></p>
+
+<p>(<code>wget -qO-</code> can be replaced by <code>curl -s</code>)</p>
+
+<p>The binary is <code>bin/dppm</code> in the directory.</p>
+
+<ul><li>Manual</li></ul>
+
+<p>Get <a href="https://bintray.com/dfabric/apps-static/builds#files" target="_blank">the pre-compiled binary</a> called <code>dppm-static_*</code>, and extract it.</p>
+
+<ul><li>Clone the repository and compile the project</li></ul>
+
+<p>See the <code>Development</code> section</p>
+
+<h3><a id="2.-run-the-installation-command" class="anchor" href="#2.-run-the-installation-command">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>2. Run the installation command</h3>
+
+<p><code>sudo bin/dppm app install</code></p>
+
+<p>You don't <em>need</em> to install it as root, but no system services nor dedicated users will be available. You will have to rely on <code>sudo dppm app exec</code></p>
+
+<h2><a id="usage" class="anchor" href="#usage">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Usage</h2>
+
+<p>To show the help:</p>
+
+<p><code>dppm --help</code></p>
+
+<p>To list <a href="https://github.com/DFabric/package-sources" target="_blank">available packages</a> (applications, built and available packages):</p>
+
+<p><code>dppm list</code></p>
+
+<p>A typical installation can be:</p>
+
+<pre><code class="language-sh"># add a new application to the system
+sudo dppm app add [application]
+
+# start the service and auto start the service at boot
+sudo dppm service start [application]
+sudo dppm service boot [application] true</code></pre>
+
+<p>If not specified, an user, group and application name will be created.</p>
+
+<p>Note that <code>add</code> will <code>build</code> the missing required packages.</p>
+
+<p>Root execution is needed to add a system service (systemd or OpenRC)</p>
+
+<p>To show the services status:</p>
+
+<p><code>dppm service status</code></p>
+
+<p>To follow last application logs:</p>
+
+<p><code>sudo dppm logs [application] output</code></p>
+
+<h2><a id="uninstall" class="anchor" href="#uninstall">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Uninstall</h2>
+
+<p><code>sudo dppm app uninstall</code></p>
+
+<h2><a id="supported-environments" class="anchor" href="#supported-environments">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Supported environments</h2>
+
+<p>Supported architectures are <code>x86-64</code> and <code>arm64</code> (thanks to <a href="https://github.com/jirutka" target="_blank">@jirutka</a>).</p>
+
+<p>32-bit architectures are partially supported, but discouraged since nowadays more and more applications are designed for 64-bit, particularly databases (<a href="https://github.com/pingcap/tidb/issues/5224" target="_blank">TiDB</a>, <a href="https://www.mongodb.com/blog/post/32-bit-limitations" target="_blank">MongoDB</a>...)</p>
+
+<p>For Rapberry Pi 3, a 64-bit OS like <a href="https://www.armbian.com/" target="_blank">Armbian</a> is recommended, and needed to run DPPM, instead of a 32-bit Raspbian.</p>
+
+<p>Still, <a href="https://github.com/crystal-lang/crystal/issues/5467" target="_blank">an issue is open</a> for <code>armhf</code>.</p>
+
+<h2><a id="development" class="anchor" href="#development">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Development</h2>
+
+<p>You will need a <a href="https://crystal-lang.org" target="_blank">Crystal</a> development environment</p>
+
+<p>You can either <a href="https://crystal-lang.org/docs/installation" target="_blank">install it</a> or use a <a href="https://hub.docker.com/r/jrei/crystal-alpine" target="_blank">Docker image</a></p>
+
+<p>You may also find useful this variables <code>config=./config.con</code> and <code>source=../packages-source</code></p>
+
+<h3><a id="how-to-build" class="anchor" href="#how-to-build">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>How to build</h3>
+
+<p>Install dependencies and build <code>dppm</code>:</p>
+
+<p><code>shards build</code></p>
+
+<p>Run it</p>
+
+<p><code>bin/dppm --help</code></p>
+
+<p>For more informations, see the <a href="https://crystal-lang.org/docs/using_the_compiler/" target="_blank">official docs</a></p>
+
+<h3><a id="run-tests" class="anchor" href="#run-tests">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Run tests</h3>
+
+<p>Integration tests are stateful and need to be runned all in a batch sequentially.</p>
+
+<p>To run them: <code>crystal spec spec/integration_spec.cr</code></p>
+
+<p>Other tests are stateless and can be runned independently to each other</p>
+
+<p>To run all tests: <code>crystal spec</code></p>
+
+<h2><a id="license" class="anchor" href="#license">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>License                                                                                                 </h2>
+
+<p>Copyright (c) 2018-2020 Julien Reichardt - ISC License</p>
+</div>
+</body>
+</html>
