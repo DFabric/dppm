@@ -101,7 +101,7 @@ describe DPPM::CLI do
     it "cleans unused packages" do
       spec_with_prefix do |prefix|
         build_package prefix.path.to_s
-        Dir.rmdir (prefix.app / "dppm").to_s
+        Dir.delete (prefix.app / "dppm").to_s
         packages = prefix.clean_unused_packages(false) { }
         packages.not_nil!.should eq Set{"libfake_0.0.1", "testapp_0.2.0"}
         Dir.children(prefix.pkg.to_s).should be_empty

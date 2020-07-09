@@ -1,18 +1,30 @@
-require "cossack"
+require "colorize"
+require "http"
 
-# Method for redirections using the cossack http client
+REDIRECT_THRESH = {% if threshold = flag? :redirect_threshold %}
+                    {{ threshold }}
+                  {% else %}
+                    10
+                  {% end %}
+
+# Method for redirections using the stdlib http client
 module DPPM::HTTPHelper
   extend self
 
-  def get_string(url)
-    response = Cossack::Client.new(&.use Cossack::RedirectionMiddleware).get url
+  def get_string(url, headers = nil, redirection = 0)
+    raise "Probable redirection loop" if redirection > REDIRECT_THRESH
+    response = HTTP::Client.get url, headers
+
     case response.status
-    when 200, 301, 302 then response.body
-    else
-      raise "Status code #{response.status}: " + url
+    when .success? then response.body? || response.body_io.gets_to_end
+    when .redirection?
+      get_string url: response.headers["Location"],
+        headers: headers,
+        redirection: redirection + 1
+    else raise %<Server returned "#{response.status}" status>
     end
   rescue ex
-    raise Error.new "Failed to get #{url.colorize.underline}", ex
+    raise Error.new "Failed to get #{url.colorize.underline}", cause: ex
   end
 
   def get_file(url : String, path : String = File.basename(url))

@@ -270,7 +270,8 @@ struct DPPM::Prefix::App
 
       yield
 
-      File.chown origin_file, origin_file_info.owner, origin_file_info.group
+      {% raise "can't chown on windows in crystal yet" if flag? :win32 %}
+      File.chown origin_file, origin_file_info.owner_id.to_u32, origin_file_info.group_id.to_u32
       time = Time.utc
       File.touch origin_file, time
       File.touch config_file!.to_s, time
@@ -423,7 +424,7 @@ struct DPPM::Prefix::App
     set_permissions
 
     if Process.root?
-      Utils.chown_r @path.to_s, file_info.owner, file_info.group
+      Utils.chown_r @path.to_s, file_info.owner_id.to_u32, file_info.group_id.to_u32
     end
 
     Logger.info "upgrade completed", @path.to_s
@@ -477,7 +478,7 @@ struct DPPM::Prefix::App
       pkg_file.type.webapp!
 
       webserver = @prefix.new_app web_server
-      web_server_uid = webserver.file_info.owner
+      web_server_uid = webserver.file_info.owner_id.to_u32
       @website = webserver.new_website self
       vars["web_server"] = web_server
     end
@@ -874,11 +875,11 @@ struct DPPM::Prefix::App
         libcrown = Libcrown.new
         # Delete the web server from the group of the user
         if webserver
-          libcrown.groups[file_info.group].users.delete libcrown.users[file_info.owner].name
+          libcrown.groups[file_info.group_id.to_u32].users.delete libcrown.users[file_info.owner_id.to_u32].name
         end
         if !keep_user_group
-          libcrown.del_user file_info.owner if owner.user.name.starts_with? '_' + @name
-          libcrown.del_group file_info.group if owner.group.name.starts_with? '_' + @name
+          libcrown.del_user file_info.owner_id.to_u32 if owner.user.name.starts_with? '_' + @name
+          libcrown.del_group file_info.group_id.to_u32 if owner.group.name.starts_with? '_' + @name
         end
         libcrown.write
       end
@@ -912,6 +913,6 @@ struct DPPM::Prefix::App
 
   getter owner : Owner do
     libcrown = Libcrown.new nil
-    Owner.new libcrown.users[file_info.owner], libcrown.groups[file_info.group]
+    Owner.new libcrown.users[file_info.owner_id.to_u32], libcrown.groups[file_info.group_id.to_u32]
   end
 end

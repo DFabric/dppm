@@ -107,7 +107,7 @@ class Service::Systemd::Config < Service::Config
 
     @after << SYSTEMD_NETWORK_SERVICE
     systemd["Unit"]["After"] = String.build do |str|
-      @after.join(' ', str) do |service|
+      @after.join(str, ' ') do |service|
         str << service
         str << ".service" if service != SYSTEMD_NETWORK_SERVICE
       end

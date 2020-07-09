@@ -35,7 +35,7 @@ struct PortChecker
   private def internal_available_port?(socket : IPSocket, port : Int32) : Bool
     socket.bind @ipaddress.address, port
     available = true
-  rescue ex : Errno
+  rescue ex : Socket::BindError | RuntimeError
     available = false
   ensure
     socket.close

@@ -101,7 +101,7 @@ class Service::OpenRC::Config < Service::Config
 
     io << "\n\ndepend() {\n\tafter "
     @after << OPENRC_NETWORK_SERVICE
-    @after.join ' ', io
+    @after.join io, ' '
     io << "}\n"
 
     if @reload_signal
