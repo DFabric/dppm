@@ -7,12 +7,12 @@ platform:
 
 steps:
 - name: format
-  image: jrei/crystal-alpine
+  image: crystallang/crystal:latest-alpine
   commands:
   - crystal tool format --check
 
 - name: build
-  image: jrei/crystal-alpine
+  image: crystallang/crystal:latest-alpine
   volumes:
   - name: cache
     path: /root/.cache
@@ -21,7 +21,7 @@ steps:
   - shards build --static
 
 - name: lint
-  image: jrei/crystal-alpine
+  image: crystallang/crystal:latest-alpine
   commands:
   - bin/ameba
 
@@ -29,12 +29,12 @@ steps:
   volumes:
   - name: cache
     path: /root/.cache
-  image: jrei/crystal-alpine
+  image: crystallang/crystal:latest-alpine
   commands:
   - crystal spec -D allow_root --warnings all --error-on-warnings
 
 - name: build docs
-  image: jrei/crystal-alpine
+  image: crystallang/crystal:latest-alpine
   volumes:
   - name: docs
     path: /docs
