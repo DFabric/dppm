@@ -8,7 +8,7 @@ module DPPM::Logger
   class_property date : Bool = false
 
   def print_date(io)
-    Time.utc.to_s("%F %T%z ", io) if @@date
+    Time.utc.to_s(io, "%F %T%z ") if @@date
   end
 
   def info(title : String, message) : Nil

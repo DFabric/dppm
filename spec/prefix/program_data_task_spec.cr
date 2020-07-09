@@ -108,7 +108,7 @@ describe DPPM::Prefix::ProgramData::Task do
           cmd.execute("mkdir " + tempdir)
           Dir.exists?(tempdir).should be_true
         ensure
-          Dir.rmdir tempdir
+          Dir.delete tempdir
         end
       end
 
